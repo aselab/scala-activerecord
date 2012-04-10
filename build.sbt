@@ -20,6 +20,3 @@ resolvers ++= Seq(
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
 
-parallelExecution in Test := false
-
-fork in Test := false
