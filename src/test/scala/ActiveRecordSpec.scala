@@ -42,9 +42,6 @@ case class DummyModel(
 }
 
 object DummyModel extends ActiveRecordCompanion[DummyModel] {
-  // オーバーライドして参照するテーブル定義を切り替える
-  override lazy val definition = DummyTables
-
   def newModel(i: Int, none: Boolean = false) = DummyModel(
     "string" + i,
     i % 2 == 1,
@@ -69,35 +66,30 @@ object DummyModel extends ActiveRecordCompanion[DummyModel] {
   )
 }
 
-object DummyTables extends Tables {
+object DummyTables extends ActiveRecordTables {
   val dummyModelTable = table[DummyModel]
   val all = List(dummyModelTable)
 
-  val models = (1 to 100).map { i => DummyModel.newModel(i, i > 50)}
-
-  override def initialize {
-    super.initialize
-    transaction {
-      models.foreach {_.save}
-    }
+  def createTestData = (1 to 100).foreach { i =>
+    DummyModel.newModel(i, i > 50).save
   }
 }
 
 object ActiveRecordSpec extends Specification {
   override def map(fs: => Fragments) = {
     Step {
-      System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog")
-      System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING")
-      DummyTables.initialize
+      DummyTables.initialize(Map(
+        "schema" -> "com.github.aselab.activerecord.DummyTables"
+      ))
+      DummyTables.createTestData
     } ^ fs ^ Step {
-      Session.cleanupResources
-      Config.pool.close
+      DummyTables.cleanup
     }
   }
 
   "ActiveRecordCompanion" should {
     "table で命名規約に一致するテーブルを取得できること" >> {
-      DummyModel.table mustEqual DummyModel.definition.dummyModelTable
+      DummyModel.table mustEqual DummyTables.dummyModelTable
     }
 
     "all で全件検索できること" >> transaction {

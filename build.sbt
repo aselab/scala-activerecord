@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.config" % "config" % "0.3.0",
   "org.specs2" %% "specs2" % "1.9" % "test",
   "c3p0" % "c3p0" % "0.9.1.2",
-  "com.h2database" % "h2" % "1.3.157" % "test"
+  "com.h2database" % "h2" % "1.3.157"
 )
 
 resolvers ++= Seq(

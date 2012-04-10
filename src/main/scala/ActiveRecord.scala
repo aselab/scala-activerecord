@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord
 
 import org.squeryl._
+import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import org.squeryl.PrimitiveTypeMode._
 import java.util.{Date, UUID}
@@ -50,7 +51,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
   protected def self: this.type = this
 
   /** コンパニオンオブジェクトが参照するテーブル定義 */
-  lazy val definition = Config.tableDefinition
+  lazy val schema = Config.schema
 
   /**
    * コンパニオンオブジェクトが管理するテーブル.
@@ -58,7 +59,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
   implicit lazy val table: Table[T] = {
     val name = getClass.getSimpleName.dropRight(1)
     val field = name.head.toLower + name.tail + "Table"
-    definition.getValue[Table[T]](field)
+    schema.getValue[Table[T]](field)
   }
 
   /**
@@ -282,11 +283,9 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
 }
 
 /**
- * テーブル定義の基底クラス.
+ * スキーマ定義の基底クラス.
  */
-trait Tables extends Schema {
-  import Config._
-
+trait ActiveRecordTables extends Schema {
   /** 全テーブル */
   def all: List[Table[_ <: ActiveRecordBase]]
 
@@ -302,84 +301,106 @@ trait Tables extends Schema {
   }}
 
   /** 初期化する */
-  def initialize {
+  def initialize(implicit config: Map[String, Any] = Map()) {
+    Config.conf = loadConfig(config)
+
     // 全テーブルのidフィールド定義
     all.foreach(on(_)(t => declare(
       t.id is(primaryKey, autoIncremented)
     )))
 
-    SessionFactory.concreteFactory = Some(() =>
-      Session.currentSessionOption.getOrElse {
-        Session.create(pool.getConnection, adapter)
-      }
-    )
+    SessionFactory.concreteFactory = Some(() => session)
 
     if (!isCreated) transaction { create }
   }
+
+  def cleanup = Config.cleanup
+
+  def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
+    DefaultConfig(config)
+
+  def session = Session.create(Config.connection, Config.adapter)
 
   /** DBのdrop・createを行う */
   def reset = transaction {
     drop
     create
   }
+}
 
-  def connection: Connection = {
-    Class.forName(driverClass)
-    DriverManager.getConnection(jdbcUrl, user, password)
+trait ActiveRecordConfig {
+  def schemaClass: String
+  def connection: Connection
+  def adapter: DatabaseAdapter
+  def cleanup: Unit = {
+    Session.cleanupResources
   }
+}
+
+case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
+  val conf = ConfigFactory.load()
+  val env = System.getProperty("run.mode", "dev")
+
+  def get[T](key: String): Option[T] = map.get(key).map(_.asInstanceOf[T])
+  def get[T](key: String, getter: String => T): Option[T] = try {
+    Option(getter(env + "." + key))
+  } catch {
+    case e: ConfigException.Missing => None
+  }
+  def getString(key: String) = get[String](key).orElse(get(key, conf.getString))
+  def getInt(key: String) = get[Int](key).orElse(get(key, conf.getInt))
+
+  lazy val schemaClass = getString("schema").getOrElse("models.Tables")
+  lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
+  lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
+  lazy val username = getString("username")
+  lazy val password = getString("password")
+  lazy val minPoolSize = getInt("minpoolsize")
+  lazy val maxPoolSize = getInt("maxpoolsize")
+
+  lazy val adapter = driverClass match {
+    case "org.h2.Driver" => new H2Adapter
+    case "org.postgresql.Driver" => new PostgreSqlAdapter
+    case "com.mysql.jdbc.Driver" => new MySQLAdapter
+    case driver => throw new Exception("サポートしていないドライバ: " + driver)
+  }
+
+  /** データベースコネクションプール */
+  lazy val pool = {
+    System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog")
+    System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING")
+
+    val cpds = new ComboPooledDataSource
+    cpds.setDriverClass(driverClass)
+    cpds.setJdbcUrl(jdbcurl)
+    username.foreach(cpds.setUser(_))
+    password.foreach(cpds.setPassword(_))
+    minPoolSize.foreach(cpds.setMinPoolSize(_))
+    maxPoolSize.foreach(cpds.setMaxPoolSize(_))
+    cpds
+  }
+
+  override def cleanup = {
+    super.cleanup
+    pool.close
+  }
+
+  def connection = pool.getConnection
 }
 
 /**
  * 設定管理オブジェクト
  */
 object Config {
-  class Conf {
-    val conf = ConfigFactory.load()
-    val env = System.getProperty("run.mode", "dev")
-    def get[T](key: String)(getter: String => T): Option[T] = try {
-      Option(getter(env + "." + key))
-    } catch {
-      case e: ConfigException.Missing => None
-    }
-    def getString(key: String) = get(key)(conf.getString)
-    def getInt(key: String) = get(key)(conf.getInt)
-    def apply(key: String) = getString(key).getOrElse(throw new Exception(env + "." + key + " is required"))
-  }
+  var conf: ActiveRecordConfig = _
 
-  lazy val conf = new Conf
-  lazy val tableClass = conf.getString("table.class").getOrElse("models.Tables")
-  lazy val driverKey = "db.driver"
-  lazy val driverClass = conf(driverKey)
-  lazy val jdbcUrl = conf("db.url")
-  lazy val user = conf("db.user")
-  lazy val password = conf("db.password")
-  lazy val minPoolSize = conf.getInt("db.pool.size.min").getOrElse(1)
-  lazy val maxPoolSize = conf.getInt("db.pool.size.max").getOrElse(5)
+  lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
+    .asInstanceOf[ActiveRecordTables]
 
-  /** DB接続用アダプタ */
-  def adapter = conf.getString(driverKey) match {
-    case Some("org.h2.Driver") => new H2Adapter
-    case Some("org.postgresql.Driver") => new PostgreSqlAdapter
-    case Some("com.mysql.jdbc.Driver") => new MySQLAdapter
-    case Some(driver) => throw new Exception("サポートしていないドライバ: " + driver)
-    case _ => throw new Exception("DBドライバ設定がありません")
-  }
+  def connection = conf.connection
+  def adapter = conf.adapter
 
-  /** テーブル定義 */
-  lazy val tableDefinition =
-    ReflectionUtil.classToCompanion(tableClass).asInstanceOf[Tables]
-
-  /** データベースコネクションプール */
-  lazy val pool = {
-    val cpds = new ComboPooledDataSource
-    cpds.setDriverClass(driverClass)
-    cpds.setJdbcUrl(jdbcUrl)
-    cpds.setUser(user)
-    cpds.setPassword(password)
-    cpds.setMinPoolSize(minPoolSize)
-    cpds.setMaxPoolSize(maxPoolSize)
-    cpds
-  }
+  def cleanup = conf.cleanup
 }
 
 /**
