@@ -22,7 +22,6 @@ case class DummyModel(
   @Ignore var date: Date,
   @Ignore var uuid: UUID,
 
-  //@MinLength(4)
   var ostring: Option[String],
 
   @Ignore var oboolean: Option[Boolean],

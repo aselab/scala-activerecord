@@ -1,5 +1,3 @@
-sbtPlugin := true
-
 name := "scala-activerecord"
 
 version := "0.1-SNAPSHOT"
@@ -19,4 +17,8 @@ resolvers ++= Seq(
 )
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
+
+crossPaths := false
+
+publishTo := Some(Resolver.file("file", file("target/publish")))
 
