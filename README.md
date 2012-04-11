@@ -6,6 +6,7 @@ This library is inspired by ActiveRecord of Ruby on Rails and helps to reduce yo
 ## Example
 
 Model implementation:
+
 ```scala
 import com.github.aselab.activerecord._
 
@@ -15,6 +16,7 @@ object User extends ActiveRecordCompanion[User]
 ```
 
 Schema definition:
+
 ```scala
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
@@ -27,6 +29,7 @@ object Tables extends ActiveRecordTables {
 ```
 
 ActiveRecord model usage:
+
 ```scala
 import com.github.aselab.activerecord.dsl._
 
