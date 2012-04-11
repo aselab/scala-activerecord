@@ -338,7 +338,7 @@ trait ActiveRecordConfig {
 }
 
 case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
-  val conf = ConfigFactory.load()
+  val conf = ConfigFactory.load("activerecord")
   val env = System.getProperty("run.mode", "dev")
 
   def get[T](key: String): Option[T] = map.get(key).map(_.asInstanceOf[T])

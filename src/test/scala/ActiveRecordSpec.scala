@@ -3,8 +3,7 @@ package com.github.aselab.activerecord
 import org.specs2.mutable._
 import org.specs2.specification._
 
-import org.squeryl._
-import org.squeryl.PrimitiveTypeMode._
+import dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
@@ -76,6 +75,8 @@ object DummyTables extends ActiveRecordTables {
 }
 
 object ActiveRecordSpec extends Specification {
+  sequential
+
   override def map(fs: => Fragments) = {
     Step {
       DummyTables.initialize(Map(
@@ -92,156 +93,156 @@ object ActiveRecordSpec extends Specification {
       DummyModel.table mustEqual DummyTables.dummyModelTable
     }
 
-    "all で全件検索できること" >> transaction {
+    "all で全件検索できること" >> {
       DummyModel.all must have size 100
     }
 
-    "apply でfindを呼び出すこと" >> transaction {
+    "apply でfindを呼び出すこと" >> {
       DummyModel.apply(3) mustEqual DummyModel.find(3)
     }
 
-    "find でid検索できること" >> transaction {
+    "find でid検索できること" >> {
       DummyModel.find(13) must beSome.which {_.id == 13}
     }
 
     "findBy" >> {
-      "クエリ検索できること" >> transaction {
+      "クエリ検索できること" >> {
         DummyModel.where {m: DummyModel =>
           (m.int lte 30) and (m.string like "string%0")
         } must have size 3
       }
 
-      "クエリ検索でNoneを検索できること" >> transaction {
+      "クエリ検索でNoneを検索できること" >> {
         DummyModel.where {m: DummyModel =>
           m.oint isNull
         } must have size 50
       }
 
-      "String値で検索できること" >> transaction {
+      "String値で検索できること" >> {
         val result = DummyModel.findBy("string", "string33")
         result must have size 1
         result.head.string mustEqual "string33"
       }
 
-      "Option[String]値で検索できること" >> transaction {
+      "Option[String]値で検索できること" >> {
         val result = DummyModel.findBy("ostring", Some("string33"))
         result must have size 1
         result.head.ostring must beSome("string33")
       }
 
-      "Boolean値で検索できること" >> transaction {
+      "Boolean値で検索できること" >> {
         val result = DummyModel.findBy("boolean", true)
         result must have size 50
       }
 
-      "Option[Boolean]値で検索できること" >> transaction {
+      "Option[Boolean]値で検索できること" >> {
         val result = DummyModel.findBy("oboolean", Some(true))
         result must have size 25
       }
 
-      "Int値で検索できること" >> transaction {
+      "Int値で検索できること" >> {
         val result = DummyModel.findBy("int", 55)
         result must have size 1
         result.head.int mustEqual 55
       }
 
-      "Option[Int]値で検索できること" >> transaction {
+      "Option[Int]値で検索できること" >> {
         val result = DummyModel.findBy("oint", Some(35))
         result must have size 1
         result.head.oint must beSome(35)
       }
 
-      "Long値で検索できること" >> transaction {
+      "Long値で検索できること" >> {
         val result = DummyModel.findBy("long", 55L)
         result must have size 1
         result.head.long mustEqual 55L
       }
 
-      "Option[Long]値で検索できること" >> transaction {
+      "Option[Long]値で検索できること" >> {
         val result = DummyModel.findBy("olong", Some(35L))
         result must have size 1
         result.head.olong must beSome(35L)
       }
 
-      "Float値で検索できること" >> transaction {
+      "Float値で検索できること" >> {
         val result = DummyModel.findBy("float", 23.toFloat)
         result must have size 1
         result.head.float mustEqual 23.toFloat
       }
 
-      "Option[Float]値で検索できること" >> transaction {
+      "Option[Float]値で検索できること" >> {
         val result = DummyModel.findBy("ofloat", Some(23.toFloat))
         result must have size 1
         result.head.ofloat must beSome(23.toFloat)
       }
 
-      "Double値で検索できること" >> transaction {
+      "Double値で検索できること" >> {
         val result = DummyModel.findBy("double", 45.0)
         result must have size 1
         result.head.double mustEqual 45.0
       }
 
-      "Option[Double]値で検索できること" >> transaction {
+      "Option[Double]値で検索できること" >> {
         val result = DummyModel.findBy("odouble", Some(45.0))
         result must have size 1
         result.head.odouble must beSome(45.0)
       }
 
-      "BigDecimal値で検索できること" >> transaction {
+      "BigDecimal値で検索できること" >> {
         val result = DummyModel.findBy("bigDecimal", BigDecimal(55))
         result must have size 1
         result.head.bigDecimal mustEqual BigDecimal(55)
       }
 
-      "Option[BigDecimal]値で検索できること" >> transaction {
+      "Option[BigDecimal]値で検索できること" >> {
         val result = DummyModel.findBy("obigDecimal", Some(BigDecimal(45)))
         result must have size 1
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
 
-      "Timestamp値で検索できること" >> transaction {
+      "Timestamp値で検索できること" >> {
         val t = new Timestamp(44L)
         val result = DummyModel.findBy("timestamp", t)
         result must have size 1
         result.head.timestamp mustEqual t
       }
 
-      "Option[Timestamp]値で検索できること" >> transaction {
+      "Option[Timestamp]値で検索できること" >> {
         val t = Some(new Timestamp(44L))
         val result = DummyModel.findBy("otimestamp", t)
         result must have size 1
         result.head.otimestamp mustEqual t
       }
 
-      "Date値で検索できること" >> transaction {
+      "Date値で検索できること" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = DummyModel.findBy("date", t)
         result must have size 1
         result.head.date.toString mustEqual "1970-01-23"
       }
 
-      "Option[Date]値で検索できること" >> transaction {
+      "Option[Date]値で検索できること" >> {
         val t = Some(new Date(22L * 1000 * 60 * 60 * 24))
         val result = DummyModel.findBy("odate", t)
         result must have size 1
         result.head.odate must beSome.which {_.toString == "1970-01-23"}
       }
 
-      "UUID値で検索できること" >> transaction {
+      "UUID値で検索できること" >> {
         val u = new UUID(11L, 11L)
         val result = DummyModel.findBy("uuid", u)
         result must have size 1
         result.head.uuid mustEqual u
       }
 
-      "Option[UUID]値で検索できること" >> transaction {
+      "Option[UUID]値で検索できること" >> {
         val u = Some(new UUID(11L, 11L))
         val result = DummyModel.findBy("ouuid", u)
         result must have size 1
         result.head.ouuid mustEqual u
       }
 
-      "組み合わせで検索できること" >> transaction {
+      "組み合わせで検索できること" >> {
         val result = DummyModel.findBy("string" -> "string22", "int" -> 22)
         result must have size 1
         result.head.int mustEqual 22
@@ -250,26 +251,26 @@ object ActiveRecordSpec extends Specification {
     }
 
     "toRichQuery" >> {
-      "findByをネストできること" >> transaction {
+      "findByをネストできること" >> {
         DummyModel.all.where(m => m.int lt 50).findBy("string", "string22") must have size 1
       }
 
-      "orderByでqueryを並べ替えられること" >> transaction {
+      "orderByでqueryを並べ替えられること" >> {
         DummyModel.all.orderBy(m => m.int desc).toList mustEqual DummyModel.all.toList.reverse
       }
 
-      "orderByで複数キーソートができること" >> transaction {
+      "orderByで複数キーソートができること" >> {
         DummyModel.all.orderBy(m => m.boolean asc, m => m.int desc).toList mustEqual DummyModel.all.toList.sortWith {
           (m1, m2) => m1.boolean < m2.boolean || m1.int > m2.int
         }
       }
 
-      "limitで指定件数取得できること" >> transaction {
+      "limitで指定件数取得できること" >> {
         DummyModel.all.limit(10).toList mustEqual DummyModel.all.toList.take(10)
       }
     }
 
-    "CRUD できること" >> transaction {
+    "CRUD できること" >> {
       val m = DummyModel.all.head
       DummyModel.create(m)
       DummyModel.find(m.id) must beSome(m)
@@ -338,7 +339,7 @@ object ActiveRecordSpec extends Specification {
       m._companion mustEqual DummyModel
     }
 
-    "モデルのCRUDができること" >> transaction {
+    "モデルのCRUDができること" >> {
       val m = DummyModel.newModel(5)
       val size = DummyModel.all.size
       m.string = "abcdezzz"
