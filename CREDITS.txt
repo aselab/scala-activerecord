@@ -1,0 +1,12 @@
+Contributors
+============
+
+
+Library Dependencies
+===================
+
+Squeryl (forked)
+Copyright: Maxime Lévesque
+     Site: http://squeryl.org/
+  License: Apache License 2.0
+     diff: https://github.com/aselab/Squeryl/commit/ef2af53bc80958516f71d2dfe5f63b867da25783
