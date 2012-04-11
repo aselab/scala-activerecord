@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
 )
 
 resolvers ++= Seq(
+  "aselab" at "http://aselab.github.com/maven/",
   "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 )
 
