@@ -66,7 +66,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
    * 検索条件をchainするための暗黙変換.
    */
   implicit def toRichQuery(query: Query[T]) = new {
-    def where(condition: (T) => dsl.ast.LogicalBoolean): Query[T] = {
+    def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
       self.where(condition)(query)
     }
 
@@ -87,7 +87,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
      * @param condition 並べ替え条件
      * @param conditions 複数キーによるソート時の並べ替え条件
      */
-    def orderBy(condition: (T) => dsl.ast.OrderByArg, conditions: (T => dsl.ast.OrderByArg)*) = {
+    def orderBy(condition: (T) => org.squeryl.dsl.ast.OrderByArg, conditions: (T => org.squeryl.dsl.ast.OrderByArg)*) = {
       conditions.toList match {
         case Nil => from(query)(m => select(m).orderBy(condition(m)))
         case List(f1) => from(query)(m => select(m).orderBy(condition(m), f1(m)))
@@ -133,7 +133,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
    * @param condition where句に相当する関数
    * @param query 検索元のテーブルやクエリ．デフォルトではtableから検索する．
    */
-  def where(condition: (T) => dsl.ast.LogicalBoolean)(implicit query: Queryable[T]): Query[T] = {
+  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean)(implicit query: Queryable[T]): Query[T] = {
     from(query)(m => PrimitiveTypeMode.where(condition(m)) select(m))
   }
 
