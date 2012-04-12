@@ -6,7 +6,7 @@ import org.squeryl.adapters._
 import org.squeryl.PrimitiveTypeMode._
 import java.util.{Date, UUID}
 import java.sql.{Timestamp, DriverManager, Connection}
-import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.jolbox.bonecp._
 import com.typesafe.config._
 
 /**
@@ -252,7 +252,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
     targetClass.newInstance.asInstanceOf[T]
   } catch {
     case e: InstantiationException =>
-      throw ConventionException.defaultConstructorRequired
+      ActiveRecordException.defaultConstructorRequired
   }
 
   /** フィールド情報 */
@@ -355,34 +355,38 @@ case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
   lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
   lazy val username = getString("username")
   lazy val password = getString("password")
-  lazy val minPoolSize = getInt("minpoolsize")
-  lazy val maxPoolSize = getInt("maxpoolsize")
+  lazy val partitionCount = getInt("partitionCount")
+  lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
+  lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
 
   lazy val adapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
     case "org.postgresql.Driver" => new PostgreSqlAdapter
     case "com.mysql.jdbc.Driver" => new MySQLAdapter
-    case driver => throw new Exception("サポートしていないドライバ: " + driver)
+    case driver => ActiveRecordException.unsupportedDriver(driver)
   }
 
   /** データベースコネクションプール */
   lazy val pool = {
-    System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog")
-    System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING")
+    try {
+      Class.forName(driverClass)
+    } catch {
+      case e => ActiveRecordException.unsupportedDriver(driverClass)
+    }
 
-    val cpds = new ComboPooledDataSource
-    cpds.setDriverClass(driverClass)
-    cpds.setJdbcUrl(jdbcurl)
-    username.foreach(cpds.setUser(_))
-    password.foreach(cpds.setPassword(_))
-    minPoolSize.foreach(cpds.setMinPoolSize(_))
-    maxPoolSize.foreach(cpds.setMaxPoolSize(_))
-    cpds
+    val conf = new BoneCPConfig
+    conf.setJdbcUrl(jdbcurl)
+    username.foreach(conf.setUsername(_))
+    password.foreach(conf.setPassword(_))
+    partitionCount.foreach(conf.setPartitionCount(_))
+    maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition(_))
+    minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition(_))
+    new BoneCP(conf)
   }
 
   override def cleanup = {
     super.cleanup
-    pool.close
+    pool.shutdown
   }
 
   def connection = pool.getConnection
@@ -403,23 +407,21 @@ object Config {
   def cleanup = conf.cleanup
 }
 
-/**
- * マッピング時例外クラス.
- * @param msg メッセージ
- */
-class ConventionException(msg: String) extends RuntimeException(msg)
+class ActiveRecordException(msg: String) extends RuntimeException(msg)
 
-/** マッピング時例外定義 */
-object ConventionException {
+object ActiveRecordException {
   /** 未サポート例外 */
-  def unsupportedType(name: String) = new ConventionException("サポートしていないタイプ: " + name)
+  def unsupportedType(name: String) = throw new ActiveRecordException("サポートしていないタイプ: " + name)
   /** デフォルトコンストラクタ未実装例外 */
-  def defaultConstructorRequired = new ConventionException("デフォルトコンストラクタを実装する必要があります")
+  def defaultConstructorRequired = throw new ActiveRecordException("デフォルトコンストラクタを実装する必要があります")
   /** Option値型検出失敗例外 */
-  def optionValueMustBeSome = new ConventionException("デフォルト値がNoneの場合type erasureによりGenericsの型パラメータを検出できません")
+  def optionValueMustBeSome = throw new ActiveRecordException("デフォルト値がNoneの場合type erasureによりGenericsの型パラメータを検出できません")
   /** リスト型検出失敗例外 */
-  def traversableValueMustNotBeNil = new ConventionException("デフォルト値がNilの場合type erasureによりGenericsの型パラメータを検出できません")
+  def traversableValueMustNotBeNil = throw new ActiveRecordException("デフォルト値がNilの場合type erasureによりGenericsの型パラメータを検出できません")
   /** 型検出失敗例外 */
-  def cannotDetectType(value: Any) = new ConventionException("%s の型を検出できません".format(value))
+  def cannotDetectType(value: Any) = throw new ActiveRecordException("%s の型を検出できません".format(value))
+
+  def unsupportedDriver(driver: String) =
+    throw new ActiveRecordException("Unsupported database driver: " + driver)
 }
 

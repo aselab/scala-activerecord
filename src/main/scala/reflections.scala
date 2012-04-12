@@ -31,17 +31,17 @@ case class FieldInfo(
 object FieldInfo {
   def apply(name: String, value: Any, field: Option[Field]): FieldInfo = value match {
     case Some(v) => apply(name, v, None).copy(isOption = true)
-    case None => throw ConventionException.optionValueMustBeSome
+    case None => ActiveRecordException.optionValueMustBeSome
 
     case l: Traversable[_] => l.toSeq match {
       case Seq(v, _*) => apply(name, v, None).copy(isSeq = true)
-      case Nil => throw ConventionException.traversableValueMustNotBeNil
+      case Nil => ActiveRecordException.traversableValueMustNotBeNil
     }
 
     case v: Any => FieldInfo(name, v.getClass, false, false)
     case v =>
       val fieldType = field.map(_.getType).getOrElse(
-        throw ConventionException.cannotDetectType(v))
+        ActiveRecordException.cannotDetectType(v))
       FieldInfo(name, fieldType, false, false)
   }
 
