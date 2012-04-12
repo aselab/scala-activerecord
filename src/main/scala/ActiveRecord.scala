@@ -410,16 +410,20 @@ object Config {
 class ActiveRecordException(msg: String) extends RuntimeException(msg)
 
 object ActiveRecordException {
-  /** 未サポート例外 */
-  def unsupportedType(name: String) = throw new ActiveRecordException("サポートしていないタイプ: " + name)
-  /** デフォルトコンストラクタ未実装例外 */
-  def defaultConstructorRequired = throw new ActiveRecordException("デフォルトコンストラクタを実装する必要があります")
-  /** Option値型検出失敗例外 */
-  def optionValueMustBeSome = throw new ActiveRecordException("デフォルト値がNoneの場合type erasureによりGenericsの型パラメータを検出できません")
-  /** リスト型検出失敗例外 */
-  def traversableValueMustNotBeNil = throw new ActiveRecordException("デフォルト値がNilの場合type erasureによりGenericsの型パラメータを検出できません")
-  /** 型検出失敗例外 */
-  def cannotDetectType(value: Any) = throw new ActiveRecordException("%s の型を検出できません".format(value))
+  def unsupportedType(name: String) =
+    throw new ActiveRecordException("Unsupported type: " + name)
+
+  def defaultConstructorRequired =
+    throw new ActiveRecordException("Must implement default constructor")
+
+  def optionValueMustBeSome =
+    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is None because of type erasure.")
+
+  def traversableValueMustNotBeNil =
+    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is Nil because of type erasure.")
+
+  def cannotDetectType(value: Any) =
+    throw new ActiveRecordException("Cannot detect type of %s.".format(value))
 
   def unsupportedDriver(driver: String) =
     throw new ActiveRecordException("Unsupported database driver: " + driver)
