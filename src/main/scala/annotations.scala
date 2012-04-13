@@ -2,18 +2,16 @@ package com.github.aselab.activerecord
 
 import org.squeryl.annotations._
 
-/** アノテーション定義 */
 object Annotations {
   import annotation.target._
 
   /**
-   * 無視フィールドアノテーション.
-   * フォーム検証対象外のフィールドに付加する．
+   * ignore field annotation.
    */
   type Ignore = annotations.Ignore @field
 
   /**
-   * ユニークアノテーション.
+   * unique field annotation.
    */
   type Unique = annotations.Unique @field
 }

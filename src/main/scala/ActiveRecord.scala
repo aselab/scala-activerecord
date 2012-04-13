@@ -9,13 +9,11 @@ import java.sql.{Timestamp, DriverManager, Connection}
 import com.jolbox.bonecp._
 import com.typesafe.config._
 
-/**
- * ActiveRecord 基底クラス.
- */
 abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUDable {
-  var id: Long = 0L
+  /** primary key */
+  val id: Long = 0L
 
-  /** モデルに対応するコンパニオンオブジェクト */
+  /** corresponding ActiveRecordCompanion object */
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
     .asInstanceOf[ActiveRecordCompanion[this.type]]
 
@@ -40,21 +38,27 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
   protected def doDelete = _companion.delete(id)
 }
 
-/** ActiveRecord 抽象基底クラス. */
+/**
+ * Base class of ActiveRecord objects.
+ *
+ * This class provides object-relational mapping and CRUD logic and callback hooks.
+ */
 abstract class ActiveRecord extends ActiveRecordBase
 
 /**
- * ActiveRecord コンパニオンオブジェクトの基底クラス.
+ * Base class of ActiveRecord companion objects.
+ *
+ * This class provides database table mapping and query logic.
  */
 trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
-  /** 自己参照 */
+  /** self reference */
   protected def self: this.type = this
 
-  /** コンパニオンオブジェクトが参照するテーブル定義 */
+  /** database schema */
   lazy val schema = Config.schema
 
   /**
-   * コンパニオンオブジェクトが管理するテーブル.
+   * corresponding database table
    */
   implicit lazy val table: Table[T] = {
     val name = getClass.getSimpleName.dropRight(1)
@@ -63,7 +67,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
   }
 
   /**
-   * 検索条件をchainするための暗黙変換.
+   * implicit conversion for query chain.
    */
   implicit def toRichQuery(query: Query[T]) = new {
     def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
@@ -79,13 +83,14 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
     }
 
     /**
-     * ソート
+     * sort.
+     *
      * {{{
      * Person.findBy("country", "Japan").orderBy(p => p.age asc)
      * Person.all.orderBy(p => p.age asc, p => p.name asc)
      * }}}
-     * @param condition 並べ替え条件
-     * @param conditions 複数キーによるソート時の並べ替え条件
+     * @param condition sort condition
+     * @param conditions multiple sort conditions(optional)
      */
     def orderBy(condition: (T) => org.squeryl.dsl.ast.OrderByArg, conditions: (T => org.squeryl.dsl.ast.OrderByArg)*) = {
       conditions.toList match {
@@ -100,50 +105,53 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
     }
 
     /**
-     * 指定件数取得
+     * limit query.
      * {{{
      * Post.all.orderBy(p => p.updatedAt desc).limit(10)
      * }}}
-     * @param count 件数
+     * @param count max count
      */
     def limit(count: Int) = query.page(0, count)
   }
 
   /**
-   * 全件検索
+   * all search.
    */
   def all = from(table)(m => select(m))
 
   /**
-   * id検索
+   * same as find method.
    */
   def apply(id: Long) = find(id)
 
   /**
-   * id検索
+   * search by id.
    */
   def find(id: Long) = inTransaction { table.lookup(id) }
 
   /**
-   * where検索.
+   * query search.
+   *
    * {{{
-   * 例: findBy {m: T => m.name === "abc" and m.age > 20}
+   * findBy {m: T => m.name === "abc" and m.age > 20}
    * }}}
    *
-   * @param condition where句に相当する関数
-   * @param query 検索元のテーブルやクエリ．デフォルトではtableから検索する．
+   * @param condition search condition
+   * @param query table or subquery in from clause. default is table
    */
   def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean)(implicit query: Queryable[T]): Query[T] = {
     from(query)(m => PrimitiveTypeMode.where(condition(m)) select(m))
   }
 
   /**
-   * Key-Value検索.
-   * 複数条件のAND検索が可能．
+   * Search by multiple fieldnames and values.
+   *
    * {{{
    * 例: findBy("name" -> "abc", "email" -> "abc@foo.bar")
    * }}}
-   * @param condition 
+   * @param condition fieldname-value tuple
+   * @param conditions multiple fieldname-value tuples(optional)
+   * @param query table or subquery in from clause. default is table
    */
   def findBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Query[T] = {
     conditions.foldLeft(findBy(condition._1, condition._2)(query)) {
@@ -152,13 +160,13 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
   }
 
   /**
-   * Key-Value検索.
+   * Search by fieldname and value.
    * {{{
    * 例: findBy("name", "abc")
    * }}}
-   * @param name モデルのフィールド名
-   * @param value 検索する値
-   * @param query 検索元のテーブルやクエリ．デフォルトではtableから検索する．
+   * @param name field name
+   * @param value field value
+   * @param query table or subquery in from clause. default is table
    */
   def findBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
     where(value match {
@@ -182,71 +190,65 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
       case Some(v: Date) => {m: T => m.getValue[Option[Date]](name) === Some(v)}
       case v: UUID => {m: T => m.getValue[UUID](name) === v}
       case Some(v: UUID) => {m: T => m.getValue[Option[UUID]](name) === Some(v)}
-      case _ => throw new RuntimeException(
-        "サポートしていない形式: %s by %s".format(name, value.toString))
+      case _ => ActiveRecordException.unsupportedType(
+        "%s by %s".format(name, value.toString))
     })(query)
   }
 
   /**
-   * 対象テーブルのレコードを作成する.
-   * @param model 作成するモデル
+   * insert record from model.
    */
   def create(model: T) = inTransaction {
     table.insert(model)
   }
 
   /**
-   * 対象テーブルのレコードを更新する.
-   * @param model 更新するモデル
+   * update record from model.
    */
   def update(model: T) = inTransaction {
     table.update(model)
   }
 
   /**
-   * 対象テーブルのレコードを削除する.
-   * @param id 削除対象ID
+   * delete record from id.
    */
   def delete(id: Long) = inTransaction {
     table.delete(id)
   }
 
   /**
-   * 対象テーブルのレコードを全削除する.
+   * delete all records.
    */
   def deleteAll = inTransaction {
     table.delete(all)
   }
 
   /**
-   * 重複チェック.
+   * unique validation.
    */
   def isUnique(name: String, m: T): Boolean = inTransaction {
     val newValue = m.getValue[Any](name)
-    // 値がnull または Noneの時は無条件でtrueを返す
+
     if (newValue == null || newValue == None) return true
 
     val result = findBy(name, newValue)
     find(m.id) match {
-      // 既存レコードで値が変わっている時のみ重複チェック
       case Some(old) if old.getValue[Any](name) != newValue => result.isEmpty
-      // 既存レコードで値が変わっていない場合は無条件でtrue
       case Some(_) => true
-      // 新規レコードの場合
       case None => result.isEmpty
     }
   }
 
-  /** Uniqueアノテーションが付与されたフィールド */
+  /** Unique annotated fields */
   lazy val uniqueFields =
     formatFields.filter(_.isAnnotationPresent(classOf[annotations.Unique]))
 
-  /** 対象のcase class */
+  /** corresponding ActiveRecord class */
   private val targetClass = companionToClass(this)
 
   /**
-   * インスタンス生成.
-   * 対象クラスはデフォルトコンストラクタを実装する必要がある．
+   * Create a new model object.
+   * ActiveRecord class must implement default constructor.
    */
   def newInstance = try {
     targetClass.newInstance.asInstanceOf[T]
@@ -255,7 +257,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
       ActiveRecordException.defaultConstructorRequired
   }
 
-  /** フィールド情報 */
+  /** ActiveRecord fields information */
   lazy val fieldInfo = {
     val m = newInstance
     formatFields.map { f =>
@@ -264,34 +266,22 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
     }.toMap
   }
 
-  /** formatFieldのリストを返す */
   lazy val formatFields: List[java.lang.reflect.Field] =
     targetClass.getDeclaredFields.filterNot {f =>
       f.isAnnotationPresent(classOf[annotations.Ignore]) ||
       f.getName.contains("$")
     }.toList
 
-  /** 値のコピーを行う */
-  def merge(a: T, b: T): T = {
-    fieldInfo.values.foreach {f =>
-      val name = f.name
-      a.setValue(name, b.getValue[Any](name))
-    }
-    a
-  }
-
 }
 
 /**
- * スキーマ定義の基底クラス.
+ * Base class of database schema.
  */
 trait ActiveRecordTables extends Schema {
-  /** 全テーブル */
+  /** All tables */
   def all: List[Table[_ <: ActiveRecordBase]]
 
-  /** テーブルが生成済みかどうか */
   def isCreated = all.headOption.exists{ t => inTransaction {
-    // 検索してエラーにならなければtrue
     try {
       t.lookup(1L)
       true
@@ -300,7 +290,7 @@ trait ActiveRecordTables extends Schema {
     }
   }}
 
-  /** 初期化する */
+  /** load configuration and then setup database and session */
   def initialize(implicit config: Map[String, Any] = Map()) {
     Config.conf = loadConfig(config)
 
@@ -314,6 +304,7 @@ trait ActiveRecordTables extends Schema {
     if (!isCreated) transaction { create }
   }
 
+  /** cleanup database resources */
   def cleanup = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
@@ -321,7 +312,7 @@ trait ActiveRecordTables extends Schema {
 
   def session = Session.create(Config.connection, Config.adapter)
 
-  /** DBのdrop・createを行う */
+  /** drop and create table */
   def reset = transaction {
     drop
     create
@@ -366,12 +357,11 @@ case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
     case driver => ActiveRecordException.unsupportedDriver(driver)
   }
 
-  /** データベースコネクションプール */
   lazy val pool = {
     try {
       Class.forName(driverClass)
     } catch {
-      case e => ActiveRecordException.unsupportedDriver(driverClass)
+      case e => ActiveRecordException.missingDriver(driverClass)
     }
 
     val conf = new BoneCPConfig
@@ -392,9 +382,6 @@ case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
   def connection = pool.getConnection
 }
 
-/**
- * 設定管理オブジェクト
- */
 object Config {
   var conf: ActiveRecordConfig = _
 
@@ -427,5 +414,8 @@ object ActiveRecordException {
 
   def unsupportedDriver(driver: String) =
     throw new ActiveRecordException("Unsupported database driver: " + driver)
+
+  def missingDriver(driver: String) =
+    throw new ActiveRecordException("Cannot load database driver: " + driver)
 }
 

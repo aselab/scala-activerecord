@@ -3,22 +3,20 @@ package com.github.aselab.activerecord
 import org.squeryl.annotations.Transient
 
 /**
- * CRUDとコールバックのインタフェース
+ * Interface of CRUD and callbacks.
  */
 trait CRUDable {
-  /** 新規インスタンスフラグ */
   @Transient
   protected var _isNewInstance = true
 
-  /** 新規インスタンスフラグ */
   def isNewInstance = _isNewInstance
 
   /**
-   * 保存メソッド．
+   * Save model.
    *
-   * 新規インスタンスの時はdoCreateを，
-   * そうでなければdoUpdateを呼び出す．
-   * 保存前と保存後にコールバックメソッドを呼び出す．
+   * If isNewInstance flag is true, it calls doCreate method.
+   * If not, it calls doUpdate method.
+   * before and after callbacks are available.
    */
   def save(): Boolean = {
     val onCreate = isNewInstance
@@ -37,8 +35,9 @@ trait CRUDable {
   }
 
   /**
-   * 削除メソッド.
-   * 削除前と削除後にコールバックメソッドを呼び出す．
+   * Delete model.
+   *
+   * before and after callbacks are available.
    */
   def delete(): Boolean = !isNewInstance && {
     beforeDelete()
@@ -53,104 +52,88 @@ trait CRUDable {
   }
 
   /**
-   * 新規保存処理を行うメソッド.
-   * 保存に成功した場合trueを，失敗した場合falseを返すように実装する．
+   * Model creation.
+   * Implement creation logic and return result of success or failure
    */
   protected def doCreate(): Boolean
 
   /**
-   * 更新保存処理を行うメソッド.
-   * 更新に成功した場合trueを，失敗した場合falseを返すように実装する．
+   * Model update.
+   * Implement update logic and return result of success or failure
    */
   protected def doUpdate(): Boolean
 
   /**
-   * 削除処理を行うメソッド.
-   * 削除に成功した場合trueを，失敗した場合falseを返すように実装する．
+   * Model deletion.
+   * Implement deletion logic and return result of success or failure
    */
   protected def doDelete(): Boolean
 
   /**
-   * 保存前のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doCreate, doUpdateを実行する前に呼びだされる．
+   * Callback method of before create and update.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
    */
   protected def beforeSave() {}
 
   /**
-   * 保存後のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doCreate, doUpdateを実行した後に呼びだされる．
-   * 保存に失敗した場合は呼び出されない．
+   * Callback method of after create and update.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
+   * This is not called if failed to save.
    */
   protected def afterSave() {}
 
   /**
-   * 新規作成前のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doCreateを実行する前に呼びだされる．
+   * Callback method of before create.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
    */
   protected def beforeCreate() {}
 
   /**
-   * 新規作成後のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doCreateを実行した後に呼びだされる．
-   * 保存に失敗した場合は呼び出されない．
+   * Callback method of after create.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
+   * This is not called if failed to create.
    */
   protected def afterCreate() {}
 
   /**
-   * 更新前のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doUpdateを実行する前に呼びだされる．
+   * Callback method of before update.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
    */
   protected def beforeUpdate() {}
 
   /**
-   * 更新後のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * saveメソッドが呼び出された時，実際の保存メソッドである
-   * doUpdateを実行した後に呼びだされる．
-   * 保存に失敗した場合は呼び出されない．
+   * Callback method of after update.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
+   * This is not called if failed to update.
    */
   protected def afterUpdate() {}
 
   /**
-   * 削除前のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * deleteメソッドが呼び出された時，実際の削除メソッドである
-   * doDeleteを実行する前に呼びだされる．
+   * Callback method of before delete.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
    */
   protected def beforeDelete() {}
 
   /**
-   * 削除後のコールバックメソッド.
-   * デフォルトでは何もしないため，必要があれば派生クラスで
-   * オーバーライドして実装する．
-   *
-   * deleteメソッドが呼び出された時，実際の削除メソッドである
-   * doDeleteを実行した後に呼びだされる．
-   * 削除に失敗した場合は呼び出されない．
+   * Callback method of after delete.
+   * 
+   * You can override this method and implement logic if necessary.
+   * Nothing is done by default.
+   * This is not called if failed to delete.
    */
   protected def afterDelete() {}
 }
