@@ -66,10 +66,7 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
     schema.getValue[Table[T]](field)
   }
 
-  /**
-   * implicit conversion for query chain.
-   */
-  implicit def toRichQuery(query: Query[T]) = new {
+  case class RichQuery(query: Query[T]) {
     def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
       self.where(condition)(query)
     }
@@ -113,6 +110,11 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
      */
     def limit(count: Int) = query.page(0, count)
   }
+
+  /**
+   * implicit conversion for query chain.
+   */
+  implicit def toRichQuery(query: Query[T]) = RichQuery(query)
 
   /**
    * all search.
