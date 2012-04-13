@@ -7,8 +7,6 @@ import dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-import Annotations._
-
 case class DummyModel(
   @Unique var string: String,
   @Ignore var boolean: Boolean,
