@@ -24,3 +24,8 @@ crossPaths := false
 
 publishTo := Some(Resolver.file("file", file("target/publish")))
 
+publish <<= (publish, name).map {(_, name) =>
+  val script = Path.userHome / ".sbt/publish"
+  if (script.exists)
+    "%s %s %s".format(script.getAbsolutePath, file("target/publish").getAbsolutePath, name) !
+}
