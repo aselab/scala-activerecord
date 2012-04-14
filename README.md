@@ -23,8 +23,6 @@ import com.github.aselab.activerecord.dsl._
 
 object Tables extends ActiveRecordTables {
   val userTable = table[User]
-
-  val all = List(userTable)
 }
 ```
 
@@ -42,7 +40,7 @@ User.where(_.age gte 20).toList //=> List(User("user1", 25), User("user3", 40))
 User.all.orderBy(_.age desc).toList //=> List(User("user3", 40), User("user1", 25), User("user2", 18))
 ```
 
-Query DSL is based on [Squeryl](http://squeryl.org/).
+Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 
 Sample project at https://github.com/aselab/scala-activerecord-sample
 
