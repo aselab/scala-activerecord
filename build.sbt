@@ -22,6 +22,8 @@ scalacOptions ++= Seq("-deprecation", "-unchecked")
 
 crossPaths := false
 
+compileOrder := CompileOrder.JavaThenScala
+
 publishTo := Some(Resolver.file("file", file("target/publish")))
 
 publish <<= (publish, name).map {(_, name) =>
