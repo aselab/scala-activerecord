@@ -65,7 +65,6 @@ object DummyModel extends ActiveRecordCompanion[DummyModel] {
 
 object DummyTables extends ActiveRecordTables {
   val dummyModelTable = table[DummyModel]
-  val all = List(dummyModelTable)
 
   def createTestData = (1 to 100).foreach { i =>
     DummyModel.newModel(i, i > 50).save

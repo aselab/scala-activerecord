@@ -280,8 +280,13 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
  * Base class of database schema.
  */
 trait ActiveRecordTables extends Schema {
+  import ReflectionUtil._
+
   /** All tables */
-  def all: List[Table[_ <: ActiveRecordBase]]
+  lazy val all = getClass.getDeclaredFields.collect {
+    case f if classOf[Table[ActiveRecordBase]].isAssignableFrom(f.getType) => 
+      this.getValue[Table[ActiveRecordBase]](f.getName)
+  }.toList
 
   def isCreated = all.headOption.exists{ t => inTransaction {
     try {
