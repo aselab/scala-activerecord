@@ -64,7 +64,7 @@ object DummyModel extends ActiveRecordCompanion[DummyModel] {
 }
 
 object DummyTables extends ActiveRecordTables {
-  val dummyModelTable = table[DummyModel]
+  val dummyModels = table[DummyModel]
 
   def createTestData = (1 to 100).foreach { i =>
     DummyModel.newModel(i, i > 50).save
@@ -86,8 +86,8 @@ object ActiveRecordSpec extends Specification {
   }
 
   "ActiveRecordCompanion" should {
-    "table で命名規約に一致するテーブルを取得できること" >> {
-      DummyModel.table mustEqual DummyTables.dummyModelTable
+    "table で対応するテーブルを取得できること" >> {
+      DummyModel.table mustEqual DummyTables.dummyModels
     }
 
     "all で全件検索できること" >> {

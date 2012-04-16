@@ -61,9 +61,8 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
    * corresponding database table
    */
   implicit lazy val table: Table[T] = {
-    val name = getClass.getSimpleName.dropRight(1)
-    val field = name.head.toLower + name.tail + "Table"
-    schema.getValue[Table[T]](field)
+    val name = getClass.getName.dropRight(1)
+    schema.tables(name).asInstanceOf[Table[T]]
   }
 
   case class RichQuery(query: Query[T]) {
@@ -282,11 +281,14 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
 trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
 
-  /** All tables */
-  lazy val all = getClass.getDeclaredFields.collect {
+  lazy val tables = getClass.getDeclaredFields.collect {
     case f if classOf[Table[ActiveRecordBase]].isAssignableFrom(f.getType) => 
-      this.getValue[Table[ActiveRecordBase]](f.getName)
-  }.toList
+      val c = f.getGenericType.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments.head.asInstanceOf[Class[_]]
+      (c.getName, this.getValue[Table[ActiveRecordBase]](f.getName))
+  }.toMap
+
+  /** All tables */
+  lazy val all = tables.values
 
   def isCreated = all.headOption.exists{ t => inTransaction {
     try {
