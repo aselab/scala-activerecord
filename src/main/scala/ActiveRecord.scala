@@ -311,6 +311,8 @@ trait ActiveRecordTables extends Schema {
   /** All tables */
   lazy val all = tables.values
 
+  override def tableNameFromClassName(tableName: String) = tableName.pluralize
+
   def oneToMany[O <: ActiveRecordBase, M <: ActiveRecordBase](ot: Table[O], mt:Table[M]) = {
     oneToManyRelation(ot, mt).via((o, m) => {
       // class name is ClassName$$EnhancerByCGLIB$$...

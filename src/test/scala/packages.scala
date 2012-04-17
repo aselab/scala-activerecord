@@ -10,7 +10,7 @@ object DummyTables extends ActiveRecordTables with VersionTable {
   val dummyModels2 = table[DummyModel2]
 
   val users = table[User]
-  val groups = table[Group]("groups")
+  val groups = table[Group]
 
   val groupToUsers = oneToMany(groups, users)
 
