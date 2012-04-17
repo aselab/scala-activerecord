@@ -64,17 +64,10 @@ object DummyModel extends ActiveRecordCompanion[DummyModel] {
 }
 
 object ActiveRecordSpec extends ActiveRecordSpecification {
-
-  def config = Map(
-    "schema" -> "com.github.aselab.activerecord.DummyTables"
-  )
-
   override def before = {
     super.before
     DummyTables.createTestData
   }
-
-  val schema = DummyTables
 
   "ActiveRecordCompanion" should {
     "table で対応するテーブルを取得できること" >> {

@@ -29,9 +29,11 @@ trait ActiveRecordSpecification extends Specification {
     schema.cleanup
   }
 
-  def config: Map[String, String]
+  def config: Map[String, String] = Map(
+    "schema" -> "com.github.aselab.activerecord.DummyTables"
+  )
 
-  def schema: ActiveRecordTables
+  def schema: ActiveRecordTables = DummyTables
 
   override def map(fs: => Fragments) = {
     Step {

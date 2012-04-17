@@ -13,16 +13,10 @@ case class DummyModel2(
 object DummyModel2 extends ActiveRecordCompanion[DummyModel2]
 
 object VersionsSpec extends ActiveRecordSpecification {
-  val schema = DummyTables
-
-  override def config = Map(
-    "schema" -> "com.github.aselab.activerecord.DummyTables"
-  )
-
   "Versions" should {
     val modelName = "com.github.aselab.activerecord.DummyModel2"
 
-    "doValidateでVersionRecordに保存されること" in {
+    "doUpdateでVersionに保存されること" in {
       val model = DummyModel2("str", true, 10, Some("aaa"))
       model.save
       val m1 = model.map("string" -> "bbb", "boolean" -> true)
