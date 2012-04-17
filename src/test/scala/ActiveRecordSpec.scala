@@ -63,27 +63,18 @@ object DummyModel extends ActiveRecordCompanion[DummyModel] {
   )
 }
 
-object DummyTables extends ActiveRecordTables {
-  val dummyModels = table[DummyModel]
+object ActiveRecordSpec extends ActiveRecordSpecification {
 
-  def createTestData = (1 to 100).foreach { i =>
-    DummyModel.newModel(i, i > 50).save
+  def config = Map(
+    "schema" -> "com.github.aselab.activerecord.DummyTables"
+  )
+
+  override def before = {
+    super.before
+    DummyTables.createTestData
   }
-}
 
-object ActiveRecordSpec extends Specification {
-  sequential
-
-  override def map(fs: => Fragments) = {
-    Step {
-      DummyTables.initialize(Map(
-        "schema" -> "com.github.aselab.activerecord.DummyTables"
-      ))
-      DummyTables.createTestData
-    } ^ fs ^ Step {
-      DummyTables.cleanup
-    }
-  }
+  val schema = DummyTables
 
   "ActiveRecordCompanion" should {
     "table で対応するテーブルを取得できること" >> {

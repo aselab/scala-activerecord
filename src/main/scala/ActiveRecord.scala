@@ -12,6 +12,11 @@ import com.typesafe.config._
 abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUDable {
   /** primary key */
   val id: Long = 0L
+  private[activerecord] def setId(id: Long) = {
+    val f = classOf[ActiveRecordBase].getDeclaredField("id")
+    f.setAccessible(true)
+    f.set(this, id)
+  }
 
   /** corresponding ActiveRecordCompanion object */
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
@@ -36,6 +41,21 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
   }
 
   protected def doDelete = _companion.delete(id)
+
+  def map(newValues: (String, Any)*) = {
+    import ReflectionUtil._
+    val constructor = this.getClass.getConstructors.head
+    val n = constructor.newInstance(productIterator.map(_.asInstanceOf[AnyRef]).toSeq:_*).asInstanceOf[this.type]
+    (_companion.formatFields.map {
+      f => (f.getName, this.getValue[Any](f.getName))
+    }.toMap ++ newValues).foreach {
+      case (k, v) => n.setValue(k, v)
+    }
+    n.setId(id)
+    n
+  }
+
+  def apply(newValues: (String, Any)*) = map(newValues:_*)
 }
 
 /**
@@ -290,14 +310,18 @@ trait ActiveRecordTables extends Schema {
   /** All tables */
   lazy val all = tables.values
 
-  def isCreated = all.headOption.exists{ t => inTransaction {
-    try {
-      t.lookup(1L)
-      true
-    } catch {
-      case e => false
+  private lazy val createTables = transaction {
+    val isCreated = all.headOption.exists{ t =>
+      try {
+        t.lookup(1L)
+        true
+      } catch {
+        case e => false
+      }
     }
-  }}
+
+    if (!isCreated) create
+  }
 
   /** load configuration and then setup database and session */
   def initialize(implicit config: Map[String, Any] = Map()) {
@@ -308,9 +332,9 @@ trait ActiveRecordTables extends Schema {
       t.id is(primaryKey, autoIncremented)
     )))
 
-    SessionFactory.concreteFactory = Some(() => session)
+    val n = SessionFactory.concreteFactory = Some(() => session)
 
-    if (!isCreated) transaction { create }
+    createTables
   }
 
   /** cleanup database resources */
