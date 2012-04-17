@@ -332,7 +332,7 @@ trait ActiveRecordTables extends Schema {
       t.id is(primaryKey, autoIncremented)
     )))
 
-    val n = SessionFactory.concreteFactory = Some(() => session)
+    SessionFactory.concreteFactory = Some(() => session)
 
     createTables
   }
