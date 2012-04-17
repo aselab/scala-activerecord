@@ -2,12 +2,12 @@ package com.github.aselab.activerecord
 
 import annotations._
 
-trait Versions extends ActiveRecordBase {
-  @Ignore private lazy val _className = getClass.getSimpleName
+trait Versionable extends ActiveRecordBase {
+  @Ignore private lazy val _className = getClass.getName
 
   abstract override def doUpdate = dsl.transaction {
     changed.foreach { case (name, value) =>
-      VersionRecord(_className, this.id, name, value._1.toString, value._2.toString).save
+      Version(_className, this.id, name, value._1.toString, value._2.toString).save
     }
     changed.clear
     super.doUpdate
@@ -17,7 +17,7 @@ trait Versions extends ActiveRecordBase {
 
   abstract override def map(newValues: (String, Any)*) = {
     import ReflectionUtil._
-    val n = super.map(newValues:_*).asInstanceOf[Versions]
+    val n = super.map(newValues:_*).asInstanceOf[Versionable]
     newValues.foreach {
       case (name, newValue) =>
         val oldValue = this.getValue[Any](name)
@@ -28,7 +28,7 @@ trait Versions extends ActiveRecordBase {
   }
 }
 
-case class VersionRecord(
+case class Version(
   targetTable: String,
   targetId: Long,
   field: String,
@@ -36,5 +36,8 @@ case class VersionRecord(
   newValue: String
 ) extends ActiveRecord
 
-object VersionRecord extends ActiveRecordCompanion[VersionRecord]
+object Version extends ActiveRecordCompanion[Version]
 
+trait VersionTable extends org.squeryl.Schema {
+  val _versionTable = table[Version]
+}

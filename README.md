@@ -22,7 +22,7 @@ import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 
 object Tables extends ActiveRecordTables {
-  val userTable = table[User]
+  val users = table[User]
 }
 ```
 

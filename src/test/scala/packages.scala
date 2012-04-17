@@ -5,10 +5,9 @@ import org.specs2.specification._
 
 import org.squeryl._
 
-object DummyTables extends ActiveRecordTables {
+object DummyTables extends ActiveRecordTables with VersionTable {
   val dummyModels = table[DummyModel]
   val dummyModels2 = table[DummyModel2]
-  val versions = table[VersionRecord]
 
   def createTestData = (1 to 100).foreach { i =>
     DummyModel.newModel(i, i > 50).save

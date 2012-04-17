@@ -8,7 +8,7 @@ case class DummyModel2(
   var boolean: Boolean,
   var int: Int,
   var optionString: Option[String]
-) extends ActiveRecord with Versions
+) extends ActiveRecord with Versionable
 
 object DummyModel2 extends ActiveRecordCompanion[DummyModel2]
 
@@ -20,6 +20,8 @@ object VersionsSpec extends ActiveRecordSpecification {
   )
 
   "Versions" should {
+    val modelName = "com.github.aselab.activerecord.DummyModel2"
+
     "doValidateでVersionRecordに保存されること" in {
       val model = DummyModel2("str", true, 10, Some("aaa"))
       model.save
@@ -27,9 +29,9 @@ object VersionsSpec extends ActiveRecordSpecification {
       m1.save
       val m2 = m1.map("string" -> "bbb", "boolean" -> false)
       m2.save
-      VersionRecord.all.toList must equalTo(List(
-        VersionRecord("DummyModel2", 1, "string", "str", "bbb"),
-        VersionRecord("DummyModel2", 1, "boolean", "true", "false")
+      Version.all.toList must equalTo(List(
+        Version(modelName, 1, "string", "str", "bbb"),
+        Version(modelName, 1, "boolean", "true", "false")
       ))
     }
   }
