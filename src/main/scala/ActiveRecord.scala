@@ -8,6 +8,7 @@ import java.util.{Date, UUID}
 import java.sql.{Timestamp, DriverManager, Connection}
 import com.jolbox.bonecp._
 import com.typesafe.config._
+import mojolly.inflector.InflectorImports._
 
 abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUDable {
   /** primary key */
@@ -309,6 +310,15 @@ trait ActiveRecordTables extends Schema {
 
   /** All tables */
   lazy val all = tables.values
+
+  def oneToMany[O <: ActiveRecordBase, M <: ActiveRecordBase](ot: Table[O], mt:Table[M]) = {
+    oneToManyRelation(ot, mt).via((o, m) => {
+      // class name is ClassName$$EnhancerByCGLIB$$...
+      val cname = o.getClass.getSimpleName.takeWhile(_ != '$')
+      val foreignKey = cname.underscore.camelize + "Id"
+      o.id === m.getValue[Option[Long]](foreignKey)
+    })
+  }
 
   private lazy val createTables = transaction {
     val isCreated = all.headOption.exists{ t =>

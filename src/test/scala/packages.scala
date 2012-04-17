@@ -9,6 +9,11 @@ object DummyTables extends ActiveRecordTables with VersionTable {
   val dummyModels = table[DummyModel]
   val dummyModels2 = table[DummyModel2]
 
+  val users = table[User]
+  val groups = table[Group]("groups")
+
+  val groupToUsers = oneToMany(groups, users)
+
   def createTestData = (1 to 100).foreach { i =>
     DummyModel.newModel(i, i > 50).save
   }
