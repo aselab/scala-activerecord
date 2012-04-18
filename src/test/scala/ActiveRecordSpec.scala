@@ -7,17 +7,6 @@ import dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-case class User(name: String) extends ActiveRecord {
-  val groupId: Option[Long] = None
-}
-
-object User extends ActiveRecordCompanion[User]
-
-case class Group(name: String) extends ActiveRecord {
-}
-
-object Group extends ActiveRecordCompanion[Group]
-
 case class DummyModel(
   @Unique var string: String,
   @Ignore var boolean: Boolean,
@@ -348,4 +337,5 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       DummyModel.find(m.id) must beNone
     }
   }
+
 }

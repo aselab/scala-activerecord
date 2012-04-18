@@ -1,7 +1,8 @@
 package com.github.aselab.activerecord
 
 import java.lang.annotation.Annotation
-import java.lang.reflect.Field
+import java.lang.reflect.{Field, ParameterizedType}
+import scala.reflect.Manifest
 import annotations._
 
 /**
@@ -97,7 +98,14 @@ trait ReflectionUtil {
       f.setAccessible(true)
       f.set(o, value)
     }
+
+    def getFields[T](implicit m: Manifest[T]) = c.getDeclaredFields.filter {
+      f => m.erasure.isAssignableFrom(f.getType)
+    }
   }
+
+  def getGenericType(field: Field) = getGenericTypes(field).head
+  def getGenericTypes(field: Field) = field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
 }
 
 /** リフレクション用ユーティリティ */

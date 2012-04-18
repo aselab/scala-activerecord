@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord
 
 import org.squeryl._
+import org.squeryl.dsl._
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import org.squeryl.PrimitiveTypeMode._
@@ -57,6 +58,18 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
   }
 
   def apply(newValues: (String, Any)*) = map(newValues:_*)
+
+  private def getRelation(left: Class[_], right: Class[_]) =
+    _companion.schema.relations.getOrElse(
+      left.getName -> right.getName,
+      ActiveRecordException.missingRelation
+    )
+
+  protected def belongsTo[T <: ActiveRecordBase](implicit m: Manifest[T]) =
+    getRelation(m.erasure, getClass).right(this).asInstanceOf[ManyToOne[T]]
+
+  protected def hasMany[T <: ActiveRecordBase](implicit m: Manifest[T]) =
+    getRelation(getClass, m.erasure).left(this).asInstanceOf[OneToMany[T]]
 }
 
 /**
@@ -302,10 +315,18 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
 trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
 
-  lazy val tables = getClass.getDeclaredFields.collect {
-    case f if classOf[Table[ActiveRecordBase]].isAssignableFrom(f.getType) => 
-      val c = f.getGenericType.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments.head.asInstanceOf[Class[_]]
-      (c.getName, this.getValue[Table[ActiveRecordBase]](f.getName))
+  lazy val tables = this.getFields[Table[ActiveRecordBase]].map {f =>
+    val name = getGenericType(f).getName
+    (name, this.getValue[Table[ActiveRecordBase]](f.getName))
+  }.toMap
+
+  lazy val relations = this.getFields[Relation[ActiveRecordBase, ActiveRecordBase]].map {f =>
+    val types = getGenericTypes(f).map(_.getName)
+    val left = types.head
+    val right = types.last
+    val relation = this.getValue[OneToManyRelation[ActiveRecordBase, ActiveRecordBase]](f.getName)
+
+    (left, right) -> relation
   }.toMap
 
   /** All tables */
@@ -462,5 +483,8 @@ object ActiveRecordException {
 
   def missingDriver(driver: String) =
     throw new ActiveRecordException("Cannot load database driver: " + driver)
+
+  def missingRelation =
+    throw new ActiveRecordException("Cannot find definition of relation")
 }
 
