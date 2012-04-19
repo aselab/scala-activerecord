@@ -12,8 +12,11 @@ import com.typesafe.config._
 import mojolly.inflector.InflectorImports._
 
 abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUDable {
+  import ReflectionUtil._
+
   /** primary key */
   val id: Long = 0L
+
   private[activerecord] def setId(id: Long) = {
     val f = classOf[ActiveRecordBase].getDeclaredField("id")
     f.setAccessible(true)
@@ -45,7 +48,6 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
   protected def doDelete = _companion.delete(id)
 
   def map(newValues: (String, Any)*) = {
-    import ReflectionUtil._
     val constructor = this.getClass.getConstructors.head
     val n = constructor.newInstance(productIterator.map(_.asInstanceOf[AnyRef]).toSeq:_*).asInstanceOf[this.type]
     (_companion.formatFields.map {
@@ -70,6 +72,20 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
 
   protected def hasMany[T <: ActiveRecordBase](implicit m: Manifest[T]) =
     getRelation(getClass, m.erasure).left(this).asInstanceOf[OneToMany[T]]
+
+  def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {
+    def relationMap(o: Any) = o.asInstanceOf[ActiveRecordBase].toMap(true)
+    _companion.formatFields.flatMap { f =>
+      val name = f.getName
+      (this.getValue[Any](name) match {
+        case r @ (_: OneToMany[_] | _: ManyToOne[_]) if excludeRelation => None
+        case r: OneToMany[_] => Some(r.toList.map(relationMap))
+        case r: ManyToOne[_] => r.headOption.map(relationMap)
+        case v: Option[_] => v
+        case v => Some(v)
+      }).map(name -> _)
+    }.toMap
+  }
 }
 
 /**
@@ -356,8 +372,12 @@ trait ActiveRecordTables extends Schema {
     if (!isCreated) create
   }
 
+  private var _initialized = false
+
   /** load configuration and then setup database and session */
   def initialize(implicit config: Map[String, Any] = Map()) {
+    if (_initialized)
+      return
     Config.conf = loadConfig(config)
 
     // 全テーブルのidフィールド定義
@@ -368,6 +388,7 @@ trait ActiveRecordTables extends Schema {
     SessionFactory.concreteFactory = Some(() => session)
 
     createTables
+    _initialized = true
   }
 
   /** cleanup database resources */

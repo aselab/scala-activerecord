@@ -6,62 +6,7 @@ import org.specs2.specification._
 import dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
-
-case class DummyModel(
-  @Unique var string: String,
-  @Ignore var boolean: Boolean,
-  @Ignore var int: Int,
-  @Ignore var long: Long,
-  @Ignore var float: Float,
-  @Ignore var double: Double,
-  @Ignore var bigDecimal: BigDecimal,
-  @Ignore var timestamp: Timestamp,
-  @Ignore var date: Date,
-  @Ignore var uuid: UUID,
-
-  var ostring: Option[String],
-
-  @Ignore var oboolean: Option[Boolean],
-  @Ignore var oint: Option[Int],
-  @Ignore var olong: Option[Long],
-  @Ignore var ofloat: Option[Float],
-  @Ignore var odouble: Option[Double],
-  @Ignore var obigDecimal: Option[BigDecimal],
-  @Ignore var otimestamp: Option[Timestamp],
-  @Ignore var odate: Option[Date],
-  @Ignore var ouuid: Option[UUID]
-) extends ActiveRecord {
-  def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
-    new Timestamp(0), new Date(0), new UUID(0, 0),
-    Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
-    Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), None
-  )
-}
-
-object DummyModel extends ActiveRecordCompanion[DummyModel] {
-  def newModel(i: Int, none: Boolean = false) = DummyModel(
-    "string" + i,
-    i % 2 == 1,
-    i,
-    i.toLong,
-    i.toFloat,
-    i.toDouble,
-    BigDecimal(i),
-    new Timestamp(i.toLong),
-    new Date(i.toLong * 1000 * 60 * 60 * 24),
-    new UUID(i.toLong, i.toLong),
-    Some("string" + i).filterNot(_ => none),
-    Some(i % 2 == 1).filterNot(_ => none),
-    Some(i).filterNot(_ => none),
-    Some(i.toLong).filterNot(_ => none),
-    Some(i.toFloat).filterNot(_ => none),
-    Some(i.toDouble).filterNot(_ => none),
-    Some(BigDecimal(i)).filterNot(_ => none),
-    Some(new Timestamp(i.toLong)).filterNot(_ => none),
-    Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none),
-    Some(new UUID(i.toLong, i.toLong)).filterNot(_ => none)
-  )
-}
+import models._
 
 object ActiveRecordSpec extends ActiveRecordSpecification {
   override def before = {
@@ -335,6 +280,51 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
       m.delete
       DummyModel.find(m.id) must beNone
+    }
+
+    "toMap" >> {
+      val m = DummyModel.newModel(5)
+      m.ofloat = None
+      m.otimestamp = None
+      m.odate = None
+      m.ouuid = None
+
+      m.toMap must equalTo(Map(
+        "boolean" -> true,
+        "oboolean" -> true,
+        "timestamp" -> new Timestamp(5L),
+        "float" -> 5.0,
+        "long" -> 5L,
+        "olong" -> 5L,
+        "string" -> "string5",
+        "ostring" -> "string5",
+        "bigDecimal" -> 5,
+        "obigDecimal" -> 5,
+        "double" -> 5.0,
+        "odouble" -> 5.0,
+        "date" -> new Date(5L * 1000 * 60 * 60 * 24),
+        "int" -> 5,
+        "oint" -> 5,
+        "uuid" -> new UUID(5L, 5L)
+      ))
+    }
+
+    "toMap (relation)" >> {
+      val g = Group("group1")
+      g.save
+      g.users.associate(User("user1"))
+      g.users.associate(User("user2"))
+      g.toMap must equalTo(Map(
+        "name" -> "group1",
+        "users" -> List(
+          Map("name" -> "user1", "groupId" -> 1),
+          Map("name" -> "user2", "groupId" -> 1)
+        )
+      ))
+      User.all.map(_.toMap) must equalTo(List(
+        Map("name" -> "user1", "groupId" -> 1, "group" -> Map("name" -> "group1")),
+        Map("name" -> "user2", "groupId" -> 1, "group" -> Map("name" -> "group1"))
+      ))
     }
   }
 
