@@ -23,6 +23,8 @@ scalacOptions ++= Seq("-deprecation", "-unchecked")
 
 crossPaths := false
 
+parallelExecution := false
+
 compileOrder := CompileOrder.JavaThenScala
 
 publishTo := Some(Resolver.file("file", file("target/publish")))

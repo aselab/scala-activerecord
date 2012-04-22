@@ -73,19 +73,19 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
     )
 
   protected def belongsTo[T <: ActiveRecord](implicit m: Manifest[T]) =
-    getRelation(m.erasure, getClass).right(this).asInstanceOf[ManyToOne[T]]
+    getRelation(m.erasure, getClass).belongsTo(this).asInstanceOf[ActiveRecordManyToOne[T]]
 
   protected def hasMany[T <: ActiveRecord](implicit m: Manifest[T]) =
-    getRelation(getClass, m.erasure).left(this).asInstanceOf[OneToMany[T]]
+    getRelation(getClass, m.erasure).hasMany(this).asInstanceOf[ActiveRecordOneToMany[T]]
 
   def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {
     def relationMap(o: Any) = o.asInstanceOf[ActiveRecord].toMap(true)
     _companion.formatFields.flatMap { f =>
       val name = f.getName
       (this.getValue[Any](name) match {
-        case r @ (_: OneToMany[_] | _: ManyToOne[_]) if excludeRelation => None
-        case r: OneToMany[_] => Some(r.toList.map(relationMap))
-        case r: ManyToOne[_] => r.headOption.map(relationMap)
+        case r: RecordRelation if excludeRelation => None
+        case ActiveRecordOneToMany(r) => Some(r.toList.map(relationMap))
+        case ActiveRecordManyToOne(r) => r.headOption.map(relationMap)
         case v: Option[_] => v
         case v => Some(v)
       }).map(name -> _)
@@ -335,14 +335,16 @@ trait ActiveRecordTables extends Schema {
     (name, this.getValue[Table[AR]](f.getName))
   }.toMap
 
-  lazy val relations = this.getFields[Relation[AR, AR]].map {f =>
-    val types = getGenericTypes(f).map(_.getName)
-    val left = types.head
-    val right = types.last
-    val relation = this.getValue[OneToManyRelation[AR, AR]](f.getName)
+  lazy val relations = {
+    this.getFields[Relation[AR, AR]].map {f =>
+      val types = getGenericTypes(f).map(_.getName)
+      val left = types.head
+      val right = types.last
+      val relation = this.getValue[Relation[AR, AR]](f.getName)
 
-    (left, right) -> relation
-  }.toMap
+      (left, right) -> RelationWrapper(relation)
+    }.toMap
+  }
 
   /** All tables */
   lazy val all = tables.values

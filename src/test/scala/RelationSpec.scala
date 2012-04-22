@@ -6,7 +6,7 @@ import models._
 
 object RelationSpec extends ActiveRecordSpecification {
   "ActiveRecord" should {
-    "oneToMany relation" in { dsl.transaction {
+    "oneToMany relation" in {
       val g = Group("group1")
       g.save
 
@@ -17,8 +17,8 @@ object RelationSpec extends ActiveRecordSpecification {
       User("user3").save
 
       g.users must contain(u1, u2).only
-      u1.group.headOption must beSome(g)
-      u2.group.headOption must beSome(g)
-    }}
+      u1.group.one must beSome(g)
+      u2.group.one must beSome(g)
+    }
   }
 }
