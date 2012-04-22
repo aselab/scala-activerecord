@@ -2,7 +2,7 @@ package com.github.aselab.activerecord
 
 import annotations._
 
-trait Versionable extends ActiveRecordBase {
+trait Versionable extends ActiveRecord {
   @Ignore private lazy val _className = getClass.getName
 
   abstract override def doUpdate = dsl.transaction {

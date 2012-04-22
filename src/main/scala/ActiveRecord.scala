@@ -11,14 +11,19 @@ import com.jolbox.bonecp._
 import com.typesafe.config._
 import mojolly.inflector.InflectorImports._
 
-abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUDable {
+/**
+ * Base class of ActiveRecord objects.
+ *
+ * This class provides object-relational mapping and CRUD logic and callback hooks.
+ */
+abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable {
   import ReflectionUtil._
 
   /** primary key */
   val id: Long = 0L
 
   private[activerecord] def setId(id: Long) = {
-    val f = classOf[ActiveRecordBase].getDeclaredField("id")
+    val f = classOf[ActiveRecord].getDeclaredField("id")
     f.setAccessible(true)
     f.set(this, id)
   }
@@ -67,14 +72,14 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
       ActiveRecordException.missingRelation
     )
 
-  protected def belongsTo[T <: ActiveRecordBase](implicit m: Manifest[T]) =
+  protected def belongsTo[T <: ActiveRecord](implicit m: Manifest[T]) =
     getRelation(m.erasure, getClass).right(this).asInstanceOf[ManyToOne[T]]
 
-  protected def hasMany[T <: ActiveRecordBase](implicit m: Manifest[T]) =
+  protected def hasMany[T <: ActiveRecord](implicit m: Manifest[T]) =
     getRelation(getClass, m.erasure).left(this).asInstanceOf[OneToMany[T]]
 
   def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {
-    def relationMap(o: Any) = o.asInstanceOf[ActiveRecordBase].toMap(true)
+    def relationMap(o: Any) = o.asInstanceOf[ActiveRecord].toMap(true)
     _companion.formatFields.flatMap { f =>
       val name = f.getName
       (this.getValue[Any](name) match {
@@ -89,18 +94,11 @@ abstract class ActiveRecordBase extends KeyedEntity[Long] with Product with CRUD
 }
 
 /**
- * Base class of ActiveRecord objects.
- *
- * This class provides object-relational mapping and CRUD logic and callback hooks.
- */
-abstract class ActiveRecord extends ActiveRecordBase
-
-/**
  * Base class of ActiveRecord companion objects.
  *
  * This class provides database table mapping and query logic.
  */
-trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
+trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   /** self reference */
   protected def self: this.type = this
 
@@ -330,17 +328,18 @@ trait ActiveRecordCompanion[T <: ActiveRecordBase] extends ReflectionUtil {
  */
 trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
+  import com.github.aselab.activerecord.{ActiveRecord => AR}
 
-  lazy val tables = this.getFields[Table[ActiveRecordBase]].map {f =>
+  lazy val tables = this.getFields[Table[AR]].map {f =>
     val name = getGenericType(f).getName
-    (name, this.getValue[Table[ActiveRecordBase]](f.getName))
+    (name, this.getValue[Table[AR]](f.getName))
   }.toMap
 
-  lazy val relations = this.getFields[Relation[ActiveRecordBase, ActiveRecordBase]].map {f =>
+  lazy val relations = this.getFields[Relation[AR, AR]].map {f =>
     val types = getGenericTypes(f).map(_.getName)
     val left = types.head
     val right = types.last
-    val relation = this.getValue[OneToManyRelation[ActiveRecordBase, ActiveRecordBase]](f.getName)
+    val relation = this.getValue[OneToManyRelation[AR, AR]](f.getName)
 
     (left, right) -> relation
   }.toMap
@@ -350,7 +349,7 @@ trait ActiveRecordTables extends Schema {
 
   override def tableNameFromClassName(tableName: String) = tableName.pluralize
 
-  def oneToMany[O <: ActiveRecordBase, M <: ActiveRecordBase](ot: Table[O], mt:Table[M]) = {
+  def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M]) = {
     oneToManyRelation(ot, mt).via((o, m) => {
       // class name is ClassName$$EnhancerByCGLIB$$...
       val cname = o.getClass.getSimpleName.takeWhile(_ != '$')
