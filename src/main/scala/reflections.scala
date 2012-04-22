@@ -5,14 +5,6 @@ import java.lang.reflect.{Field, ParameterizedType}
 import scala.reflect.Manifest
 import annotations._
 
-/**
- * フィールド情報モデル
- * @param name フィールド名
- * @param fieldType フィールドタイプ
- * @param isOption Option型かどうか
- * @param isSeq シーケンスかどうか
- * @param annotations アノテーションリスト
- */
 case class FieldInfo(
   name: String, fieldType: Class[_],
   isOption: Boolean, isSeq: Boolean,
@@ -22,13 +14,10 @@ case class FieldInfo(
     a => (a.annotationType.getSimpleName, a)
   }.toMap
 
-  /** Ignoreフィールドかどうか */
   lazy val ignored = annotationMap.isDefinedAt("Ignore")
-  /** Uniqueフィールドかどうか */
   lazy val unique = annotationMap.isDefinedAt("Unique")
 }
 
-/** フィールド情報オブジェクト */
 object FieldInfo {
   def apply(name: String, value: Any, field: Option[Field]): FieldInfo = value match {
     case Some(v) => apply(name, v, None).copy(isOption = true)
@@ -52,11 +41,10 @@ object FieldInfo {
     apply(field.getName, value, Some(field)).copy(annotations = field.getAnnotations.toSeq)
 }
 
-/** リフレクション用ユーティリティ */
 trait ReflectionUtil {
   /**
-   * クラスからコンパニオンオブジェクトを返す.
-   * @param className クラス名
+   * returns companion object from class name
+   * @param className class name
    */
   def classToCompanion(className: String): Any = {
     val cc = Class.forName(className + "$")
@@ -64,35 +52,22 @@ trait ReflectionUtil {
   }
 
   /**
-   * クラスからコンパニオンオブジェクトを返す.
-   * @param c クラス
+   * returns companion object from class
+   * @param c class
    */
   def classToCompanion(c: Class[_]): Any = classToCompanion(c.getName)
 
   /**
-   * クラスからコンパニオンオブジェクトを返す.
-   * @param c 任意のオブジェクト
+   * returns corresponding class from companion object
+   * @param c companion object
    */
   def companionToClass(c: Any) = Class.forName(c.getClass.getName.dropRight(1))
 
-  /**
-   * 任意のオブジェクトのフィールド値をリフレクションで取得/変更できるようにする
-   * 暗黙変換メソッド.
-   */
   implicit def toReflectable(o: Any) = new {
     val c = o.getClass
 
-    /**
-     * 値を取得する.
-     * @param name フィールド名
-     */
     def getValue[T](name: String) = c.getMethod(name).invoke(o).asInstanceOf[T]
 
-    /**
-     * 値を設定する.
-     * @param name フィールド名
-     * @param value 設定する値
-     */
     def setValue(name: String, value: Any) = {
       val f = c.getDeclaredField(name)
       f.setAccessible(true)
@@ -108,5 +83,4 @@ trait ReflectionUtil {
   def getGenericTypes(field: Field) = field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
 }
 
-/** リフレクション用ユーティリティ */
 object ReflectionUtil extends ReflectionUtil

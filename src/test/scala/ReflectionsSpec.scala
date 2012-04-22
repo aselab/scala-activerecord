@@ -10,7 +10,7 @@ object ReflectionSpec extends Specification {
   }
 
   "FieldInfo#apply" should {
-    "Option値のタイプを検出できること" in {
+    "detect type of Option value" in {
       "Int" in {
         FieldInfo.apply("int", Some(3)) mustEqual
           FieldInfo("int", classOf[Integer], true, false)
@@ -27,7 +27,7 @@ object ReflectionSpec extends Specification {
       }
     }
 
-    "List値のタイプを検出できること" in {
+    "detect type of List value" in {
       "Int" in {
         FieldInfo.apply("int", Seq(3)) mustEqual
           FieldInfo("int", classOf[Integer], false, true)
@@ -44,7 +44,7 @@ object ReflectionSpec extends Specification {
       }
     }
 
-    "Option[List]のタイプを検出できること" in {
+    "Option[List]" in {
        FieldInfo.apply("listint", Some(Seq(3, 4))) mustEqual
          FieldInfo("listint", classOf[Integer], true, true)
 

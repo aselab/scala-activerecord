@@ -380,7 +380,7 @@ trait ActiveRecordTables extends Schema {
       return
     Config.conf = loadConfig(config)
 
-    // 全テーブルのidフィールド定義
+    // declare id field on all tables
     all.foreach(on(_)(t => declare(
       t.id is(primaryKey, autoIncremented)
     )))
