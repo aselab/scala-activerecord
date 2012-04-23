@@ -113,55 +113,17 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
     schema.tables(name).asInstanceOf[Table[T]]
   }
 
-  case class RichQuery(query: Query[T]) {
-    def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
-      self.where(condition)(query)
-    }
-
-    def findBy(condition: (String, Any), conditions: (String, Any)*): Query[T] = {
-      self.findBy(condition, conditions:_*)(query)
-    }
-
-    def findBy(name: String, value: Any): Query[T] = {
-      self.findBy(name, value)(query)
-    }
-
-    /**
-     * sort.
-     *
-     * {{{
-     * Person.findBy("country", "Japan").orderBy(p => p.age asc)
-     * Person.all.orderBy(p => p.age asc, p => p.name asc)
-     * }}}
-     * @param condition sort condition
-     * @param conditions multiple sort conditions(optional)
-     */
-    def orderBy(condition: (T) => org.squeryl.dsl.ast.OrderByArg, conditions: (T => org.squeryl.dsl.ast.OrderByArg)*) = {
-      conditions.toList match {
-        case Nil => from(query)(m => select(m).orderBy(condition(m)))
-        case List(f1) => from(query)(m => select(m).orderBy(condition(m), f1(m)))
-        case List(f1, f2) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m)))
-        case List(f1, f2, f3) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m)))
-        case List(f1, f2, f3, f4) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m)))
-        case List(f1, f2, f3, f4, f5) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m)))
-        case List(f1, f2, f3, f4, f5, f6) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m), f6(m)))
-      }
-    }
-
-    /**
-     * limit query.
-     * {{{
-     * Post.all.orderBy(p => p.updatedAt desc).limit(10)
-     * }}}
-     * @param count max count
-     */
-    def limit(count: Int) = query.page(0, count)
-  }
-
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRichQuery(query: Query[T]) = RichQuery(query)
+  implicit def toRichQuery(query: Query[T])(implicit m: Manifest[T]) =
+    RichQuery(query)
+
+  implicit def toRichQuery(r: ActiveRecordOneToMany[T])
+    (implicit m: Manifest[T]) = RichQuery(r.relation)
+
+  implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
+  implicit def toModel(r: ActiveRecordManyToOne[T]) = r.one
 
   /**
    * all search.
@@ -321,6 +283,54 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
       f.getName.contains("$")
     }.toList
 
+}
+
+case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]) {
+  val companion = ReflectionUtil.classToCompanion(m.erasure)
+    .asInstanceOf[ActiveRecordCompanion[T]]
+
+  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
+    companion.where(condition)(query)
+  }
+
+  def findBy(condition: (String, Any), conditions: (String, Any)*): Query[T] = {
+    companion.findBy(condition, conditions:_*)(query)
+  }
+
+  def findBy(name: String, value: Any): Query[T] = {
+    companion.findBy(name, value)(query)
+  }
+
+  /**
+   * sort.
+   *
+   * {{{
+   * Person.findBy("country", "Japan").orderBy(p => p.age asc)
+   * Person.all.orderBy(p => p.age asc, p => p.name asc)
+   * }}}
+   * @param condition sort condition
+   * @param conditions multiple sort conditions(optional)
+   */
+  def orderBy(condition: (T) => org.squeryl.dsl.ast.OrderByArg, conditions: (T => org.squeryl.dsl.ast.OrderByArg)*) = {
+    conditions.toList match {
+      case Nil => from(query)(m => select(m).orderBy(condition(m)))
+      case List(f1) => from(query)(m => select(m).orderBy(condition(m), f1(m)))
+      case List(f1, f2) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m)))
+      case List(f1, f2, f3) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m)))
+      case List(f1, f2, f3, f4) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m)))
+      case List(f1, f2, f3, f4, f5) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m)))
+      case List(f1, f2, f3, f4, f5, f6) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m), f6(m)))
+    }
+  }
+
+  /**
+   * limit query.
+   * {{{
+   * Post.all.orderBy(p => p.updatedAt desc).limit(10)
+   * }}}
+   * @param count max count
+   */
+  def limit(count: Int) = query.page(0, count)
 }
 
 /**

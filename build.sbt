@@ -23,7 +23,7 @@ scalacOptions ++= Seq("-deprecation", "-unchecked")
 
 crossPaths := false
 
-parallelExecution := false
+parallelExecution in Test := false
 
 compileOrder := CompileOrder.JavaThenScala
 
