@@ -406,7 +406,7 @@ trait ActiveRecordTables extends Schema {
   def cleanup = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    DefaultConfig(config)
+    DefaultConfig(ConfigFactory.load("activerecord"), config)
 
   def session = Session.create(Config.connection, Config.adapter)
 
@@ -426,8 +426,7 @@ trait ActiveRecordConfig {
   }
 }
 
-case class DefaultConfig(map: Map[String, Any]) extends ActiveRecordConfig {
-  val conf = ConfigFactory.load("activerecord")
+case class DefaultConfig(conf: Config, map: Map[String, Any]) extends ActiveRecordConfig {
   val env = System.getProperty("run.mode", "dev")
 
   def get[T](key: String): Option[T] = map.get(key).map(_.asInstanceOf[T])
