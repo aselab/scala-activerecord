@@ -359,7 +359,7 @@ trait ActiveRecordTables extends Schema {
   /** All tables */
   lazy val all = tables.values
 
-  override def tableNameFromClassName(tableName: String) = tableName.pluralize
+  override def tableNameFromClass(c: Class[_]) = super.tableNameFromClass(c).pluralize
 
   def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M]) = {
     oneToManyRelation(ot, mt).via((o, m) => {
@@ -406,7 +406,7 @@ trait ActiveRecordTables extends Schema {
   def cleanup = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    DefaultConfig(ConfigFactory.load("activerecord"), config)
+    DefaultConfig(ConfigFactory.load(), config)
 
   def session = Session.create(Config.connection, Config.adapter)
 
