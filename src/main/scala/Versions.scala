@@ -5,7 +5,7 @@ import annotations._
 trait Versionable extends ActiveRecord {
   @Ignore private lazy val _className = getClass.getName
 
-  abstract override def doUpdate = dsl.transaction {
+  abstract override def doUpdate = dsl.inTransaction {
     changed.foreach { case (name, value) =>
       Version(_className, this.id, name, value._1.toString, value._2.toString).save
     }
