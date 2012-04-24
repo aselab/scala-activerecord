@@ -6,7 +6,7 @@ organization := "com.github.aselab"
 
 libraryDependencies ++= Seq(
   "com.github.aselab" %% "squeryl" % "0.9.5-SNAPSHOT",
-  "com.typesafe.config" % "config" % "0.3.0",
+  "com.typesafe" % "config" % "0.4.0",
   "org.specs2" %% "specs2" % "1.9" % "test",
   "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
   "org.slf4j" % "slf4j-nop" % "1.6.4" % "test",
