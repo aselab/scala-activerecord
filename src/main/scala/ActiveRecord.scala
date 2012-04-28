@@ -361,13 +361,25 @@ trait ActiveRecordTables extends Schema {
 
   override def tableNameFromClass(c: Class[_]) = super.tableNameFromClass(c).pluralize
 
-  def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M]) = {
-    oneToManyRelation(ot, mt).via((o, m) => {
-      // class name is ClassName$$EnhancerByCGLIB$$...
-      val cname = o.getClass.getSimpleName.takeWhile(_ != '$')
-      val foreignKey = cname.underscore.camelize + "Id"
-      o.id === m.getValue[Option[Long]](foreignKey)
-    })
+  def foreignKeyName(c: Class[_]) = c.getSimpleName.underscore.camelize + "Id"
+
+  def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]) = {
+    val foreignKey = foreignKeyName(om.erasure)
+    val foreignKeyIsOption= try {
+      val f = mm.erasure.getDeclaredField(foreignKey)
+      f.getType.getName == "scala.Option"
+    } catch {
+      case e: java.lang.NoSuchFieldException =>
+        ActiveRecordException.missingForeignKey(foreignKey)
+    }
+
+    oneToManyRelation(ot, mt).via {(o, m) => 
+      if (foreignKeyIsOption) {
+        o.id === m.getValue[Option[Long]](foreignKey)
+      } else {
+        o.id === m.getValue[Long](foreignKey)
+      }
+    }
   }
 
   private lazy val createTables = transaction {
@@ -517,5 +529,8 @@ object ActiveRecordException {
 
   def missingRelation =
     throw new ActiveRecordException("Cannot find definition of relation")
+
+  def missingForeignKey(name: String) =
+    throw new ActiveRecordException("Cannot find declaration of foreign key: " + name)
 }
 
