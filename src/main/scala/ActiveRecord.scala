@@ -160,7 +160,7 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
    * query search.
    *
    * {{{
-   * findBy {m: T => m.name === "abc" and m.age > 20}
+   * where {m: T => m.name === "abc" and m.age.~ > 20}
    * }}}
    *
    * @param condition search condition
@@ -171,31 +171,55 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   }
 
   /**
-   * Search by multiple fieldnames and values.
+   * Search by multiple fieldnames and values and return first record.
    *
    * {{{
-   * 例: findBy("name" -> "abc", "email" -> "abc@foo.bar")
+   * findBy("name" -> "abc", "email" -> "abc@foo.bar")
    * }}}
    * @param condition fieldname-value tuple
    * @param conditions multiple fieldname-value tuples(optional)
    * @param query table or subquery in from clause. default is table
    */
-  def findBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Query[T] = {
-    conditions.foldLeft(findBy(condition._1, condition._2)(query)) {
-      case (subquery, cond) => findBy(cond._1, cond._2)(subquery)
+  def findBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Option[T] = findAllBy(condition, conditions:_*).headOption
+
+  /**
+   * Search by multiple fieldnames and values.
+   *
+   * {{{
+   * findAllBy("name" -> "abc", "email" -> "abc@foo.bar")
+   * }}}
+   * @param condition fieldname-value tuple
+   * @param conditions multiple fieldname-value tuples(optional)
+   * @param query table or subquery in from clause. default is table
+   */
+  def findAllBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Query[T] = {
+    conditions.foldLeft(findAllBy(condition._1, condition._2)(query)) {
+      case (subquery, cond) => findAllBy(cond._1, cond._2)(subquery)
     }
   }
 
   /**
-   * Search by fieldname and value.
+   * Search by fieldname and value and return first record.
    * {{{
-   * 例: findBy("name", "abc")
+   * findBy("name", "abc")
    * }}}
    * @param name field name
    * @param value field value
    * @param query table or subquery in from clause. default is table
    */
-  def findBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
+  def findBy(name: String, value: Any)(implicit query: Queryable[T]):Option[T] =
+    findAllBy(name, value).headOption
+
+  /**
+   * Search by fieldname and value.
+   * {{{
+   * findAllBy("name", "abc")
+   * }}}
+   * @param name field name
+   * @param value field value
+   * @param query table or subquery in from clause. default is table
+   */
+  def findAllBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
     where(value match {
       case v: String => {m: T => m.getValue[String](name) === v}
       case Some(v: String) => {m: T => m.getValue[Option[String]](name) === Some(v)}
@@ -305,23 +329,26 @@ case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]
   val companion = ReflectionUtil.classToCompanion(m.erasure)
     .asInstanceOf[ActiveRecordCompanion[T]]
 
-  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] = {
+  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] =
     companion.where(condition)(query)
-  }
 
-  def findBy(condition: (String, Any), conditions: (String, Any)*): Query[T] = {
-    companion.findBy(condition, conditions:_*)(query)
-  }
+  def findBy(condition: (String, Any), conditions: (String, Any)*): Option[T] =
+    findAllBy(condition, conditions:_*).headOption
 
-  def findBy(name: String, value: Any): Query[T] = {
-    companion.findBy(name, value)(query)
-  }
+  def findAllBy(condition: (String, Any), conditions: (String, Any)*):Query[T] =
+    companion.findAllBy(condition, conditions:_*)(query)
+
+  def findBy(name: String, value: Any): Option[T] =
+    findAllBy(name, value).headOption
+
+  def findAllBy(name: String, value: Any): Query[T] =
+    companion.findAllBy(name, value)(query)
 
   /**
    * sort.
    *
    * {{{
-   * Person.findBy("country", "Japan").orderBy(p => p.age asc)
+   * Person.findAllBy("country", "Japan").orderBy(p => p.age asc)
    * Person.all.orderBy(p => p.age asc, p => p.name asc)
    * }}}
    * @param condition sort condition

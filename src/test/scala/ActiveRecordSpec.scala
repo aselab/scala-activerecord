@@ -31,7 +31,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       DummyModel.find(13) must beSome.which {_.id == 13}
     }
 
-    "#findBy" >> {
+    "#where" >> {
       "complex query" >> {
         DummyModel.where {m: DummyModel =>
           (m.int lte 30) and (m.string like "string%0")
@@ -43,142 +43,148 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
           m.oint isNull
         } must have size 50
       }
+    }
 
+    "#findBy" >> {
+      DummyModel.findBy("string", "string33").map(_.string) must beSome("string33")
+    }
+
+    "#findAllBy" >> {
       "String" >> {
-        val result = DummyModel.findBy("string", "string33")
+        val result = DummyModel.findAllBy("string", "string33")
         result must have size 1
         result.head.string mustEqual "string33"
       }
 
       "Option[String]" >> {
-        val result = DummyModel.findBy("ostring", Some("string33"))
+        val result = DummyModel.findAllBy("ostring", Some("string33"))
         result must have size 1
         result.head.ostring must beSome("string33")
       }
 
       "Boolean" >> {
-        val result = DummyModel.findBy("boolean", true)
+        val result = DummyModel.findAllBy("boolean", true)
         result must have size 50
       }
 
       "Option[Boolean]" >> {
-        val result = DummyModel.findBy("oboolean", Some(true))
+        val result = DummyModel.findAllBy("oboolean", Some(true))
         result must have size 25
       }
 
       "Int" >> {
-        val result = DummyModel.findBy("int", 55)
+        val result = DummyModel.findAllBy("int", 55)
         result must have size 1
         result.head.int mustEqual 55
       }
 
       "Option[Int]" >> {
-        val result = DummyModel.findBy("oint", Some(35))
+        val result = DummyModel.findAllBy("oint", Some(35))
         result must have size 1
         result.head.oint must beSome(35)
       }
 
       "Long" >> {
-        val result = DummyModel.findBy("long", 55L)
+        val result = DummyModel.findAllBy("long", 55L)
         result must have size 1
         result.head.long mustEqual 55L
       }
 
       "Option[Long]" >> {
-        val result = DummyModel.findBy("olong", Some(35L))
+        val result = DummyModel.findAllBy("olong", Some(35L))
         result must have size 1
         result.head.olong must beSome(35L)
       }
 
       "Float" >> {
-        val result = DummyModel.findBy("float", 23.toFloat)
+        val result = DummyModel.findAllBy("float", 23.toFloat)
         result must have size 1
         result.head.float mustEqual 23.toFloat
       }
 
       "Option[Float]" >> {
-        val result = DummyModel.findBy("ofloat", Some(23.toFloat))
+        val result = DummyModel.findAllBy("ofloat", Some(23.toFloat))
         result must have size 1
         result.head.ofloat must beSome(23.toFloat)
       }
 
       "Double" >> {
-        val result = DummyModel.findBy("double", 45.0)
+        val result = DummyModel.findAllBy("double", 45.0)
         result must have size 1
         result.head.double mustEqual 45.0
       }
 
       "Option[Double]" >> {
-        val result = DummyModel.findBy("odouble", Some(45.0))
+        val result = DummyModel.findAllBy("odouble", Some(45.0))
         result must have size 1
         result.head.odouble must beSome(45.0)
       }
 
       "BigDecimal" >> {
-        val result = DummyModel.findBy("bigDecimal", BigDecimal(55))
+        val result = DummyModel.findAllBy("bigDecimal", BigDecimal(55))
         result must have size 1
         result.head.bigDecimal mustEqual BigDecimal(55)
       }
 
       "Option[BigDecimal]" >> {
-        val result = DummyModel.findBy("obigDecimal", Some(BigDecimal(45)))
+        val result = DummyModel.findAllBy("obigDecimal", Some(BigDecimal(45)))
         result must have size 1
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
 
       "Timestamp" >> {
         val t = new Timestamp(44L)
-        val result = DummyModel.findBy("timestamp", t)
+        val result = DummyModel.findAllBy("timestamp", t)
         result must have size 1
         result.head.timestamp mustEqual t
       }
 
       "Option[Timestamp]" >> {
         val t = Some(new Timestamp(44L))
-        val result = DummyModel.findBy("otimestamp", t)
+        val result = DummyModel.findAllBy("otimestamp", t)
         result must have size 1
         result.head.otimestamp mustEqual t
       }
 
       "Date" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
-        val result = DummyModel.findBy("date", t)
+        val result = DummyModel.findAllBy("date", t)
         result must have size 1
         result.head.date.toString mustEqual "1970-01-23"
       }
 
       "Option[Date]" >> {
         val t = Some(new Date(22L * 1000 * 60 * 60 * 24))
-        val result = DummyModel.findBy("odate", t)
+        val result = DummyModel.findAllBy("odate", t)
         result must have size 1
         result.head.odate must beSome.which {_.toString == "1970-01-23"}
       }
 
       "UUID" >> {
         val u = new UUID(11L, 11L)
-        val result = DummyModel.findBy("uuid", u)
+        val result = DummyModel.findAllBy("uuid", u)
         result must have size 1
         result.head.uuid mustEqual u
       }
 
       "Option[UUID]" >> {
         val u = Some(new UUID(11L, 11L))
-        val result = DummyModel.findBy("ouuid", u)
+        val result = DummyModel.findAllBy("ouuid", u)
         result must have size 1
         result.head.ouuid mustEqual u
       }
 
       "multiple values" >> {
-        val result = DummyModel.findBy("string" -> "string22", "int" -> 22)
+        val result = DummyModel.findAllBy("string" -> "string22", "int" -> 22)
         result must have size 1
         result.head.int mustEqual 22
-        DummyModel.findBy("string" -> "string22", "int" -> 23) must beEmpty
+        DummyModel.findAllBy("string" -> "string22", "int" -> 23) must beEmpty
       }
     }
 
     "toRichQuery" >> {
-      "#findBy should be able to chain" >> {
-        DummyModel.all.where(m => m.int lt 50).findBy("string", "string22") must have size 1
+      "it should be able to chain" >> {
+        DummyModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
       }
 
       "#orderBy" >> {

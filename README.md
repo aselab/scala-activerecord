@@ -3,7 +3,7 @@
 scala-activerecord is an ORM library for Scala.
 This library is inspired by ActiveRecord of Ruby on Rails and helps to reduce your code.
 
-## Example
+## Minimal example
 
 Model implementation:
 
@@ -19,7 +19,6 @@ Schema definition:
 
 ```scala
 import com.github.aselab.activerecord._
-import com.github.aselab.activerecord.dsl._
 
 object Tables extends ActiveRecordTables {
   val users = table[User]
@@ -34,10 +33,12 @@ import com.github.aselab.activerecord.dsl._
 User("user1", 25).save
 User("user2", 18).save
 User("user3", 40).save
+User("user4", 18).save
 
-User.findBy("name", "user1").head //=> User("user1", 25)
-User.where(_.age gte 20).toList //=> List(User("user1", 25), User("user3", 40))
-User.all.orderBy(_.age desc).toList //=> List(User("user3", 40), User("user1", 25), User("user2", 18))
+User.findBy("name", "user1") //=> Some(User("user1", 25))
+User.findBy("age", 55) //=> None
+User.findAllBy("age", 18).toList //=> List(User("user2", 18), User("user4", 18))
+User.where(_.age.~ >= 20).orderBy(_.age desc).toList //=> List(User("user3", 40), User("user1", 25))
 ```
 
 Schema and query DSL is based on [Squeryl](http://squeryl.org/).

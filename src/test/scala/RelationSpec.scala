@@ -44,35 +44,35 @@ object RelationSpec extends ActiveRecordSpecification {
 
   "implicit conversions" should {
     "OneToMany relation to rich query" in {
-      val g = Group.findBy("name", "group1").head
-      g.users.findBy("name", "user2").toList mustEqual List(User("user2"))
+      val g = Group.findBy("name", "group1").get
+      g.users.findBy("name", "user2") must beSome(User("user2"))
 
       g.users.where(_.name like "user%").orderBy(_.name desc).toList mustEqual
         List(User("user2"), User("user1"))
     }
 
     "ManyToMany relation to rich query" in {
-      val p = Project.findBy("name", "project1").head
-      p.users.findBy("name", "user2").toList mustEqual List(User("user2"))
+      val p = Project.findBy("name", "project1").get
+      p.users.findBy("name", "user2") must beSome(User("user2"))
 
       p.users.where(_.name like "user%").orderBy(_.name desc).toList mustEqual
         List(User("user3"), User("user2"), User("user1"))
     }
 
     "OneToMany relation to List(model)" in {
-      val group = Group.findBy("name", "group1").head
+      val group = Group.findBy("name", "group1").get
       val users: List[User] = group.users
       users mustEqual List(User("user1"), User("user2"))
     }
 
     "ManyToMany relation to List(model)" in {
-      val project = Project.findBy("name", "project1").head
+      val project = Project.findBy("name", "project1").get
       val users: List[User] = project.users
       users must containAllOf(List(User("user1"), User("user2"), User("user3")))
     }
 
     "ManyToOne relation to Option(model)" in {
-      val user = User.findBy("name", "user1").head
+      val user = User.findBy("name", "user1").get
       val g: Option[Group] = user.group
       g must beSome(Group("group1"))
     }
