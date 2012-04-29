@@ -16,8 +16,10 @@ package models {
 
     val users = table[User]
     val groups = table[Group]
+    val projects = table[Project]
 
     val groupToUsers = oneToMany(groups, users)
+    val projectsToUsers = manyToMany(projects, users)
 
     def createTestData = (1 to 100).foreach { i =>
       DummyModel.newModel(i, i > 50).save
@@ -31,14 +33,20 @@ package models {
   case class User(name: String) extends ActiveRecord {
     val groupId: Option[Long] = None
     lazy val group = belongsTo[Group]
+    lazy val projects = hasAndBelongsToMany[Project]
   }
 
   case class Group(name: String) extends ActiveRecord {
     lazy val users = hasMany[User]
   }
 
+  case class Project(name: String) extends ActiveRecord {
+    lazy val users = hasAndBelongsToMany[User]
+  }
+
   object User extends ActiveRecordCompanion[User]
   object Group extends ActiveRecordCompanion[Group]
+  object Project extends ActiveRecordCompanion[Project]
 
   case class DummyModel(
     @Unique var string: String,

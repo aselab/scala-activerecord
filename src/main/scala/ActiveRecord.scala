@@ -66,11 +66,10 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
 
   def apply(newValues: (String, Any)*) = map(newValues:_*)
 
+  private lazy val relations = _companion.schema.relations
   private def getRelation(left: Class[_], right: Class[_]) =
-    _companion.schema.relations.getOrElse(
-      left.getName -> right.getName,
-      ActiveRecordException.missingRelation
-    )
+    relations.get(left.getName -> right.getName)
+     .getOrElse(ActiveRecordException.missingRelation)
 
   protected def belongsTo[T <: ActiveRecord](implicit m: Manifest[T]) =
     getRelation(m.erasure, getClass).belongsTo(this).asInstanceOf[ActiveRecordManyToOne[T]]
@@ -78,19 +77,31 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
   protected def hasMany[T <: ActiveRecord](implicit m: Manifest[T]) =
     getRelation(getClass, m.erasure).hasMany(this).asInstanceOf[ActiveRecordOneToMany[T]]
 
+  protected def hasAndBelongsToMany[T <: ActiveRecord](implicit m: Manifest[T])=
+    relations.get(getClass.getName -> m.erasure.getName)
+      .map(_.hasAndBelongsToManyL(this))
+      .getOrElse(getRelation(m.erasure, getClass).hasAndBelongsToManyR(this))
+      .asInstanceOf[ActiveRecordManyToMany[T, IntermediateRecord]]
+
   def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {
     def relationMap(o: Any) = o.asInstanceOf[ActiveRecord].toMap(true)
     _companion.formatFields.flatMap { f =>
       val name = f.getName
       (this.getValue[Any](name) match {
         case r: RecordRelation if excludeRelation => None
-        case ActiveRecordOneToMany(r) => Some(r.toList.map(relationMap))
-        case ActiveRecordManyToOne(r) => r.headOption.map(relationMap)
+        case r: ActiveRecordOneToMany[_] => Some(r.toList.map(relationMap))
+        case r: ActiveRecordManyToOne[_] => r.one.map(relationMap)
         case v: Option[_] => v
         case v => Some(v)
       }).map(name -> _)
     }.toMap
   }
+}
+
+case class IntermediateRecord(leftId: Long, rightId: Long)
+  extends KeyedEntity[CompositeKey2[Long, Long]]
+{
+    def id = compositeKey(leftId, rightId)
 }
 
 /**
@@ -122,7 +133,11 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   implicit def toRichQuery(r: ActiveRecordOneToMany[T])
     (implicit m: Manifest[T]) = RichQuery(r.relation)
 
+  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])
+    (implicit m: Manifest[T]) = RichQuery(r.relation)
+
   implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
+  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]) = r.toList
   implicit def toModel(r: ActiveRecordManyToOne[T]) = r.one
 
   /**
@@ -340,16 +355,18 @@ trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
   import com.github.aselab.activerecord.{ActiveRecord => AR}
 
-  lazy val tables = this.getFields[Table[AR]].map {f =>
-    val name = getGenericType(f).getName
-    (name, this.getValue[Table[AR]](f.getName))
-  }.toMap
+  lazy val tables = {
+    val exceptType = classOf[ManyToManyRelationImpl[_, _, _]]
+    this.getFields[Table[AR]].collect {
+      case f if !exceptType.isAssignableFrom(f.getType) =>
+        val name = getGenericType(f).getName
+        (name, this.getValue[Table[AR]](f.getName))
+    }.toMap
+  }
 
   lazy val relations = {
     this.getFields[Relation[AR, AR]].map {f =>
-      val types = getGenericTypes(f).map(_.getName)
-      val left = types.head
-      val right = types.last
+      val List(left, right, _*) = getGenericTypes(f).map(_.getName)
       val relation = this.getValue[Relation[AR, AR]](f.getName)
 
       (left, right) -> RelationWrapper(relation)
@@ -363,23 +380,35 @@ trait ActiveRecordTables extends Schema {
 
   def foreignKeyName(c: Class[_]) = c.getSimpleName.underscore.camelize + "Id"
 
+  def foreignKeyIsOption(c: Class[_], name: String) = try {
+    c.getDeclaredField(name).getType.getName == "scala.Option"
+  } catch {
+    case e: java.lang.NoSuchFieldException =>
+      ActiveRecordException.missingForeignKey(name)
+  }
+
   def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]) = {
     val foreignKey = foreignKeyName(om.erasure)
-    val foreignKeyIsOption= try {
-      val f = mm.erasure.getDeclaredField(foreignKey)
-      f.getType.getName == "scala.Option"
-    } catch {
-      case e: java.lang.NoSuchFieldException =>
-        ActiveRecordException.missingForeignKey(foreignKey)
-    }
+    val isOption= foreignKeyIsOption(mm.erasure, foreignKey)
 
     oneToManyRelation(ot, mt).via {(o, m) => 
-      if (foreignKeyIsOption) {
+      if (isOption) {
         o.id === m.getValue[Option[Long]](foreignKey)
       } else {
         o.id === m.getValue[Long](foreignKey)
       }
     }
+  }
+
+  def manyToMany[L <: AR, R <: AR](lt: Table[L], rt:Table[R])(implicit lm: Manifest[L], rm: Manifest[R]) = {
+    val foreignKeyL = foreignKeyName(lm.erasure)
+    val foreignKeyR = foreignKeyName(rm.erasure)
+    val middleName =
+      lm.erasure.getSimpleName.pluralize + rm.erasure.getSimpleName.pluralize
+
+    new ManyToManyRelationBuilder(lt, rt, Some(middleName))
+      .via[IntermediateRecord] ((l, r, m) =>
+        (l.id === m.leftId, r.id === m.rightId))
   }
 
   private lazy val createTables = transaction {
