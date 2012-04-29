@@ -91,6 +91,7 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
         case r: RecordRelation if excludeRelation => None
         case r: ActiveRecordOneToMany[_] => Some(r.toList.map(relationMap))
         case r: ActiveRecordManyToOne[_] => r.one.map(relationMap)
+        case r: ActiveRecordManyToMany[_, _] => Some(r.toList.map(relationMap))
         case v: Option[_] => v
         case v => Some(v)
       }).map(name -> _)

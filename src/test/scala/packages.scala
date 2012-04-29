@@ -110,6 +110,7 @@ trait ActiveRecordSpecification extends Specification {
 
   def before = {
     schema.initialize(config)
+    schema.reset
   }
 
   def after = dsl.transaction {

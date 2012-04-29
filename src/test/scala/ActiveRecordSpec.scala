@@ -313,10 +313,16 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
     "toMap (relation)" >> {
       val g = Group("group1")
+      val p = Project("project1")
       g.save
+      p.save
       val id = g.id
-      g.users.associate(User("user1"))
-      g.users.associate(User("user2"))
+      val u1 = User("user1")
+      val u2 = User("user2")
+      g.users.associate(u1)
+      g.users.associate(u2)
+      p.users.associate(u1)
+      p.users.associate(u2)
       g.toMap must equalTo(Map(
         "name" -> "group1",
         "users" -> List(
@@ -324,9 +330,9 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
           Map("name" -> "user2", "groupId" -> id)
         )
       ))
-      g.users.map(_.toMap) must equalTo(List(
-        Map("name" -> "user1", "groupId" -> id, "group" -> Map("name" -> "group1")),
-        Map("name" -> "user2", "groupId" -> id, "group" -> Map("name" -> "group1"))
+      g.users.map(_.toMap) must containAllOf(List(
+        Map("name" -> "user1", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1"))),
+        Map("name" -> "user2", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1")))
       ))
     }
   }
