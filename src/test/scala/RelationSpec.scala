@@ -22,9 +22,9 @@ object RelationSpec extends ActiveRecordSpecification {
       u2.group.one must beSome(g)
     }
     
-    "manyToMany relation" in {
+    "manyToMany relation" in { inTransaction {
       val p1 = Project("project1")
-      val p2 = Project("project1")
+      val p2 = Project("project2")
       p1.save
       p2.save
 
@@ -37,9 +37,9 @@ object RelationSpec extends ActiveRecordSpecification {
       User.all.foreach(_.projects.associate(p2))
 
       p1.users.toList must containAllOf(p1users)
-      p1users.forall(u => u.projects must contain(p1, p2).only)
+      p1users.forall(u => u.projects.toList must contain(p1, p2).only)
       u4.projects.toList must contain(p2).only
-    }
+    }}
   }
 
   "implicit conversions" should {

@@ -412,7 +412,7 @@ trait ActiveRecordTables extends Schema {
         (l.id === m.leftId, r.id === m.rightId))
   }
 
-  private lazy val createTables = transaction {
+  private lazy val createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
       try {
         t.lookup(1L)
@@ -453,7 +453,7 @@ trait ActiveRecordTables extends Schema {
   def session = Session.create(Config.connection, Config.adapter)
 
   /** drop and create table */
-  def reset = transaction {
+  def reset = inTransaction {
     drop
     create
   }
