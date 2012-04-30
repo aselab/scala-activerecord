@@ -2,13 +2,9 @@ package com.github.aselab.activerecord
 
 import org.squeryl._
 import org.squeryl.dsl._
-import org.squeryl.internals.DatabaseAdapter
-import org.squeryl.adapters._
 import org.squeryl.PrimitiveTypeMode._
 import java.util.{Date, UUID}
-import java.sql.{Timestamp, DriverManager, Connection}
-import com.jolbox.bonecp._
-import com.typesafe.config._
+import java.sql.Timestamp
 import mojolly.inflector.InflectorImports._
 
 /**
@@ -16,7 +12,9 @@ import mojolly.inflector.InflectorImports._
  *
  * This class provides object-relational mapping and CRUD logic and callback hooks.
  */
-abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable {
+abstract class ActiveRecord extends KeyedEntity[Long] with Product
+  with CRUDable with RecordRelationSupport
+{
   import ReflectionUtil._
 
   /** primary key */
@@ -66,22 +64,7 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
 
   def apply(newValues: (String, Any)*) = map(newValues:_*)
 
-  private lazy val relations = _companion.schema.relations
-  private def getRelation(left: Class[_], right: Class[_]) =
-    relations.get(left.getName -> right.getName)
-     .getOrElse(ActiveRecordException.missingRelation)
-
-  protected def belongsTo[T <: ActiveRecord](implicit m: Manifest[T]) =
-    getRelation(m.erasure, getClass).belongsTo(this).asInstanceOf[ActiveRecordManyToOne[T]]
-
-  protected def hasMany[T <: ActiveRecord](implicit m: Manifest[T]) =
-    getRelation(getClass, m.erasure).hasMany(this).asInstanceOf[ActiveRecordOneToMany[T]]
-
-  protected def hasAndBelongsToMany[T <: ActiveRecord](implicit m: Manifest[T])=
-    relations.get(getClass.getName -> m.erasure.getName)
-      .map(_.hasAndBelongsToManyL(this))
-      .getOrElse(getRelation(m.erasure, getClass).hasAndBelongsToManyR(this))
-      .asInstanceOf[ActiveRecordManyToMany[T, IntermediateRecord]]
+  protected lazy val relations = _companion.schema.relations
 
   def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {
     def relationMap(o: Any) = o.asInstanceOf[ActiveRecord].toMap(true)
@@ -97,12 +80,6 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product with CRUDable
       }).map(name -> _)
     }.toMap
   }
-}
-
-case class IntermediateRecord(leftId: Long, rightId: Long)
-  extends KeyedEntity[CompositeKey2[Long, Long]]
-{
-    def id = compositeKey(leftId, rightId)
 }
 
 /**
@@ -379,9 +356,8 @@ case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]
 /**
  * Base class of database schema.
  */
-trait ActiveRecordTables extends Schema {
+trait ActiveRecordTables extends Schema with TableRelationSupport {
   import ReflectionUtil._
-  import com.github.aselab.activerecord.{ActiveRecord => AR}
 
   lazy val tables = {
     val exceptType = classOf[ManyToManyRelationImpl[_, _, _]]
@@ -392,52 +368,10 @@ trait ActiveRecordTables extends Schema {
     }.toMap
   }
 
-  lazy val relations = {
-    this.getFields[Relation[AR, AR]].map {f =>
-      val List(left, right, _*) = getGenericTypes(f).map(_.getName)
-      val relation = this.getValue[Relation[AR, AR]](f.getName)
-
-      (left, right) -> RelationWrapper(relation)
-    }.toMap
-  }
-
   /** All tables */
   lazy val all = tables.values
 
   override def tableNameFromClass(c: Class[_]) = super.tableNameFromClass(c).pluralize
-
-  def foreignKeyName(c: Class[_]) = c.getSimpleName.underscore.camelize + "Id"
-
-  def foreignKeyIsOption(c: Class[_], name: String) = try {
-    c.getDeclaredField(name).getType.getName == "scala.Option"
-  } catch {
-    case e: java.lang.NoSuchFieldException =>
-      ActiveRecordException.missingForeignKey(name)
-  }
-
-  def oneToMany[O <: AR, M <: AR](ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]) = {
-    val foreignKey = foreignKeyName(om.erasure)
-    val isOption= foreignKeyIsOption(mm.erasure, foreignKey)
-
-    oneToManyRelation(ot, mt).via {(o, m) => 
-      if (isOption) {
-        o.id === m.getValue[Option[Long]](foreignKey)
-      } else {
-        o.id === m.getValue[Long](foreignKey)
-      }
-    }
-  }
-
-  def manyToMany[L <: AR, R <: AR](lt: Table[L], rt:Table[R])(implicit lm: Manifest[L], rm: Manifest[R]) = {
-    val foreignKeyL = foreignKeyName(lm.erasure)
-    val foreignKeyR = foreignKeyName(rm.erasure)
-    val middleName =
-      lm.erasure.getSimpleName.pluralize + rm.erasure.getSimpleName.pluralize
-
-    new ManyToManyRelationBuilder(lt, rt, Some(middleName))
-      .via[IntermediateRecord] ((l, r, m) =>
-        (l.id === m.leftId, r.id === m.rightId))
-  }
 
   private lazy val createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
@@ -475,7 +409,7 @@ trait ActiveRecordTables extends Schema {
   def cleanup = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    DefaultConfig(ConfigFactory.load(), config)
+    DefaultConfig(overrideSettings = config)
 
   def session = Session.create(Config.connection, Config.adapter)
 
@@ -484,68 +418,6 @@ trait ActiveRecordTables extends Schema {
     drop
     create
   }
-}
-
-trait ActiveRecordConfig {
-  def schemaClass: String
-  def connection: Connection
-  def adapter: DatabaseAdapter
-  def cleanup: Unit = {
-    Session.cleanupResources
-  }
-}
-
-case class DefaultConfig(conf: Config, map: Map[String, Any]) extends ActiveRecordConfig {
-  val env = System.getProperty("run.mode", "dev")
-
-  def get[T](key: String): Option[T] = map.get(key).map(_.asInstanceOf[T])
-  def get[T](key: String, getter: String => T): Option[T] = try {
-    Option(getter(env + "." + key))
-  } catch {
-    case e: ConfigException.Missing => None
-  }
-  def getString(key: String) = get[String](key).orElse(get(key, conf.getString))
-  def getInt(key: String) = get[Int](key).orElse(get(key, conf.getInt))
-
-  lazy val schemaClass = getString("schema").getOrElse("models.Tables")
-  lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
-  lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
-  lazy val username = getString("username")
-  lazy val password = getString("password")
-  lazy val partitionCount = getInt("partitionCount")
-  lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
-  lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
-
-  lazy val adapter = driverClass match {
-    case "org.h2.Driver" => new H2Adapter
-    case "org.postgresql.Driver" => new PostgreSqlAdapter
-    case "com.mysql.jdbc.Driver" => new MySQLAdapter
-    case driver => ActiveRecordException.unsupportedDriver(driver)
-  }
-
-  lazy val pool = {
-    try {
-      Class.forName(driverClass)
-    } catch {
-      case e => ActiveRecordException.missingDriver(driverClass)
-    }
-
-    val conf = new BoneCPConfig
-    conf.setJdbcUrl(jdbcurl)
-    username.foreach(conf.setUsername(_))
-    password.foreach(conf.setPassword(_))
-    partitionCount.foreach(conf.setPartitionCount(_))
-    maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition(_))
-    minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition(_))
-    new BoneCP(conf)
-  }
-
-  override def cleanup = {
-    super.cleanup
-    pool.shutdown
-  }
-
-  def connection = pool.getConnection
 }
 
 object Config {
@@ -558,36 +430,5 @@ object Config {
   def adapter = conf.adapter
 
   def cleanup = conf.cleanup
-}
-
-class ActiveRecordException(msg: String) extends RuntimeException(msg)
-
-object ActiveRecordException {
-  def unsupportedType(name: String) =
-    throw new ActiveRecordException("Unsupported type: " + name)
-
-  def defaultConstructorRequired =
-    throw new ActiveRecordException("Must implement default constructor")
-
-  def optionValueMustBeSome =
-    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is None because of type erasure.")
-
-  def traversableValueMustNotBeNil =
-    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is Nil because of type erasure.")
-
-  def cannotDetectType(value: Any) =
-    throw new ActiveRecordException("Cannot detect type of %s.".format(value))
-
-  def unsupportedDriver(driver: String) =
-    throw new ActiveRecordException("Unsupported database driver: " + driver)
-
-  def missingDriver(driver: String) =
-    throw new ActiveRecordException("Cannot load database driver: " + driver)
-
-  def missingRelation =
-    throw new ActiveRecordException("Cannot find definition of relation")
-
-  def missingForeignKey(name: String) =
-    throw new ActiveRecordException("Cannot find declaration of foreign key: " + name)
 }
 
