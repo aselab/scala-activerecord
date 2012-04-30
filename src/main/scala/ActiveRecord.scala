@@ -70,18 +70,23 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRichQuery(query: Query[T])(implicit m: Manifest[T]) =
+  implicit def toRichQuery(query: Queryable[T])(implicit m: Manifest[T]) =
     RichQuery(query)
+
+  implicit def toRichQuery(t: this.type)(implicit m: Manifest[T]) =
+    RichQuery(t.table)
 
   implicit def toRichQuery(r: ActiveRecordOneToMany[T])
     (implicit m: Manifest[T]) = RichQuery(r.relation)
 
-  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])
-    (implicit m: Manifest[T]) = RichQuery(r.relation)
+  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])(implicit m: Manifest[T]) = RichQuery(r.relation)
 
+  implicit def toModelList(query: Query[T]) = query.toList
   implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
   implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]) = r.toList
   implicit def toModel(r: ActiveRecordManyToOne[T]) = r.one
+
+  implicit def toQueryable(t: this.type) = t.table
 
   /**
    * all search.
@@ -212,7 +217,7 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   /**
    * delete all records.
    */
-  def deleteAll = inTransaction {
+  def deleteAll() = inTransaction {
     table.delete(all)
   }
 
@@ -267,7 +272,7 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
 
 }
 
-case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]) {
+case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifest[T]) {
   val companion = ReflectionUtil.classToCompanion(m.erasure)
     .asInstanceOf[ActiveRecordCompanion[T]]
 
@@ -287,7 +292,7 @@ case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]
     companion.findAllBy(name, value)(query)
 
   /**
-   * sort.
+   * sort results.
    *
    * {{{
    * Person.findAllBy("country", "Japan").orderBy(p => p.age asc)
@@ -309,13 +314,16 @@ case class RichQuery[T <: ActiveRecord](query: Query[T])(implicit m: Manifest[T]
   }
 
   /**
-   * limit query.
+   * returns limited results.
    * {{{
    * Post.all.orderBy(p => p.updatedAt desc).limit(10)
    * }}}
    * @param count max count
    */
-  def limit(count: Int) = query.page(0, count)
+  def limit(count: Int) = query match {
+    case _: Query[_] => query.asInstanceOf[Query[T]].page(0, count)
+    case _ => from(query)(m => select(m)).page(0, count)
+  }
 }
 
 /**

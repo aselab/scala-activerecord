@@ -182,25 +182,42 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
     }
 
-    "toRichQuery" >> {
-      "it should be able to chain" >> {
-        DummyModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
-      }
+    "RichQuery" >> {
+      def query = RichQuery(DummyModel.all)
 
       "#orderBy" >> {
         "single field" >> {
-          DummyModel.all.orderBy(m => m.int desc).toList mustEqual DummyModel.all.toList.reverse
+          query.orderBy(m => m.int desc).toList mustEqual DummyModel.all.toList.reverse
         }
 
         "multiple fields" >> {
-          DummyModel.all.orderBy(m => m.boolean asc, m => m.int desc).toList mustEqual DummyModel.all.toList.sortWith {
+          query.orderBy(m => m.boolean asc, m => m.int desc).toList mustEqual DummyModel.all.toList.sortWith {
             (m1, m2) => m1.boolean < m2.boolean || m1.int > m2.int
           }
         }
       }
 
       "#limit returns only specified count" >> {
-        DummyModel.all.limit(10).toList mustEqual DummyModel.all.toList.take(10)
+        query.limit(10).toList mustEqual DummyModel.all.toList.take(10)
+      }
+    }
+
+    "implicit conversions" >> {
+      "query should be able to chain" >> {
+        DummyModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
+      }
+
+      "Query to List" >> {
+        val all: List[DummyModel] = DummyModel.all
+        success
+      }
+
+      "ActiveRecordCompanion to RichQuery" >> {
+        DummyModel.limit(10).toList mustEqual DummyModel.all.toList.take(10)
+      }
+
+      "ActiveRecordCompanion to Queryable" >> {
+        from(DummyModel)(m => select(m)).toList mustEqual DummyModel.all.toList
       }
     }
 
