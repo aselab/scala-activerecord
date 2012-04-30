@@ -4,6 +4,7 @@ import org.specs2.mutable._
 import org.specs2.specification._
 
 import org.squeryl._
+import experimental._
 
 package models {
   import com.github.aselab.activerecord.annotations._
@@ -30,17 +31,17 @@ package models {
     }
   }
 
-  case class User(name: String) extends ActiveRecord {
+  case class User(name: String) extends ActiveRecord with Serializable {
     val groupId: Option[Long] = None
     lazy val group = belongsTo[Group]
     lazy val projects = hasAndBelongsToMany[Project]
   }
 
-  case class Group(name: String) extends ActiveRecord {
+  case class Group(name: String) extends ActiveRecord with Serializable {
     lazy val users = hasMany[User]
   }
 
-  case class Project(name: String) extends ActiveRecord {
+  case class Project(name: String) extends ActiveRecord with Serializable {
     lazy val users = hasAndBelongsToMany[User]
   }
 
@@ -71,7 +72,7 @@ package models {
     @Ignore var otimestamp: Option[Timestamp],
     @Ignore var odate: Option[Date],
     @Ignore var ouuid: Option[UUID]
-  ) extends ActiveRecord {
+  ) extends ActiveRecord with Serializable {
     def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
       new Timestamp(0), new Date(0), new UUID(0, 0),
       Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),

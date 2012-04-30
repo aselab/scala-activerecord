@@ -1,5 +1,6 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.experimental
 
+import com.github.aselab.activerecord._
 import org.specs2.mutable._
 import org.specs2.specification._
 
@@ -14,7 +15,7 @@ object DummyModel2 extends ActiveRecordCompanion[DummyModel2]
 
 object VersionsSpec extends ActiveRecordSpecification {
   "Versions" should {
-    val modelName = "com.github.aselab.activerecord.DummyModel2"
+    val modelName = "com.github.aselab.activerecord.experimental.DummyModel2"
 
     "doUpdateでVersionに保存されること" in {
       val model = DummyModel2("str", true, 10, Some("aaa"))
