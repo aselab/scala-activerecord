@@ -320,10 +320,22 @@ case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifes
    * }}}
    * @param count max count
    */
-  def limit(count: Int) = query match {
-    case _: Query[_] => query.asInstanceOf[Query[T]].page(0, count)
-    case _ => from(query)(m => select(m)).page(0, count)
+  def limit(count: Int) = page(0, count)
+
+  /**
+   * returns page results.
+   * {{{
+   * Post.all.orderBy(p => p.updatedAt desc).page(10 * (pageNumber - 1), 10)
+   * }}}
+   * @param offset offset count
+   * @param count max count
+   */
+  def page(offset: Int, count: Int) = query match {
+    case _: Query[_] => query.asInstanceOf[Query[T]].page(offset, count)
+    case _ => from(query)(m => select(m)).page(offset, count)
   }
+
+  def count: Long = from(query)(m => compute(PrimitiveTypeMode.count))
 }
 
 /**

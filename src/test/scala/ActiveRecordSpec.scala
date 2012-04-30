@@ -200,6 +200,14 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       "#limit returns only specified count" >> {
         query.limit(10).toList mustEqual DummyModel.all.toList.take(10)
       }
+
+      "#page" >> {
+        query.page(30, 10).toList mustEqual DummyModel.all.toList.slice(30, 40)
+      }
+
+      "#count" >> {
+        query.count mustEqual(100)
+      }
     }
 
     "implicit conversions" >> {
@@ -214,6 +222,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
       "ActiveRecordCompanion to RichQuery" >> {
         DummyModel.limit(10).toList mustEqual DummyModel.all.toList.take(10)
+        DummyModel.count mustEqual 100
       }
 
       "ActiveRecordCompanion to Queryable" >> {
