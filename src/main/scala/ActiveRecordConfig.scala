@@ -16,9 +16,9 @@ trait ActiveRecordConfig {
   }
 }
 
-case class DefaultConfig(
-  config: Config = ConfigFactory.load(),
-  overrideSettings: Map[String, Any] = Map()
+abstract class AbstractDefaultConfig(
+  config: Config,
+  overrideSettings: Map[String, Any]
 ) extends ActiveRecordConfig {
   val env = System.getProperty("run.mode", "dev")
 
@@ -71,4 +71,9 @@ case class DefaultConfig(
 
   def connection = pool.getConnection
 }
+
+case class DefaultConfig(
+  config: Config = ConfigFactory.load(),
+  overrideSettings: Map[String, Any] = Map()
+) extends AbstractDefaultConfig(config, overrideSettings)
 
