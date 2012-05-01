@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.experimental
 
 import com.github.aselab.activerecord._
 
-trait Serializable extends ActiveRecord {
+trait Serializable { this: ActiveRecord => 
   import ReflectionUtil._
 
   def toMap(implicit excludeRelation: Boolean = false): Map[String, Any] = {

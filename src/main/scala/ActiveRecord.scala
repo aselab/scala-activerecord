@@ -273,10 +273,12 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
 }
 
 case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifest[T]) {
+  import org.squeryl.dsl.ast._
+
   val companion = ReflectionUtil.classToCompanion(m.erasure)
     .asInstanceOf[ActiveRecordCompanion[T]]
 
-  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean): Query[T] =
+  def where(condition: (T) => LogicalBoolean): Query[T] =
     companion.where(condition)(query)
 
   def findBy(condition: (String, Any), conditions: (String, Any)*): Option[T] =
@@ -301,17 +303,8 @@ case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifes
    * @param condition sort condition
    * @param conditions multiple sort conditions(optional)
    */
-  def orderBy(condition: (T) => org.squeryl.dsl.ast.OrderByArg, conditions: (T => org.squeryl.dsl.ast.OrderByArg)*) = {
-    conditions.toList match {
-      case Nil => from(query)(m => select(m).orderBy(condition(m)))
-      case List(f1) => from(query)(m => select(m).orderBy(condition(m), f1(m)))
-      case List(f1, f2) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m)))
-      case List(f1, f2, f3) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m)))
-      case List(f1, f2, f3, f4) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m)))
-      case List(f1, f2, f3, f4, f5) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m)))
-      case List(f1, f2, f3, f4, f5, f6) => from(query)(m => select(m).orderBy(condition(m), f1(m), f2(m), f3(m), f4(m), f5(m), f6(m)))
-    }
-  }
+  def orderBy(condition: (T) => OrderByExpression, conditions: (T => OrderByExpression)*) =
+    from(query)(m => select(m).orderBy((condition :: conditions.toList).map(_.apply(m))))
 
   /**
    * returns limited results.
