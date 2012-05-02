@@ -7,30 +7,20 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import mojolly.inflector.InflectorImports._
 
-/**
- * Base class of ActiveRecord objects.
- *
- * This class provides object-relational mapping and CRUD logic and callback hooks.
- */
-abstract class ActiveRecord extends KeyedEntity[Long] with Product
-  with CRUDable with RecordRelationSupport
+trait ActiveRecordBase[T] extends KeyedEntity[T] with Product
+  with CRUDable with ActiveRecordBaseRelationSupport
 {
-  import ReflectionUtil._
-
-  /** primary key */
-  val id: Long = 0L
-
   /** corresponding ActiveRecordCompanion object */
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
-    .asInstanceOf[ActiveRecordCompanion[this.type]]
-
-  override def isNewInstance = id == 0
+    .asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
 
   override def equals(obj: Any): Boolean = obj match {
     case p: Product => productIterator.toList == p.productIterator.toList
     case ar: AnyRef => super.equals(obj)
     case _ => false
   }
+
+  override def isNewInstance = !isPersisted
 
   protected def doCreate = {
     _companion.create(this)
@@ -44,15 +34,26 @@ abstract class ActiveRecord extends KeyedEntity[Long] with Product
 
   protected def doDelete = _companion.delete(id)
 
-  protected lazy val relations = _companion.schema.relations
+  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] = _companion.schema.relations
 }
 
 /**
- * Base class of ActiveRecord companion objects.
+ * Base class of ActiveRecord objects.
  *
- * This class provides database table mapping and query logic.
+ * This class provides object-relational mapping and CRUD logic and callback hooks.
  */
-trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
+abstract class ActiveRecord extends ActiveRecordBase[Long]
+  with ActiveRecordRelationSupport
+{
+  /** primary key */
+  val id: Long = 0L
+
+  override def isNewInstance = id == 0
+}
+
+trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
+  import ReflectionUtil._
+
   /** self reference */
   protected def self: this.type = this
 
@@ -79,12 +80,8 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   implicit def toRichQuery(r: ActiveRecordOneToMany[T])
     (implicit m: Manifest[T]) = RichQuery(r.relation)
 
-  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])(implicit m: Manifest[T]) = RichQuery(r.relation)
-
   implicit def toModelList(query: Query[T]) = query.toList
-  implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
-  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]) = r.toList
-  implicit def toModel(r: ActiveRecordManyToOne[T]) = r.one
+  implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]) = r.one
 
   implicit def toQueryable(t: this.type) = t.table
 
@@ -96,12 +93,12 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   /**
    * same as find method.
    */
-  def apply(id: Long) = find(id)
+  def apply(id: K) = find(id)
 
   /**
    * search by id.
    */
-  def find(id: Long) = inTransaction { table.lookup(id) }
+  def find(id: K) = inTransaction { table.lookup(id) }
 
   /**
    * query search.
@@ -210,7 +207,7 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
   /**
    * delete record from id.
    */
-  def delete(id: Long) = inTransaction {
+  def delete(id: K) = inTransaction {
     table.delete(id)
   }
 
@@ -272,11 +269,23 @@ trait ActiveRecordCompanion[T <: ActiveRecord] extends ReflectionUtil {
 
 }
 
-case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifest[T]) {
+/**
+ * Base class of ActiveRecord companion objects.
+ *
+ * This class provides database table mapping and query logic.
+ */
+trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
+  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])(implicit m: Manifest[T]) = RichQuery(r.relation)
+
+  implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
+  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]) = r.toList
+}
+
+case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: Manifest[T]) {
   import org.squeryl.dsl.ast._
 
   val companion = ReflectionUtil.classToCompanion(m.erasure)
-    .asInstanceOf[ActiveRecordCompanion[T]]
+    .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
   def where(condition: (T) => LogicalBoolean): Query[T] =
     companion.where(condition)(query)
@@ -337,27 +346,27 @@ case class RichQuery[T <: ActiveRecord](query: Queryable[T])(implicit m: Manifes
 trait ActiveRecordTables extends Schema with TableRelationSupport {
   import ReflectionUtil._
 
-  lazy val tables = {
-    val exceptType = classOf[ManyToManyRelationImpl[_, _, _]]
-    this.getFields[Table[AR]].collect {
-      case f if !exceptType.isAssignableFrom(f.getType) =>
-        val name = getGenericType(f).getName
-        (name, this.getValue[Table[AR]](f.getName))
-    }.toMap
-  }
+  lazy val tables = this.getFields[Table[ActiveRecordBase[_]]].collect {
+    case f if !classOf[IntermediateTable[_]].isAssignableFrom(f.getType) =>
+      val name = getGenericTypes(f).last.getName
+      (name, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
+  }.toMap
 
   /** All tables */
   lazy val all = tables.values
 
   override def tableNameFromClass(c: Class[_]) = super.tableNameFromClass(c).pluralize
 
-  private lazy val createTables = inTransaction {
+  private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
+      val stat = Session.currentSession.connection.createStatement
       try {
-        t.lookup(1L)
+        stat.execute("select 1 from " + t.name)
         true
       } catch {
         case e => false
+      } finally {
+        try { stat.close } catch {case e => }
       }
     }
 
@@ -368,18 +377,14 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
   /** load configuration and then setup database and session */
   def initialize(implicit config: Map[String, Any] = Map()) {
-    if (_initialized)
-      return
-    Config.conf = loadConfig(config)
+    if (_initialized) return
 
-    // declare id field on all tables
-    all.foreach(on(_)(t => declare(
-      t.id is(primaryKey, autoIncremented)
-    )))
+    Config.conf = loadConfig(config)
 
     SessionFactory.concreteFactory = Some(() => session)
 
     createTables
+
     _initialized = true
   }
 
@@ -396,6 +401,14 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
     drop
     create
   }
+
+  override protected def table[T]()(implicit m: Manifest[T]) =
+    super.table[T]
+    
+  override protected def table[T](name: String)(implicit m: Manifest[T]) =
+    if (m <:< manifest[IntermediateRecord]) new IntermediateTable[T](name)
+    else super.table[T](name)
+
 }
 
 object Config {

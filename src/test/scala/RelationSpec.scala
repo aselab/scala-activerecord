@@ -22,24 +22,53 @@ object RelationSpec extends ActiveRecordSpecification {
       u2.group.one must beSome(g)
     }
     
-    "manyToMany relation" in { inTransaction {
+    "manyToMany(hasManyThrough) relation" >> {
       val p1 = Project("project1")
       val p2 = Project("project2")
+      val r1 = Role("role1")
+      val r2 = Role("role2")
       p1.save
       p2.save
+      r1.save
+      r2.save
 
-      val p1users = User.all.toList
-      p1users.foreach(p1.users.associate(_))
-      val u4 = User("user4")
-      val u5 = User("user5")
-      u4.save
-      u5.save
-      User.all.foreach(_.projects.associate(p2))
+      val List(u1, u2, u3) = User.all.toList
 
-      p1.users.toList must containAllOf(p1users)
-      p1users.forall(u => u.projects.toList must contain(p1, p2).only)
-      u4.projects.toList must contain(p2).only
-    }}
+      val membership = p1.users.assign(u1)
+      r1.memberships.associate(membership)
+
+      p1.users.associate(u2, ProjectMembership(r2.id))
+      p2.users.associate(u2, ProjectMembership(r1.id))
+
+      ProjectMembership.count mustEqual 3
+      p1.users.toList must contain(u1, u2).only
+      u2.projects.toList must contain(p1, p2).only 
+      u2.memberships.toList mustEqual u2.projects.associations
+      u2.memberships.map(m => (m.projectId, m.userId, m.roleId)) must
+        contain((p1.id, u2.id, r2.id), (p2.id, u2.id, r1.id)).only
+    }
+
+    "manyToMany(hasAndBelongsToMany) relation" in {
+      val foo1 = Foo("foo1")
+      val foo2 = Foo("foo2")
+      val bar1 = Bar("bar1")
+      val bar2 = Bar("bar2")
+      val bar3 = Bar("bar3")
+      foo1.save
+      foo2.save
+      bar1.save
+      bar2.save
+      bar3.save
+
+      foo1.bars.associate(bar2)
+      foo1.bars.associate(bar3)
+      bar1.foos.associate(foo2)
+      bar3.foos.associate(foo2)
+
+      foo1.bars.toList must contain(bar2, bar3).only
+      foo2.bars.toList must contain(bar1, bar3).only
+      bar3.foos.toList must contain(foo1, foo2).only
+    }
   }
 
   "implicit conversions" should {
@@ -52,29 +81,29 @@ object RelationSpec extends ActiveRecordSpecification {
     }
 
     "ManyToMany relation to rich query" in {
-      val p = Project.findBy("name", "project1").get
-      p.users.findBy("name", "user2") must beSome(User("user2"))
+      val foo = Foo.findBy("name", "foo1").get
+      foo.bars.findBy("name", "bar2") must beSome(Bar("bar2"))
 
-      p.users.where(_.name like "user%").orderBy(_.name desc).toList mustEqual
-        List(User("user3"), User("user2"), User("user1"))
+      foo.bars.where(_.name like "bar%").orderBy(_.name desc).toList mustEqual
+        List(Bar("bar3"), Bar("bar2"))
     }
 
     "OneToMany relation to List(model)" in {
       val group = Group.findBy("name", "group1").get
       val users: List[User] = group.users
-      users mustEqual List(User("user1"), User("user2"))
+      success
     }
 
     "ManyToMany relation to List(model)" in {
       val project = Project.findBy("name", "project1").get
       val users: List[User] = project.users
-      users must containAllOf(List(User("user1"), User("user2"), User("user3")))
+      success
     }
 
     "ManyToOne relation to Option(model)" in {
       val user = User.findBy("name", "user1").get
       val g: Option[Group] = user.group
-      g must beSome(Group("group1"))
+      success
     }
   }
 }
