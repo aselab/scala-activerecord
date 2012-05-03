@@ -193,21 +193,21 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   /**
    * insert record from model.
    */
-  def create(model: T) = inTransaction {
+  protected[activerecord] def create(model: T) = inTransaction {
     table.insert(model)
   }
 
   /**
    * update record from model.
    */
-  def update(model: T) = inTransaction {
+  protected[activerecord] def update(model: T) = inTransaction {
     table.update(model)
   }
 
   /**
    * delete record from id.
    */
-  def delete(id: K) = inTransaction {
+  protected[activerecord] def delete(id: K) = inTransaction {
     table.delete(id)
   }
 
@@ -215,7 +215,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
    * delete all records.
    */
   def deleteAll() = inTransaction {
-    table.delete(all)
+    val models = all.toList
+    models.foreach(_.delete)
+    models
   }
 
   /**
