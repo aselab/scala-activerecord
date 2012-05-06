@@ -266,6 +266,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   lazy val formatFields: List[java.lang.reflect.Field] =
     targetClass.getDeclaredFields.filterNot {f =>
       f.isAnnotationPresent(classOf[annotations.Ignore]) ||
+      classOf[RecordRelation].isAssignableFrom(f.getType) ||
       f.getName.contains("$")
     }.toList
 
