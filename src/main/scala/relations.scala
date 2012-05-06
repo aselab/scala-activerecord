@@ -149,13 +149,20 @@ trait TableRelationSupport extends Schema {
     val foreignKey = foreignKeyName(om.erasure)
     val isOption= foreignKeyIsOption(mm.erasure, foreignKey)
 
-    oneToManyRelation(ot, mt).via {(o, m) => 
+    val relation = oneToManyRelation(ot, mt).via {(o, m) => 
       if (isOption) {
         o.id === m.getValue[Option[Long]](foreignKey)
       } else {
         o.id === m.getValue[Long](foreignKey)
       }
     }
+
+    if (isOption)
+      relation.foreignKeyDeclaration.constrainReference(onDelete setNull)
+    else
+      relation.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    relation
   }
 
   def manyToMany[L <: AR, M <: IntermediateRecord, R <: AR]
@@ -165,18 +172,30 @@ trait TableRelationSupport extends Schema {
     val foreignKeyL = foreignKeyName(lm.erasure)
     val foreignKeyR = foreignKeyName(rm.erasure)
 
-    manyToManyRelation(lt, rt, mt.name).via[M] {(l, r, m) =>
+    val relation = manyToManyRelation(lt, rt, mt.name).via[M] {(l, r, m) =>
       (l.id === m.getValue[Long](foreignKeyL),
        r.id === m.getValue[Long](foreignKeyR))
     }
+
+    relation.leftForeignKeyDeclaration.constrainReference(onDelete cascade)
+    relation.rightForeignKeyDeclaration.constrainReference(onDelete cascade)
+
+    relation
   }
 
   def manyToMany[L <: AR, R <: AR](lt: Table[L], rt:Table[R])(implicit lm: Manifest[L], rm: Manifest[R]): Relation[L, R] = {
     val middleName =
       lm.erasure.getSimpleName.pluralize + rm.erasure.getSimpleName.pluralize
-    manyToManyRelation(lt, rt, middleName).via[DefaultIntermediateRecord](
-      (l, r, m) => (l.id === m.leftId, r.id === m.rightId)
-    )
+
+    val relation = manyToManyRelation(lt, rt, middleName)
+      .via[DefaultIntermediateRecord](
+        (l, r, m) => (l.id === m.leftId, r.id === m.rightId)
+      )
+
+    relation.leftForeignKeyDeclaration.constrainReference(onDelete cascade)
+    relation.rightForeignKeyDeclaration.constrainReference(onDelete cascade)
+
+    relation
   }
 }
 
