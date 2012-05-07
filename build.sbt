@@ -1,8 +1,10 @@
 name := "scala-activerecord"
 
-version := "0.1"
+version := "0.2-SNAPSHOT"
 
 organization := "com.github.aselab"
+
+scalaVersion := "2.9.2"
 
 libraryDependencies ++= Seq(
   "com.github.aselab" % "squeryl" % "0.9.5",
