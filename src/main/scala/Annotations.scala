@@ -18,4 +18,6 @@ trait Annotations {
    * unique field annotation.
    */
   type Unique = annotations.Unique @field
+
+  type Required = annotations.Required @field
 }

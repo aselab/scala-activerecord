@@ -2,10 +2,14 @@ package com.github.aselab.activerecord
 
 import org.squeryl.annotations.Transient
 
+trait Saveable {
+  def save(): Boolean
+}
+
 /**
  * Interface of CRUD and callbacks.
  */
-trait CRUDable {
+trait CRUDable extends Saveable {
   @Transient
   protected var _isNewInstance = true
 

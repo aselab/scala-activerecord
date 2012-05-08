@@ -8,7 +8,7 @@ import java.sql.Timestamp
 import mojolly.inflector.InflectorImports._
 
 trait ActiveRecordBase[T] extends KeyedEntity[T] with Product
-  with CRUDable with ActiveRecordBaseRelationSupport
+  with CRUDable with ActiveRecordBaseRelationSupport with ValidationSupport
 {
   /** corresponding ActiveRecordCompanion object */
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
