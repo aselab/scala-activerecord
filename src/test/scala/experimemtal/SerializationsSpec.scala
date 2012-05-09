@@ -10,6 +10,33 @@ import java.sql.Timestamp
 
 object SerializationsSpec extends ActiveRecordSpecification {
   "Serializable" should {
+    "assgin" >> {
+      val m = DummyModel.newModel(0)
+      m.assign(Map(
+        "boolean" -> true,
+        "oboolean" -> true,
+        "timestamp" -> new Timestamp(5L),
+        "otimestamp" -> new Timestamp(5L),
+        "float" -> 5.toFloat,
+        "ofloat" -> 5.toFloat,
+        "long" -> 5L,
+        "olong" -> 5L,
+        "string" -> "string5",
+        "ostring" -> "string5",
+        "bigDecimal" -> BigDecimal(5),
+        "obigDecimal" -> BigDecimal(5),
+        "double" -> 5.0,
+        "odouble" -> 5.0,
+        "date" -> new Date(5L * 1000 * 60 * 60 * 24),
+        "odate" -> new Date(5L * 1000 * 60 * 60 * 24),
+        "int" -> 5,
+        "oint" -> 5,
+        "uuid" -> new UUID(5L, 5L),
+        "ouuid" -> new UUID(5L, 5L)
+      ))
+      m must equalTo(DummyModel.newModel(5))
+    }
+
     "toMap" >> {
       val m = DummyModel.newModel(5)
       m.ofloat = None

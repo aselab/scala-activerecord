@@ -8,7 +8,7 @@ import java.sql.Timestamp
 import mojolly.inflector.InflectorImports._
 
 trait ActiveRecordBase[T] extends KeyedEntity[T] with Product
-  with CRUDable with ActiveRecordBaseRelationSupport with ValidationSupport
+  with CRUDable with ActiveRecordBaseRelationSupport with ValidationSupport with IO
 {
   /** corresponding ActiveRecordCompanion object */
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
@@ -255,12 +255,14 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   }
 
   /** ActiveRecord fields information */
-  lazy val fieldInfo = {
+  lazy val fieldInfo = try {
     val m = newInstance
     formatFields.map { f =>
       val name = f.getName
       (name, FieldInfo(f, m.getValue[Any](name)))
     }.toMap
+  } catch {
+    case e: ActiveRecordException => Map()
   }
 
   lazy val formatFields: List[java.lang.reflect.Field] =
@@ -270,6 +272,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
       f.getName.contains("$")
     }.toList
 
+  def fromMap(data: Map[String, Any]) = {
+    newInstance.assign(data)
+  }
 }
 
 /**
