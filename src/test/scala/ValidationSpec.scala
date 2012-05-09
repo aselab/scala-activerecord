@@ -33,6 +33,37 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   object Dummy2 extends ActiveRecordCompanion[Dummy2]
 
+  case class FormSupportModel(
+    string: String,
+    boolean: Boolean,
+    int: Int,
+    long: Long,
+    float: Float,
+    double: Double,
+    bigDecimal: BigDecimal,
+    timestamp: Timestamp,
+    date: Date,
+    uuid: UUID,
+    ostring: Option[String],
+    oboolean: Option[Boolean],
+    oint: Option[Int],
+    olong: Option[Long],
+    ofloat: Option[Float],
+    odouble: Option[Double],
+    obigDecimal: Option[BigDecimal],
+    otimestamp: Option[Timestamp],
+    odate: Option[Date],
+    ouuid: Option[UUID]
+  ) extends ActiveRecord {
+    def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
+      new Timestamp(0), new Date(0), new UUID(0, 0),
+      Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
+      Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), Some(new UUID(0, 0))
+    )
+  }
+
+  object FormSupportModel extends ActiveRecordCompanion[FormSupportModel] with FormSupport[FormSupportModel]
+
   "Validatable" should {
     "addError" in {
       val m = Dummy(Nil)
@@ -122,6 +153,10 @@ object ValidationSpec extends ActiveRecordSpecification {
       }
     }
 
+    "bind" >> {
+      FormSupportModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100")) mustEqual
+        new FormSupportModel().copy(string = "string", ostring = Some(""), int = 100)
+    }
   }
 }
 

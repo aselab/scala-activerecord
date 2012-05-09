@@ -78,17 +78,13 @@ trait ValidationSupport extends Validatable {self: ActiveRecordBase[_] =>
   }
 }
 
-object Converter {
-  private val converters = collection.mutable.Map[Class[_], (String) => Any](
-    classOf[String] -> {s: String => s},
-    classOf[java.lang.Integer] -> {s: String => s.toInt},
-    classOf[java.lang.Boolean] -> {s: String => s.toBoolean},
-    classOf[scala.math.BigDecimal] -> {s: String => BigDecimal(s)}
-  )
+trait FormSupport[T <: ActiveRecord] {self: ActiveRecordCompanion[T] =>
+  import ReflectionUtil._
 
-  def register[T](fieldType: Class[T], converter: (String) => T) = converters += (fieldType -> converter)
-  def unregister(fieldType: Class[_]) = converters -= fieldType
+  def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
+    source.assignFormValues(data)
+    source
+  }
 
-  def get(fieldType: Class[_]) = converters.get(fieldType)
+  def unbind(m: T): Map[String, String] = throw new UnsupportedOperationException()
 }
-

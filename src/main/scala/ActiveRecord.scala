@@ -255,7 +255,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   }
 
   /** ActiveRecord fields information */
-  lazy val fieldInfo = try {
+  lazy val fieldInfo: Map[String, FieldInfo] = try {
     val m = newInstance
     formatFields.map { f =>
       val name = f.getName

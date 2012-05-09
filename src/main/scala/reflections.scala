@@ -14,6 +14,7 @@ case class FieldInfo(
     a => (a.annotationType.getSimpleName, a)
   }.toMap
 
+  lazy val required = annotationMap.isDefinedAt("Required")
   lazy val ignored = annotationMap.isDefinedAt("Ignore")
   lazy val unique = annotationMap.isDefinedAt("Unique")
 }

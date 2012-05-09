@@ -118,7 +118,7 @@ package models {
     def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
       new Timestamp(0), new Date(0), new UUID(0, 0),
       Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
-      Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), None
+      Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), Some(new UUID(0, 0))
     )
   }
 

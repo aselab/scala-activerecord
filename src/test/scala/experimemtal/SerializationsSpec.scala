@@ -9,6 +9,12 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 
 object SerializationsSpec extends ActiveRecordSpecification {
+
+  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord {
+    def this() = this(List(""), List(0))
+  }
+  object ListModel extends ActiveRecordCompanion[ListModel]
+
   "Serializable" should {
     "assgin" >> {
       val m = DummyModel.newModel(0)
@@ -35,6 +41,46 @@ object SerializationsSpec extends ActiveRecordSpecification {
         "ouuid" -> new UUID(5L, 5L)
       ))
       m must equalTo(DummyModel.newModel(5))
+    }
+
+    "assignFormValues" >> {
+      val m = DummyModel.newModel(0)
+      m.assignFormValues(Map(
+        "boolean" -> "true",
+        "oboolean" -> "true",
+        "timestamp" -> "1970-01-01T09:00:00.005+09:00",
+        "otimestamp" -> "1970-01-01T09:00:00.005+09:00",
+        "float" -> "5.0",
+        "ofloat" -> "5.0",
+        "long" -> "5",
+        "olong" -> "5",
+        "string" -> "string5",
+        "ostring" -> "string5",
+        "bigDecimal" -> "5",
+        "obigDecimal" -> "5",
+        "double" -> "5.0",
+        "odouble" -> "5.0",
+        "date" -> "1970-01-06T09:00:00.000+09:00",
+        "odate" -> "1970-01-06T09:00:00.000+09:00",
+        "int" -> "5",
+        "oint" -> "5",
+        "uuid" -> "00000000-0000-0005-0000-000000000005",
+        "ouuid" -> "00000000-0000-0005-0000-000000000005"
+      ))
+      m must equalTo(DummyModel.newModel(5))
+    }
+
+    "assignFormValues(list)" >> {
+      val m = ListModel.newInstance
+      m.assignFormValues(Map(
+        "l1[0]" -> "aa",
+        "l1[1]" -> "bb",
+        "l1[2]" -> "cc",
+        "l2[0]" -> "11",
+        "l2[1]" -> "22",
+        "l2[2]" -> "33"
+      ))
+      m must equalTo(ListModel(List("aa", "bb", "cc"), List(11, 22, 33)))
     }
 
     "toMap" >> {
