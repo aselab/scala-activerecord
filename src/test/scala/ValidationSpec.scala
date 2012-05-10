@@ -132,8 +132,8 @@ object ValidationSpec extends ActiveRecordSpecification {
     "Validator" in {
       val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value) => if (value.toString == "dummy") Seq("dummy") else Nil}
       val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value) => if (value.toString == "dummy2") Seq("dummy2") else Nil}
-      ValidatorFactory.register(classOf[annotations.Unique], dummyValidator)
-      ValidatorFactory.register(classOf[annotations.Required], dummyValidator2)
+      dummyValidator.register
+      dummyValidator2.register
 
       "get" in {
         ValidatorFactory.get(classOf[annotations.Unique]) must beSome(dummyValidator)
@@ -167,7 +167,7 @@ object ValidationSpec extends ActiveRecordSpecification {
       }
 
       "unregister" in {
-        ValidatorFactory.unregister(classOf[annotations.Unique])
+        dummyValidator.unregister
         ValidatorFactory.get(classOf[annotations.Required]) must beSome(dummyValidator2)
         ValidatorFactory.get(classOf[annotations.Unique]) must beNone
       }

@@ -48,28 +48,39 @@ trait Validator {
   def apply(value: Any): Seq[String]
 }
 
-trait ValidatorFactory[T <: Annotation] {
+abstract class ValidatorFactory[T <: Annotation](implicit m: Manifest[T]) {
   def apply(a: T): Validator
+  def register = ValidatorFactory.register(this)
+  def unregister = ValidatorFactory.unregister(this)
 }
 
 object ValidatorFactory {
-  def apply[T <: Annotation](validate: (T, Any) => Seq[String]) = new ValidatorFactory[T] {
+  def apply[T <: Annotation](validate: (T, Any) => Seq[String])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
     def apply(a: T) = new Validator {
       def apply(value: Any) = validate(a, value)
     }
   }
 
   type A = Class[_ <: Annotation]
+
   lazy val factories = collection.mutable.Map[A, ValidatorFactory[_ <: Annotation]](
     classOf[annotations.Required] -> requiredValidatorFactory,
     classOf[annotations.Length] -> lengthValidatorFactory
   )
 
-  def register(annotation: A, factory: ValidatorFactory[_ <: Annotation]) = factories += (annotation -> factory)
-  def unregister(annotation: A) = factories -= annotation
+  def register[T <: Annotation](factory: ValidatorFactory[T])(implicit m: Manifest[T]) =
+    factories += (m.erasure.asInstanceOf[Class[T]] -> factory)
 
-  def get(annotation: A): Option[ValidatorFactory[Annotation]] = factories.get(annotation).asInstanceOf[Option[ValidatorFactory[Annotation]]]
-  def get(annotation: Annotation): Option[ValidatorFactory[Annotation]] = get(annotation.annotationType)
+  def unregister(annotation: A): Unit = factories -= annotation
+
+  def unregister[T <: Annotation](factory: ValidatorFactory[T])(implicit m: Manifest[T]): Unit =
+    unregister(m.erasure.asInstanceOf[Class[T]])
+
+  def get(annotation: A): Option[ValidatorFactory[Annotation]] =
+    factories.get(annotation).asInstanceOf[Option[ValidatorFactory[Annotation]]]
+
+  def get(annotation: Annotation): Option[ValidatorFactory[Annotation]] =
+    get(annotation.annotationType)
 
   val requiredValidatorFactory = ValidatorFactory[annotations.Required] {
     (_, value) => if (value != null && value.toString.isEmpty) Seq("this field is required") else Nil
