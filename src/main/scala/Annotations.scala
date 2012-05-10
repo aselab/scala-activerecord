@@ -20,4 +20,6 @@ trait Annotations {
   type Unique = annotations.Unique @field
 
   type Required = annotations.Required @field
+
+  type Length = annotations.Length @field
 }

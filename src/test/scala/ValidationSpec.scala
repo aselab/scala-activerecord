@@ -33,6 +33,12 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   object Dummy2 extends ActiveRecordCompanion[Dummy2]
 
+  case class Dummy3(@Length(min=3, max=10) s1: String) extends ActiveRecord {
+    def this() = this(null)
+  }
+
+  object Dummy3 extends ActiveRecordCompanion[Dummy3]
+
   case class FormSupportModel(
     string: String,
     boolean: Boolean,
@@ -124,32 +130,46 @@ object ValidationSpec extends ActiveRecordSpecification {
     }
 
     "Validator" in {
-      val dummyValidator = {(value: Any) => if (value.toString == "dummy") Seq("dummy") else Nil}
-      val dummyValidator2 = {(value: Any) => if (value.toString == "dummy2") Seq("dummy2") else Nil}
-      Validator.register(classOf[annotations.Unique], dummyValidator)
-      Validator.register(classOf[annotations.Required], dummyValidator2)
+      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value) => if (value.toString == "dummy") Seq("dummy") else Nil}
+      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value) => if (value.toString == "dummy2") Seq("dummy2") else Nil}
+      ValidatorFactory.register(classOf[annotations.Unique], dummyValidator)
+      ValidatorFactory.register(classOf[annotations.Required], dummyValidator2)
 
       "get" in {
-        Validator.get(classOf[annotations.Unique]) must beSome(dummyValidator)
-        Validator.get(classOf[annotations.Required]) must beSome(dummyValidator2)
+        ValidatorFactory.get(classOf[annotations.Unique]) must beSome(dummyValidator)
+        ValidatorFactory.get(classOf[annotations.Required]) must beSome(dummyValidator2)
       }
 
       "doValidate" in {
-        val m1 = Dummy2("dummy", "")
-        val m2 = Dummy2("", "dummy2")
-        val m3 = Dummy2("dummy", "dummy2")
-        m1.validate
-        m2.validate
-        m3.validate
-        m1.errors must contain(ValidationError("s1", "dummy"))
-        m2.errors must contain(ValidationError("s2", "dummy2"))
-        m3.errors must contain(ValidationError("s1", "dummy"), ValidationError("s2", "dummy2"))
+        "add custom annotations" in {
+          val m1 = Dummy2("dummy", "")
+          val m2 = Dummy2("", "dummy2")
+          val m3 = Dummy2("dummy", "dummy2")
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must contain(ValidationError("s1", "dummy"))
+          m2.errors must contain(ValidationError("s2", "dummy2"))
+          m3.errors must contain(ValidationError("s1", "dummy"), ValidationError("s2", "dummy2"))
+        }
+
+        "@Length" in {
+          val m1 = Dummy3("")
+          val m2 = Dummy3("a" * 5)
+          val m3= Dummy3("a" * 11)
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must contain(ValidationError("s1", "length error"))
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError("s1", "length error"))
+        }
       }
 
       "unregister" in {
-        Validator.unregister(classOf[annotations.Unique])
-        Validator.get(classOf[annotations.Required]) must beSome(dummyValidator2)
-        Validator.get(classOf[annotations.Unique]) must beNone
+        ValidatorFactory.unregister(classOf[annotations.Unique])
+        ValidatorFactory.get(classOf[annotations.Required]) must beSome(dummyValidator2)
+        ValidatorFactory.get(classOf[annotations.Unique]) must beNone
       }
     }
 

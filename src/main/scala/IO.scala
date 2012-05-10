@@ -34,7 +34,7 @@ trait IO { this: ActiveRecordBase[_] =>
         val v = data.get(name)
         try {
           if (info.isSeq) {
-            val keys = Iterator.iterate(0)(_ + 1).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
+            val keys = Stream.from(0).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
             Option(name -> keys.map(key => converter(data(key))).toList)
           } else if (info.isOption && v.get.isEmpty) {
             None

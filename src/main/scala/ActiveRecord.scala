@@ -275,6 +275,12 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   def fromMap(data: Map[String, Any]) = {
     newInstance.assign(data)
   }
+
+  lazy val validators: Map[String, Seq[Validator]] = fieldInfo.map {
+    case (name, info) => (name, info.annotations.flatMap { a =>
+      ValidatorFactory.get(a.annotationType).map(_.apply(a))
+    })
+  }.toMap
 }
 
 /**
