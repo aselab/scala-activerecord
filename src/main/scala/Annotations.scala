@@ -22,4 +22,18 @@ trait Annotations {
   type Required = annotations.Required @field
 
   type Length = annotations.Length @field
+
+  type MaxValue = annotations.MaxValue @field
+
+  type MinValue = annotations.MinValue @field
+
+  type Range = annotations.Range @field
+
+  type Future = annotations.Future @field
+
+  type Past = annotations.Past @field
+
+  type Checked = annotations.Checked @field
+
+  type Email = annotations.Email @field
 }

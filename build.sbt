@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "1.6.4" % "test",
   "com.h2database" % "h2" % "1.3.166" % "test",
   "io.backchat.inflector" %% "scala-inflector" % "1.3.3",
-  "org.scala-tools.time" % "time_2.9.1" % "0.5"
+  "org.scala-tools.time" % "time_2.9.1" % "0.5",
+  "commons-validator" % "commons-validator" % "1.4.0"
 )
 
 resolvers ++= Seq(
