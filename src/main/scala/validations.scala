@@ -122,7 +122,7 @@ object ValidatorFactory {
     }
   }
 
-  val futureValidatorFactory = ValidatorFactory[annotations.Past] { (_, value) =>
+  val futureValidatorFactory = ValidatorFactory[annotations.Future] { (_, value) =>
     value match {
       case date: Date if date.getTime > DateTime.now.hourOfDay.roundFloorCopy.millis => Nil
       case date: Date => Seq("Must be future date")
