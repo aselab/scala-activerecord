@@ -33,7 +33,14 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   object Dummy2 extends ActiveRecordCompanion[Dummy2]
 
-  case class Dummy3(@Length(min=3, max=10) s1: String) extends ActiveRecord {
+  case class Dummy3(
+    @Length(min=3, max=10) length: String = "aaaaa",
+    @MaxValue(5) maxValue: Int = 0,
+    @MinValue(0) minValue: Int = 1,
+    @Range(min = 5, max = 10) range: Int = 7,
+    @Checked checked: Boolean = true,
+    @Email email: String = "test@example.com"
+  ) extends ActiveRecord {
     def this() = this(null)
   }
 
@@ -154,15 +161,71 @@ object ValidationSpec extends ActiveRecordSpecification {
         }
 
         "@Length" in {
-          val m1 = Dummy3("")
-          val m2 = Dummy3("a" * 5)
-          val m3= Dummy3("a" * 11)
+          val m1 = Dummy3(length = "")
+          val m2 = Dummy3(length = "a" * 5)
+          val m3= Dummy3(length = "a" * 11)
           m1.validate
           m2.validate
           m3.validate
-          m1.errors must contain(ValidationError("s1", "length error"))
+          m1.errors must contain(ValidationError("length", "length error"))
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("s1", "length error"))
+          m3.errors must contain(ValidationError("length", "length error"))
+        }
+
+        "@MaxValue" in {
+          val m1 = Dummy3(maxValue = 5)
+          val m2 = Dummy3(maxValue = 4)
+          val m3 = Dummy3(maxValue = 6)
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must beEmpty
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError("maxValue", "Must be less or equal to 5"))
+        }
+
+       "@MinValue" in {
+          val m1 = Dummy3(minValue = 0)
+          val m2 = Dummy3(minValue = 1)
+          val m3 = Dummy3(minValue = -1)
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must beEmpty
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError("minValue", "Must be greater or equal to 0"))
+        }
+
+       "@Range" in {
+          val models = List(Dummy3(range = 4), Dummy3(range = 5), Dummy3(range = 6),
+            Dummy3(range = 9), Dummy3(range = 10), Dummy3(range = 11))
+          models.foreach(_.validate)
+          models.map(_.errors.toList) must equalTo(List(
+            List(ValidationError("range", "range error")),
+            Nil,
+            Nil,
+            Nil,
+            Nil,
+            List(ValidationError("range", "range error"))
+          ))
+        }
+
+        "@Checked" in {
+          val m1 = Dummy3(checked = true)
+          val m2 = Dummy3(checked = false)
+          m1.validate
+          m2.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError("checked", "Must be checked"))
+        }
+
+        "@Email" in {
+          val m1 = Dummy3(email = "test@example.com")
+          val m2 = Dummy3(email = "aaa")
+          m1.validate
+          m2.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError("email", "Must be email format"))
         }
       }
 
