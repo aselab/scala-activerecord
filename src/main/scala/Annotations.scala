@@ -29,10 +29,6 @@ trait Annotations {
 
   type Range = annotations.Range @field
 
-  type Future = annotations.Future @field
-
-  type Past = annotations.Past @field
-
   type Checked = annotations.Checked @field
 
   type Email = annotations.Email @field

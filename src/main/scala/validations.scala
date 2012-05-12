@@ -2,8 +2,6 @@ package com.github.aselab.activerecord
 
 import org.squeryl.annotations.Transient
 import java.lang.annotation.Annotation
-import org.scala_tools.time.Imports._
-import java.util.Date
 import org.apache.commons.validator.GenericValidator.isEmail
 
 class Errors extends Iterable[ValidationError] {
@@ -73,8 +71,6 @@ object ValidatorFactory {
     classOf[annotations.MinValue] -> minValueValidatorFactory,
     classOf[annotations.Range] -> rangeValidatorFactory,
     classOf[annotations.Email] -> emailValidatorFactory,
-    classOf[annotations.Past] -> pastValidatorFactory,
-    classOf[annotations.Future] -> futureValidatorFactory,
     classOf[annotations.Checked] -> checkedValidatorFactory
   )
 
@@ -118,22 +114,6 @@ object ValidatorFactory {
   val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value) =>
     (a.min, value, a.max) match {
       case (min: Int, v: Int, max: Int) => if (min <= v && v <= max) Nil else Seq("range error")
-      case _ => throw new Exception("Unsupported compare")
-    }
-  }
-
-  val futureValidatorFactory = ValidatorFactory[annotations.Future] { (_, value) =>
-    value match {
-      case date: Date if date.getTime > DateTime.now.hourOfDay.roundFloorCopy.millis => Nil
-      case date: Date => Seq("Must be future date")
-      case _ => throw new Exception("Unsupported compare")
-    }
-  }
-
-  val pastValidatorFactory = ValidatorFactory[annotations.Past] { (_, value) =>
-    value match {
-      case date: Date if date.getTime < DateTime.now.hourOfDay.roundFloorCopy.millis => Nil
-      case date: Date => Seq("Must be past date")
       case _ => throw new Exception("Unsupported compare")
     }
   }
