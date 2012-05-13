@@ -38,3 +38,15 @@ publish <<= (publish, name).map {(_, name) =>
   if (script.exists)
     "%s %s %s".format(script.getAbsolutePath, file("target/publish").getAbsolutePath, name) !
 }
+
+seq(lsSettings: _*)
+
+(LsKeys.tags in LsKeys.lsync) := Seq("orm", "db", "database")
+
+(externalResolvers in LsKeys.lsync) := Seq(
+  "aselab" at "http://aselab.github.com/maven/",
+  "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
+)
+
+(description in LsKeys.lsync) :=
+  "A Scala ORM library like ActiveRecord of Rails."

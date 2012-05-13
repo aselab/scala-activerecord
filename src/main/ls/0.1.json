@@ -1,0 +1,45 @@
+
+{
+ "organization":"com.github.aselab",
+ "name":"scala-activerecord",
+ "version":"0.1",
+ "description":"A Scala ORM library like ActiveRecord of Rails.",
+ "site":"https://github.com/aselab/scala-activerecord",
+ "tags":["orm","db","database"],
+ "docs":"https://github.com/aselab/scala-activerecord/wiki",
+ "licenses": [{
+  "name": "MIT",
+  "url": "https://raw.github.com/aselab/scala-activerecord/master/MIT-LICENSE.txt"
+ }],
+ "resolvers": [
+  "http://aselab.github.com/maven/",
+  "http://repo.typesafe.com/typesafe/releases/"
+ ],
+ "dependencies": [{
+   "organization":"com.github.aselab",
+   "name": "squeryl",
+   "version": "0.9.5"
+  },{
+   "organization":"com.typesafe",
+   "name": "config",
+   "version": "0.4.0"
+  },{
+   "organization":"com.jolbox",
+   "name": "bonecp",
+   "version": "0.7.1.RELEASE"
+  },{
+   "organization":"io.backchat.inflector",
+   "name": "scala-inflector",
+   "version": "1.3.3"
+  },{
+   "organization":"org.scala-tools.time",
+   "name": "time_2.9.1",
+   "version": "0.5"
+  },{
+   "organization":"commons-validator",
+   "name": "commons-validator",
+   "version": "1.4.0"
+  }],
+ "scalas": ["2.9.2"],
+ "sbt": false
+}
