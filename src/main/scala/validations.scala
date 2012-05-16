@@ -67,8 +67,6 @@ object ValidatorFactory {
   lazy val factories = collection.mutable.Map[A, ValidatorFactory[_ <: Annotation]](
     classOf[annotations.Required] -> requiredValidatorFactory,
     classOf[annotations.Length] -> lengthValidatorFactory,
-    classOf[annotations.MaxValue] -> maxValueValidatorFactory,
-    classOf[annotations.MinValue] -> minValueValidatorFactory,
     classOf[annotations.Range] -> rangeValidatorFactory,
     classOf[annotations.Email] -> emailValidatorFactory,
     classOf[annotations.Checked] -> checkedValidatorFactory
@@ -97,24 +95,20 @@ object ValidatorFactory {
     if (a.min <= l && l <= a.max) Nil else Seq("length error")
   }
 
-  val maxValueValidatorFactory = ValidatorFactory[annotations.MaxValue] { (a, value) =>
-    (value, a.value) match {
-      case (k: Int, o: Int) => if (k <= o) Nil else Seq("Must be less or equal to " + a.value)
-      case _ => throw new Exception("Unsupported compare")
-    }
-  }
-
-  val minValueValidatorFactory = ValidatorFactory[annotations.MinValue] { (a, value) =>
-    (value, a.value) match {
-      case (k: Int, o: Int) => if (k >= o) Nil else Seq("Must be greater or equal to " + a.value)
-      case _ => throw new Exception("Unsupported compare")
-    }
-  }
-
   val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value) =>
-    (a.min, value, a.max) match {
-      case (min: Int, v: Int, max: Int) => if (min <= v && v <= max) Nil else Seq("range error")
-      case _ => throw new Exception("Unsupported compare")
+    def range[T <% Ordered[T]](min: T, v: T, max: T) = Seq(
+      (v < min, "must be greater than or equal to " + min),
+      (v > max, "must be less than or equal to " + max)
+    ).collect {
+      case (invalid, message) if invalid => message
+    }
+
+    value match {
+      case v: Int => range(a.min.toInt, v, a.max.toInt)
+      case v: Long => range(a.min.toLong, v, a.max.toLong)
+      case v: Float => range(a.min.toFloat, v, a.max.toFloat)
+      case v: Double => range(a.min, v, a.max)
+      case _ => Nil
     }
   }
 

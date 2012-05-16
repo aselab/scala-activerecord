@@ -5,6 +5,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.FIELD })
 public @interface Range {
-  int max();
-  int min();
+  double max() default Double.POSITIVE_INFINITY;
+  double min() default Double.NEGATIVE_INFINITY;
 }

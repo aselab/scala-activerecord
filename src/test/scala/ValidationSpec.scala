@@ -35,8 +35,8 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   case class Dummy3(
     @Length(min=3, max=10) length: String = "aaaaa",
-    @MaxValue(5) maxValue: Int = 0,
-    @MinValue(0) minValue: Int = 1,
+    @Range(max=5.3) maxValue: Double = 0,
+    @Range(min=0) minValue: Long = 1,
     @Range(min = 5, max = 10) range: Int = 7,
     @Checked checked: Boolean = true,
     @Email email: String = "test@example.com"
@@ -172,7 +172,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.errors must contain(ValidationError("length", "length error"))
         }
 
-        "@MaxValue" in {
+        "@Range max" in {
           val m1 = Dummy3(maxValue = 5)
           val m2 = Dummy3(maxValue = 4)
           val m3 = Dummy3(maxValue = 6)
@@ -181,10 +181,10 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("maxValue", "Must be less or equal to 5"))
+          m3.errors must contain(ValidationError("maxValue", "must be less than or equal to 5.3"))
         }
 
-       "@MinValue" in {
+       "@Range min" in {
           val m1 = Dummy3(minValue = 0)
           val m2 = Dummy3(minValue = 1)
           val m3 = Dummy3(minValue = -1)
@@ -193,7 +193,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("minValue", "Must be greater or equal to 0"))
+          m3.errors must contain(ValidationError("minValue", "must be greater than or equal to 0"))
         }
 
        "@Range" in {
@@ -201,12 +201,12 @@ object ValidationSpec extends ActiveRecordSpecification {
             Dummy3(range = 9), Dummy3(range = 10), Dummy3(range = 11))
           models.foreach(_.validate)
           models.map(_.errors.toList) must equalTo(List(
-            List(ValidationError("range", "range error")),
+            List(ValidationError("range", "must be greater than or equal to 5")),
             Nil,
             Nil,
             Nil,
             Nil,
-            List(ValidationError("range", "range error"))
+            List(ValidationError("range", "must be less than or equal to 10"))
           ))
         }
 
