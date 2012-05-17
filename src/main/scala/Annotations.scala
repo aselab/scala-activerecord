@@ -23,10 +23,6 @@ trait Annotations {
 
   type Length = annotations.Length @field
 
-  type MaxValue = annotations.MaxValue @field
-
-  type MinValue = annotations.MinValue @field
-
   type Range = annotations.Range @field
 
   type Checked = annotations.Checked @field
