@@ -4,17 +4,17 @@ import org.squeryl.annotations.Transient
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 
-class Errors extends Iterable[ValidationError] {
+class Errors(model: Class[_]) extends Iterable[ValidationError] {
   private val errors = collection.mutable.MutableList[ValidationError]()
 
   def iterator = errors.iterator
 
   def add(message: String) {
-    errors += ValidationError("", message)
+    errors += ValidationError(model, "", message)
   }
 
-  def add(fieldName: String, message: String) {
-    errors += ValidationError(fieldName, message)
+  def add(fieldName: String, message: String, args: Any*) {
+    errors += ValidationError(model, fieldName, message, args:_*)
   }
 
   def clear = errors.clear
@@ -22,7 +22,7 @@ class Errors extends Iterable[ValidationError] {
 
 trait Validatable extends Saveable {
   @Transient
-  val errors = new Errors
+  val errors = new Errors(getClass)
 
   def globalErrors = errors.filter(_.key == "")
   def fieldErrors = errors.filter(_.key != "")
@@ -43,7 +43,7 @@ trait Validatable extends Saveable {
   protected def beforeValidation() {}
 }
 
-case class ValidationError(key: String, message: String)
+case class ValidationError(model: Class[_], key: String, message: String, args: Any*)
 
 trait Validator {
   def apply(value: Any): Seq[String]

@@ -84,27 +84,28 @@ object ValidationSpec extends ActiveRecordSpecification {
       m.errors.add("global error2")
       m.errors.add("s", "field error1")
       m.errors.add("i", "field error2")
+      val mc = m.getClass
 
       "errors" in {
         m.errors must contain(
-          ValidationError("", "global error1"),
-          ValidationError("", "global error2"),
-          ValidationError("s", "field error1"),
-          ValidationError("i", "field error2")
+          ValidationError(mc, "", "global error1"),
+          ValidationError(mc, "", "global error2"),
+          ValidationError(mc, "s", "field error1"),
+          ValidationError(mc, "i", "field error2")
         ).only
       }
 
       "globalErrors" in {
         m.globalErrors must contain(
-          ValidationError("", "global error1"),
-          ValidationError("", "global error2")
+          ValidationError(mc, "", "global error1"),
+          ValidationError(mc, "", "global error2")
         ).only
       }
 
       "fieldErrors" in {
         m.fieldErrors must contain(
-          ValidationError("s", "field error1"),
-          ValidationError("i", "field error2")
+          ValidationError(mc, "s", "field error1"),
+          ValidationError(mc, "i", "field error2")
         ).only
       }
     }
@@ -149,30 +150,33 @@ object ValidationSpec extends ActiveRecordSpecification {
 
       "doValidate" in {
         "add custom annotations" in {
+          val c = classOf[Dummy2]
           val m1 = Dummy2("dummy", "")
           val m2 = Dummy2("", "dummy2")
           val m3 = Dummy2("dummy", "dummy2")
           m1.validate
           m2.validate
           m3.validate
-          m1.errors must contain(ValidationError("s1", "dummy"))
-          m2.errors must contain(ValidationError("s2", "dummy2"))
-          m3.errors must contain(ValidationError("s1", "dummy"), ValidationError("s2", "dummy2"))
+          m1.errors must contain(ValidationError(c, "s1", "dummy"))
+          m2.errors must contain(ValidationError(c, "s2", "dummy2"))
+          m3.errors must contain(ValidationError(c, "s1", "dummy"), ValidationError(c, "s2", "dummy2"))
         }
 
         "@Length" in {
+          val c = classOf[Dummy3]
           val m1 = Dummy3(length = "")
           val m2 = Dummy3(length = "a" * 5)
           val m3= Dummy3(length = "a" * 11)
           m1.validate
           m2.validate
           m3.validate
-          m1.errors must contain(ValidationError("length", "length error"))
+          m1.errors must contain(ValidationError(c, "length", "length error"))
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("length", "length error"))
+          m3.errors must contain(ValidationError(c, "length", "length error"))
         }
 
         "@Range max" in {
+          val c = classOf[Dummy3]
           val m1 = Dummy3(maxValue = 5)
           val m2 = Dummy3(maxValue = 4)
           val m3 = Dummy3(maxValue = 6)
@@ -181,10 +185,11 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("maxValue", "must be less than or equal to 5.3"))
+          m3.errors must contain(ValidationError(c, "maxValue", "must be less than or equal to 5.3"))
         }
 
        "@Range min" in {
+          val c = classOf[Dummy3]
           val m1 = Dummy3(minValue = 0)
           val m2 = Dummy3(minValue = 1)
           val m3 = Dummy3(minValue = -1)
@@ -193,39 +198,42 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError("minValue", "must be greater than or equal to 0"))
+          m3.errors must contain(ValidationError(c, "minValue", "must be greater than or equal to 0"))
         }
 
        "@Range" in {
+          val c = classOf[Dummy3]
           val models = List(Dummy3(range = 4), Dummy3(range = 5), Dummy3(range = 6),
             Dummy3(range = 9), Dummy3(range = 10), Dummy3(range = 11))
           models.foreach(_.validate)
           models.map(_.errors.toList) must equalTo(List(
-            List(ValidationError("range", "must be greater than or equal to 5")),
+            List(ValidationError(c, "range", "must be greater than or equal to 5")),
             Nil,
             Nil,
             Nil,
             Nil,
-            List(ValidationError("range", "must be less than or equal to 10"))
+            List(ValidationError(c, "range", "must be less than or equal to 10"))
           ))
         }
 
         "@Checked" in {
+          val c = classOf[Dummy3]
           val m1 = Dummy3(checked = true)
           val m2 = Dummy3(checked = false)
           m1.validate
           m2.validate
           m1.errors must beEmpty
-          m2.errors must contain(ValidationError("checked", "Must be checked"))
+          m2.errors must contain(ValidationError(c, "checked", "Must be checked"))
         }
 
         "@Email" in {
+          val c = classOf[Dummy3]
           val m1 = Dummy3(email = "test@example.com")
           val m2 = Dummy3(email = "aaa")
           m1.validate
           m2.validate
           m1.errors must beEmpty
-          m2.errors must contain(ValidationError("email", "Must be email format"))
+          m2.errors must contain(ValidationError(c, "email", "Must be email format"))
         }
       }
 
