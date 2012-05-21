@@ -14,6 +14,8 @@ trait ActiveRecordConfig {
   def cleanup: Unit = {
     Session.cleanupResources
   }
+
+  def translator = new I18n(i18n.DefaultTranslator)
 }
 
 abstract class AbstractDefaultConfig(
@@ -66,7 +68,7 @@ abstract class AbstractDefaultConfig(
 
   override def cleanup = {
     super.cleanup
-    pool.shutdown
+    //pool.shutdown
   }
 
   def connection = pool.getConnection

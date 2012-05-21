@@ -138,8 +138,8 @@ object ValidationSpec extends ActiveRecordSpecification {
     }
 
     "Validator" in {
-      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value) => if (value.toString == "dummy") Seq("dummy") else Nil}
-      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value) => if (value.toString == "dummy2") Seq("dummy2") else Nil}
+      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value) => if (value.toString == "dummy") Seq(("dummy", Nil)) else Nil}
+      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value) => if (value.toString == "dummy2") Seq(("dummy2", Nil)) else Nil}
       dummyValidator.register
       dummyValidator2.register
 
@@ -170,9 +170,9 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.validate
           m2.validate
           m3.validate
-          m1.errors must contain(ValidationError(c, "length", "length error"))
+          m1.errors must contain(ValidationError(c, "length", "minLength", 3))
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError(c, "length", "length error"))
+          m3.errors must contain(ValidationError(c, "length", "maxLength", 10))
         }
 
         "@Range max" in {
@@ -185,7 +185,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError(c, "maxValue", "must be less than or equal to 5.3"))
+          m3.errors must contain(ValidationError(c, "maxValue", "maxValue", 5.3))
         }
 
        "@Range min" in {
@@ -198,7 +198,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must beEmpty
-          m3.errors must contain(ValidationError(c, "minValue", "must be greater than or equal to 0"))
+          m3.errors must contain(ValidationError(c, "minValue", "minValue", 0))
         }
 
        "@Range" in {
@@ -207,12 +207,12 @@ object ValidationSpec extends ActiveRecordSpecification {
             Dummy3(range = 9), Dummy3(range = 10), Dummy3(range = 11))
           models.foreach(_.validate)
           models.map(_.errors.toList) must equalTo(List(
-            List(ValidationError(c, "range", "must be greater than or equal to 5")),
+            List(ValidationError(c, "range", "minValue", 5)),
             Nil,
             Nil,
             Nil,
             Nil,
-            List(ValidationError(c, "range", "must be less than or equal to 10"))
+            List(ValidationError(c, "range", "maxValue", 10))
           ))
         }
 
@@ -223,7 +223,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.validate
           m2.validate
           m1.errors must beEmpty
-          m2.errors must contain(ValidationError(c, "checked", "Must be checked"))
+          m2.errors must contain(ValidationError(c, "checked", "checked"))
         }
 
         "@Email" in {
@@ -233,7 +233,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.validate
           m2.validate
           m1.errors must beEmpty
-          m2.errors must contain(ValidationError(c, "email", "Must be email format"))
+          m2.errors must contain(ValidationError(c, "email", "invalid"))
         }
       }
 

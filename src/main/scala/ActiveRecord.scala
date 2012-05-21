@@ -435,5 +435,7 @@ object Config {
   def adapter = conf.adapter
 
   def cleanup = conf.cleanup
+
+  def translator = conf.translator
 }
 

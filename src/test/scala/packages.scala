@@ -39,10 +39,6 @@ package models {
     def createTestData = (1 to 100).foreach { i =>
       DummyModel.newModel(i, i > 50).save
     }
-
-    override def cleanup = {
-      Session.cleanupResources
-    }
   }
 
   case class User(name: String) extends ActiveRecord with IO {

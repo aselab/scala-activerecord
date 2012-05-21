@@ -46,7 +46,7 @@ trait Validatable extends Saveable {
 case class ValidationError(model: Class[_], key: String, message: String, args: Any*)
 
 trait Validator {
-  def apply(value: Any): Seq[String]
+  def apply(value: Any): Seq[(String, Seq[Any])]
 }
 
 abstract class ValidatorFactory[T <: Annotation](implicit m: Manifest[T]) {
@@ -56,7 +56,7 @@ abstract class ValidatorFactory[T <: Annotation](implicit m: Manifest[T]) {
 }
 
 object ValidatorFactory {
-  def apply[T <: Annotation](validate: (T, Any) => Seq[String])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
+  def apply[T <: Annotation](validate: (T, Any) => Seq[(String, Seq[Any])])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
     def apply(a: T) = new Validator {
       def apply(value: Any) = validate(a, value)
     }
@@ -87,20 +87,26 @@ object ValidatorFactory {
     get(annotation.annotationType)
 
   val requiredValidatorFactory = ValidatorFactory[annotations.Required] {
-    (_, value) => if (value != null && value.toString.isEmpty) Seq("this field is required") else Nil
+    (_, value) => if (value != null && value.toString.isEmpty)
+      Seq(("required", Nil)) else Nil
   }
 
   val lengthValidatorFactory = ValidatorFactory[annotations.Length] { (a, value) =>
     val l = value.toString.length
-    if (a.min <= l && l <= a.max) Nil else Seq("length error")
+    Seq(
+      (l < a.min, "minLength", a.min),
+      (l > a.max, "maxLength", a.max)
+    ).collect {
+      case (invalid, message, arg) if invalid => (message, Seq(arg))
+    }
   }
 
   val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value) =>
     def range[T <% Ordered[T]](min: T, v: T, max: T) = Seq(
-      (v < min, "must be greater than or equal to " + min),
-      (v > max, "must be less than or equal to " + max)
+      (v < min, "minValue", min),
+      (v > max, "maxValue", max)
     ).collect {
-      case (invalid, message) if invalid => message
+      case (invalid, message, arg) if invalid => (message, Seq(arg))
     }
 
     value match {
@@ -114,13 +120,13 @@ object ValidatorFactory {
 
   val checkedValidatorFactory = ValidatorFactory[annotations.Checked] { (_, value) =>
     value match {
-      case b: Boolean => if (b) Nil else Seq("Must be checked")
+      case b: Boolean => if (b) Nil else Seq(("checked", Nil))
       case _ => throw new Exception("Unsupported")
     }
   }
 
   val emailValidatorFactory = ValidatorFactory[annotations.Email] { (_, value) =>
-    if (isEmail(value.toString)) Nil else Seq("Must be email format")
+    if (isEmail(value.toString)) Nil else Seq(("invalid", Nil))
   }
 }
 
@@ -133,8 +139,8 @@ trait ValidationSupport extends Validatable {self: ActiveRecordBase[_] =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
           val value = self.getValue[Any](name)
-          for (validator <- validators; message <- validator(value)) {
-            errors.add(name, message)
+          for (validator <- validators; (message, args) <- validator(value)) {
+            errors.add(name, message, args:_*)
           }
         }
     }
