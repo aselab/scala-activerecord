@@ -56,7 +56,10 @@ abstract class ValidatorFactory[T <: Annotation](implicit m: Manifest[T]) {
 }
 
 object ValidatorFactory {
-  def apply[T <: Annotation](validate: (T, Any) => Seq[(String, Seq[Any])])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
+  type Message = (String, Seq[Any])
+  def message(msg: String, args: Any*): Message = (msg, args)
+
+  def apply[T <: Annotation](validate: (T, Any) => Seq[Message])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
     def apply(a: T) = new Validator {
       def apply(value: Any) = validate(a, value)
     }
@@ -88,25 +91,25 @@ object ValidatorFactory {
 
   val requiredValidatorFactory = ValidatorFactory[annotations.Required] {
     (_, value) => if (value != null && value.toString.isEmpty)
-      Seq(("required", Nil)) else Nil
+      Seq(message("required")) else Nil
   }
 
   val lengthValidatorFactory = ValidatorFactory[annotations.Length] { (a, value) =>
     val l = value.toString.length
     Seq(
-      (l < a.min, "minLength", a.min),
-      (l > a.max, "maxLength", a.max)
+      (l < a.min, message("minLength", a.min)),
+      (l > a.max, message("maxLength", a.max))
     ).collect {
-      case (invalid, message, arg) if invalid => (message, Seq(arg))
+      case (invalid, message) if invalid => message
     }
   }
 
   val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value) =>
     def range[T <% Ordered[T]](min: T, v: T, max: T) = Seq(
-      (v < min, "minValue", min),
-      (v > max, "maxValue", max)
+      (v < min, message("minValue", min)),
+      (v > max, message("maxValue", max))
     ).collect {
-      case (invalid, message, arg) if invalid => (message, Seq(arg))
+      case (invalid, message) if invalid => message
     }
 
     value match {
@@ -120,13 +123,13 @@ object ValidatorFactory {
 
   val checkedValidatorFactory = ValidatorFactory[annotations.Checked] { (_, value) =>
     value match {
-      case b: Boolean => if (b) Nil else Seq(("checked", Nil))
-      case _ => throw new Exception("Unsupported")
+      case b: Boolean if !b => Seq(message("checked"))
+      case _ => Nil
     }
   }
 
   val emailValidatorFactory = ValidatorFactory[annotations.Email] { (_, value) =>
-    if (isEmail(value.toString)) Nil else Seq(("invalid", Nil))
+    if (isEmail(value.toString)) Nil else Seq(message("invalid"))
   }
 }
 
