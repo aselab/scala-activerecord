@@ -7,12 +7,58 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import mojolly.inflector.InflectorImports._
 
-trait ActiveRecordBase[T] extends KeyedEntity[T] with Product
+trait ProductModel extends Product {
+  lazy val _companion = ReflectionUtil.classToCompanion(getClass)
+    .asInstanceOf[ProductModelCompanion[this.type]]
+}
+
+trait ProductModelCompanion[T <: ProductModel] {
+  import ReflectionUtil._
+
+  /** corresponding model class */
+  protected val targetClass = companionToClass(this)
+
+  /**
+   * Create a new model object.
+   * ActiveRecord class must implement default constructor.
+   */
+  def newInstance = try {
+    targetClass.newInstance.asInstanceOf[T]
+  } catch {
+    case e: InstantiationException =>
+      ActiveRecordException.defaultConstructorRequired
+  }
+
+  /** ActiveRecord fields information */
+  lazy val fieldInfo: Map[String, FieldInfo] = try {
+    val m = newInstance
+    formatFields.map { f =>
+      val name = f.getName
+      (name, FieldInfo(f, m.getValue[Any](name)))
+    }.toMap
+  } catch {
+    case e: ActiveRecordException => Map()
+  }
+
+  lazy val formatFields: List[java.lang.reflect.Field] =
+    targetClass.getDeclaredFields.filterNot {f =>
+      f.isAnnotationPresent(classOf[annotations.Ignore]) ||
+      classOf[RecordRelation].isAssignableFrom(f.getType) ||
+      f.getName.contains("$")
+    }.toList
+
+  lazy val validators: Map[String, Seq[Validator]] = fieldInfo.map {
+    case (name, info) => (name, info.annotations.flatMap { a =>
+      ValidatorFactory.get(a.annotationType).map(_.apply(a))
+    })
+  }.toMap
+}
+
+trait ActiveRecordBase[T] extends KeyedEntity[T] with ProductModel
   with CRUDable with ActiveRecordBaseRelationSupport with ValidationSupport with IO
 {
   /** corresponding ActiveRecordCompanion object */
-  lazy val _companion = ReflectionUtil.classToCompanion(getClass)
-    .asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
+  lazy val recordCompanion = _companion.asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
 
   override def equals(obj: Any): Boolean = obj match {
     case p: Product => productIterator.toList == p.productIterator.toList
@@ -23,18 +69,18 @@ trait ActiveRecordBase[T] extends KeyedEntity[T] with Product
   override def isNewInstance = !isPersisted
 
   protected def doCreate = {
-    _companion.create(this)
+    recordCompanion.create(this)
     true
   }
 
   protected def doUpdate = {
-    _companion.update(this)
+    recordCompanion.update(this)
     true
   }
 
-  protected def doDelete = _companion.delete(id)
+  protected def doDelete = recordCompanion.delete(id)
 
-  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] = _companion.schema.relations
+  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] = recordCompanion.schema.relations
 }
 
 /**
@@ -51,7 +97,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   override def isNewInstance = id == 0
 }
 
-trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
+trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] {
   import ReflectionUtil._
 
   /** self reference */
@@ -240,47 +286,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] {
   lazy val uniqueFields =
     formatFields.filter(_.isAnnotationPresent(classOf[annotations.Unique]))
 
-  /** corresponding ActiveRecord class */
-  private val targetClass = companionToClass(this)
-
-  /**
-   * Create a new model object.
-   * ActiveRecord class must implement default constructor.
-   */
-  def newInstance = try {
-    targetClass.newInstance.asInstanceOf[T]
-  } catch {
-    case e: InstantiationException =>
-      ActiveRecordException.defaultConstructorRequired
-  }
-
-  /** ActiveRecord fields information */
-  lazy val fieldInfo: Map[String, FieldInfo] = try {
-    val m = newInstance
-    formatFields.map { f =>
-      val name = f.getName
-      (name, FieldInfo(f, m.getValue[Any](name)))
-    }.toMap
-  } catch {
-    case e: ActiveRecordException => Map()
-  }
-
-  lazy val formatFields: List[java.lang.reflect.Field] =
-    targetClass.getDeclaredFields.filterNot {f =>
-      f.isAnnotationPresent(classOf[annotations.Ignore]) ||
-      classOf[RecordRelation].isAssignableFrom(f.getType) ||
-      f.getName.contains("$")
-    }.toList
-
   def fromMap(data: Map[String, Any]) = {
     newInstance.assign(data)
   }
-
-  lazy val validators: Map[String, Seq[Validator]] = fieldInfo.map {
-    case (name, info) => (name, info.annotations.flatMap { a =>
-      ValidatorFactory.get(a.annotationType).map(_.apply(a))
-    })
-  }.toMap
 }
 
 /**

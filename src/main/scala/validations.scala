@@ -133,7 +133,7 @@ object ValidatorFactory {
   }
 }
 
-trait ValidationSupport extends Validatable {self: ActiveRecordBase[_] =>
+trait ValidationSupport extends Validatable {self: ProductModel =>
   import ReflectionUtil._
 
   abstract override def doValidate(): Unit = {
