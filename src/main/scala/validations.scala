@@ -22,6 +22,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
 
 trait Validatable extends Saveable {
   @Transient
+  @dsl.Ignore
   val errors = new Errors(getClass)
 
   def globalErrors = errors.filter(_.key == "")

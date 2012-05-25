@@ -46,6 +46,17 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   object Dummy3 extends ActiveRecordCompanion[Dummy3]
 
+  case class ValidateModel(
+    @Email email: String = ""
+  ) extends ProductModel with CRUDable with ValidationSupport {
+    def doDelete(): Boolean = true
+    def doUpdate(): Boolean = true
+    def doCreate(): Boolean = true
+    def this() = this("")
+  }
+
+  object ValidateModel extends ProductModelCompanion[ValidateModel]
+
   case class FormSupportModel(
     string: String,
     boolean: Boolean,
@@ -241,6 +252,12 @@ object ValidationSpec extends ActiveRecordSpecification {
         dummyValidator.unregister
         ValidatorFactory.get(classOf[annotations.Required]) must beSome(dummyValidator2)
         ValidatorFactory.get(classOf[annotations.Unique]) must beNone
+      }
+
+      "not extends ActivevRecord" in {
+        val v = ValidateModel("aaa")
+        v.validate
+        v.errors must not beEmpty
       }
     }
 
