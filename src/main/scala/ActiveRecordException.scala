@@ -13,14 +13,14 @@ object ActiveRecordException {
     throw new ActiveRecordException("Cannot create instance of " + className +
       "\ncause: " + cause)
 
-  def optionValueMustBeSome =
-    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is None because of type erasure.")
+  def optionValueMustBeSome(name: String) =
+    throw new ActiveRecordException("Cannot detect generic type of '%s' because of type erasure. Default value of Option field must not be None.".format(name))
 
-  def traversableValueMustNotBeNil =
-    throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is Nil because of type erasure.")
+  def traversableValueMustNotBeNil(name: String) =
+    throw new ActiveRecordException("Cannot detect generic type of '%s' because of type erasure. Default value of Seq field must not be Nil".format(name))
 
-  def cannotDetectType(value: Any) =
-    throw new ActiveRecordException("Cannot detect type of %s.".format(value))
+  def cannotDetectType(name: String) =
+    throw new ActiveRecordException("Cannot detect type of '%s'.".format(name))
 
   def unsupportedDriver(driver: String) =
     throw new ActiveRecordException("Unsupported database driver: " + driver)

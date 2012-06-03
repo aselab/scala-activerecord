@@ -95,43 +95,43 @@ object ReflectionSpec extends Specification {
     "detect type of Option value" in {
       "Int" in {
         FieldInfo.apply("int", Some(3)) mustEqual
-          FieldInfo("int", classOf[Integer], true, false)
+          FieldInfo("int", Some(classOf[java.lang.Integer]), true, false)
       }
 
       "String" in {
          FieldInfo.apply("string", Some("test")) mustEqual
-           FieldInfo("string", classOf[String], true, false)
+           FieldInfo("string", Some(classOf[String]), true, false)
       }
 
       "Object" in {
          FieldInfo.apply("object", Some(new Dummy)) mustEqual
-           FieldInfo("object", classOf[Dummy], true, false)
+           FieldInfo("object", Some(classOf[Dummy]), true, false)
       }
     }
 
     "detect type of List value" in {
       "Int" in {
         FieldInfo.apply("int", Seq(3)) mustEqual
-          FieldInfo("int", classOf[Integer], false, true)
+          FieldInfo("int", Some(classOf[java.lang.Integer]), false, true)
       }
 
       "String" in {
          FieldInfo.apply("string", Seq("test")) mustEqual
-           FieldInfo("string", classOf[String], false, true)
+           FieldInfo("string", Some(classOf[String]), false, true)
       }
 
       "Object" in {
          FieldInfo.apply("object", Seq(new Dummy)) mustEqual
-           FieldInfo("object", classOf[Dummy], false, true)
+           FieldInfo("object", Some(classOf[Dummy]), false, true)
       }
     }
 
     "Option[List]" in {
        FieldInfo.apply("listint", Some(Seq(3, 4))) mustEqual
-         FieldInfo("listint", classOf[Integer], true, true)
+         FieldInfo("listint", Some(classOf[java.lang.Integer]), true, true)
 
        FieldInfo.apply("listobject", Some(Seq(new Dummy))) mustEqual
-         FieldInfo("listobject", classOf[Dummy], true, true)
+         FieldInfo("listobject", Some(classOf[Dummy]), true, true)
     }
   }
 }

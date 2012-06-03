@@ -71,7 +71,7 @@ object ClassInfo {
 }
 
 case class FieldInfo(
-  name: String, fieldType: Class[_],
+  name: String, fieldTypeOption: Option[Class[_]],
   isOption: Boolean, isSeq: Boolean,
   annotations: Seq[Annotation] = Nil
 ) {
@@ -82,23 +82,26 @@ case class FieldInfo(
   lazy val required = annotationMap.isDefinedAt("Required")
   lazy val ignored = annotationMap.isDefinedAt("Ignore")
   lazy val unique = annotationMap.isDefinedAt("Unique")
+
+  lazy val fieldType = fieldTypeOption.getOrElse {
+    if (isOption) ActiveRecordException.optionValueMustBeSome(name)
+    else if (isSeq) ActiveRecordException.traversableValueMustNotBeNil(name)
+    else ActiveRecordException.cannotDetectType(name)
+  }
 }
 
 object FieldInfo {
   def apply(name: String, value: Any, field: Option[Field]): FieldInfo = value match {
-    case Some(v) => apply(name, v, None).copy(isOption = true)
-    case None => ActiveRecordException.optionValueMustBeSome
+    case Some(v) => apply(name, v, field).copy(isOption = true)
+    case None => FieldInfo(name, None, true, false)
 
     case l: Traversable[_] => l.toSeq match {
-      case Seq(v, _*) => apply(name, v, None).copy(isSeq = true)
-      case Nil => ActiveRecordException.traversableValueMustNotBeNil
+      case Seq(v, _*) => apply(name, v, field).copy(isSeq = true)
+      case Nil => FieldInfo(name, None, false, true)
     }
 
-    case v: Any => FieldInfo(name, v.getClass, false, false)
-    case v =>
-      val fieldType = field.map(_.getType).getOrElse(
-        ActiveRecordException.cannotDetectType(v))
-      FieldInfo(name, fieldType, false, false)
+    case v: Any => FieldInfo(name, Option(v.getClass), false, false)
+    case v => FieldInfo(name, field.map(_.getType), false, false)
   }
 
   def apply(name: String, value: Any): FieldInfo = apply(name, value, None)

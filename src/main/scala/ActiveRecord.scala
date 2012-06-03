@@ -17,28 +17,23 @@ trait ProductModelCompanion[T <: ProductModel] {
   import ReflectionUtil._
 
   /** corresponding model class */
-  protected val targetClass = companionToClass(this)
+  protected val targetClass = companionToClass(this).asInstanceOf[Class[T]]
 
   /**
    * Create a new model object.
-   * ActiveRecord class must implement default constructor.
    */
-  def newInstance = try {
-    targetClass.newInstance.asInstanceOf[T]
-  } catch {
-    case e: InstantiationException =>
-      ActiveRecordException.defaultConstructorRequired
-  }
+  def newInstance = classInfo.factory.apply
 
-  /** ActiveRecord fields information */
-  lazy val fieldInfo: Map[String, FieldInfo] = try {
+  /** ProductModel class information */
+  lazy val classInfo: ClassInfo[T] = ClassInfo(targetClass)
+
+  /** ProductModel fields information */
+  lazy val fieldInfo: Map[String, FieldInfo] = {
     val m = newInstance
     formatFields.map { f =>
       val name = f.getName
       (name, FieldInfo(f, m.getValue[Any](name)))
     }.toMap
-  } catch {
-    case e: ActiveRecordException => Map()
   }
 
   lazy val formatFields: List[java.lang.reflect.Field] =
