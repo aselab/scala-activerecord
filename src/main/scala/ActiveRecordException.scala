@@ -9,6 +9,10 @@ object ActiveRecordException {
   def defaultConstructorRequired =
     throw new ActiveRecordException("Must implement default constructor")
 
+  def cannotCreateInstance(className: String, cause: String) =
+    throw new ActiveRecordException("Cannot create instance of " + className +
+      "\ncause: " + cause)
+
   def optionValueMustBeSome =
     throw new ActiveRecordException("Cannot detect generic type parameter when a field's default value is None because of type erasure.")
 
