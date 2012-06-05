@@ -39,7 +39,13 @@ object ValidationSpec extends ActiveRecordSpecification {
     @Range(min=0) minValue: Long = 1,
     @Range(min = 5, max = 10) range: Int = 7,
     @Checked checked: Boolean = true,
-    @Email email: String = "test@example.com"
+    @Email email: String = "test@example.com",
+    @Length(min=3, max=10) lengthOption: Option[String] = Some("aaaaa"),
+    @Range(max=5.3) maxValueOption: Option[Double] = Some(0),
+    @Range(min=0) minValueOption: Option[Long] = Some(1),
+    @Range(min = 5, max = 10) rangeOption: Option[Int] = Some(7),
+    @Checked checkedOption: Option[Boolean] = Some(true),
+    @Email emailOption: Option[String] = Some("test@example.com")
   ) extends ActiveRecord {
     def this() = this(null)
   }
@@ -186,6 +192,22 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.errors must contain(ValidationError(c, "length", "maxLength", 10))
         }
 
+        "@Length (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(lengthOption = Some(""))
+          val m2 = Dummy3(lengthOption = Some("a" * 5))
+          val m3= Dummy3(lengthOption = Some("a" * 11))
+          val m4= Dummy3(lengthOption = None)
+          m1.validate
+          m2.validate
+          m3.validate
+          m4.validate
+          m1.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError(c, "lengthOption", "maxLength", 10))
+          m4.errors must beEmpty
+        }
+
         "@Range max" in {
           val c = classOf[Dummy3]
           val m1 = Dummy3(maxValue = 5)
@@ -227,6 +249,61 @@ object ValidationSpec extends ActiveRecordSpecification {
           ))
         }
 
+        "@Range max (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(maxValueOption = Some(5))
+          val m2 = Dummy3(maxValueOption = Some(4))
+          val m3 = Dummy3(maxValueOption = Some(6))
+          val m4 = Dummy3(maxValueOption = None)
+          m1.validate
+          m2.validate
+          m3.validate
+          m4.validate
+          m1.errors must beEmpty
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError(c, "maxValueOption", "maxValue", 5.3))
+          m4.errors must beEmpty
+        }
+
+       "@Range min (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(minValueOption = Some(0))
+          val m2 = Dummy3(minValueOption = Some(1))
+          val m3 = Dummy3(minValueOption = Some(-1))
+          val m4 = Dummy3(minValueOption = None)
+          m1.validate
+          m2.validate
+          m3.validate
+          m4.validate
+          m1.errors must beEmpty
+          m2.errors must beEmpty
+          m3.errors must contain(ValidationError(c, "minValueOption", "minValue", 0))
+          m4.errors must beEmpty
+        }
+
+       "@Range (Option)" in {
+          val c = classOf[Dummy3]
+          val models = List(
+            Dummy3(rangeOption = Some(4)),
+            Dummy3(rangeOption = Some(5)),
+            Dummy3(rangeOption = Some(6)),
+            Dummy3(rangeOption = Some(9)),
+            Dummy3(rangeOption = Some(10)),
+            Dummy3(rangeOption = Some(11)),
+            Dummy3(rangeOption = None)
+          )
+          models.foreach(_.validate)
+          models.map(_.errors.toList) must equalTo(List(
+            List(ValidationError(c, "rangeOption", "minValue", 5)),
+            Nil,
+            Nil,
+            Nil,
+            Nil,
+            List(ValidationError(c, "rangeOption", "maxValue", 10)),
+            Nil
+          ))
+        }
+
         "@Checked" in {
           val c = classOf[Dummy3]
           val m1 = Dummy3(checked = true)
@@ -237,6 +314,18 @@ object ValidationSpec extends ActiveRecordSpecification {
           m2.errors must contain(ValidationError(c, "checked", "checked"))
         }
 
+        "@Checked (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(checkedOption = Some(true))
+          val m2 = Dummy3(checkedOption = Some(false))
+          val m3 = Dummy3(checkedOption = None)
+          m1.validate
+          m2.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError(c, "checkedOption", "checked"))
+          m3.errors must beEmpty
+        }
+
         "@Email" in {
           val c = classOf[Dummy3]
           val m1 = Dummy3(email = "test@example.com")
@@ -245,6 +334,19 @@ object ValidationSpec extends ActiveRecordSpecification {
           m2.validate
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "email", "invalid"))
+        }
+
+        "@Email (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(emailOption = Some("test@example.com"))
+          val m2 = Dummy3(emailOption = Some("aaa"))
+          val m3 = Dummy3(emailOption = None)
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError(c, "emailOption", "invalid"))
+          m3.errors must beEmpty
         }
       }
 

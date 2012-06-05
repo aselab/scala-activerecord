@@ -142,10 +142,14 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
       case (name, _) =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
-          val value = self.getValue[Any](name)
-          for (validator <- validators; (message, args) <- validator(value)) {
-            errors.add(name, message, args:_*)
-          }
+          (self.getValue[Any](name) match {
+            case v: Option[_] => v
+            case v => Some(v)
+          }).foreach(value =>
+            validators.foreach(_(value).collect{ case (message, args) =>
+              errors.add(name, message, args:_*)
+            })
+          )
         }
     }
     super.doValidate()
