@@ -96,7 +96,7 @@ object ValidatorFactory {
   }
 
   val lengthValidatorFactory = ValidatorFactory[annotations.Length] { (a, value) =>
-    val l = value.toString.length
+    val l = if (value == null) 0 else value.toString.length
     Seq(
       (l < a.min, message("minLength", a.min)),
       (l > a.max, message("maxLength", a.max))
@@ -130,7 +130,7 @@ object ValidatorFactory {
   }
 
   val emailValidatorFactory = ValidatorFactory[annotations.Email] { (_, value) =>
-    if (isEmail(value.toString)) Nil else Seq(message("invalid"))
+    if (value != null && isEmail(value.toString)) Nil else Seq(message("invalid"))
   }
 }
 

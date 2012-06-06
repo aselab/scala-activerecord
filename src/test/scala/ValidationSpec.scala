@@ -183,29 +183,35 @@ object ValidationSpec extends ActiveRecordSpecification {
           val c = classOf[Dummy3]
           val m1 = Dummy3(length = "")
           val m2 = Dummy3(length = "a" * 5)
-          val m3= Dummy3(length = "a" * 11)
+          val m3 = Dummy3(length = "a" * 11)
+          val m4 = Dummy3(length = null)
           m1.validate
           m2.validate
           m3.validate
+          m4.validate
           m1.errors must contain(ValidationError(c, "length", "minLength", 3))
           m2.errors must beEmpty
           m3.errors must contain(ValidationError(c, "length", "maxLength", 10))
+          m4.errors must contain(ValidationError(c, "length", "minLength", 3))
         }
 
         "@Length (Option)" in {
           val c = classOf[Dummy3]
           val m1 = Dummy3(lengthOption = Some(""))
           val m2 = Dummy3(lengthOption = Some("a" * 5))
-          val m3= Dummy3(lengthOption = Some("a" * 11))
-          val m4= Dummy3(lengthOption = None)
+          val m3 = Dummy3(lengthOption = Some("a" * 11))
+          val m4 = Dummy3(lengthOption = None)
+          val m5 = Dummy3(lengthOption = Some(null))
           m1.validate
           m2.validate
           m3.validate
           m4.validate
+          m5.validate
           m1.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
           m2.errors must beEmpty
           m3.errors must contain(ValidationError(c, "lengthOption", "maxLength", 10))
           m4.errors must beEmpty
+          m5.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
         }
 
         "@Range max" in {
@@ -330,10 +336,13 @@ object ValidationSpec extends ActiveRecordSpecification {
           val c = classOf[Dummy3]
           val m1 = Dummy3(email = "test@example.com")
           val m2 = Dummy3(email = "aaa")
+          val m3 = Dummy3(email = null)
           m1.validate
           m2.validate
+          m3.validate
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "email", "invalid"))
+          m3.errors must contain(ValidationError(c, "email", "invalid"))
         }
 
         "@Email (Option)" in {
@@ -341,12 +350,15 @@ object ValidationSpec extends ActiveRecordSpecification {
           val m1 = Dummy3(emailOption = Some("test@example.com"))
           val m2 = Dummy3(emailOption = Some("aaa"))
           val m3 = Dummy3(emailOption = None)
+          val m4 = Dummy3(emailOption = Some(null))
           m1.validate
           m2.validate
           m3.validate
+          m4.validate
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "emailOption", "invalid"))
           m3.errors must beEmpty
+          m4.errors must contain(ValidationError(c, "emailOption", "invalid"))
         }
       }
 
