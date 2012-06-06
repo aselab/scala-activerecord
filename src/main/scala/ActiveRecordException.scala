@@ -33,5 +33,8 @@ object ActiveRecordException {
 
   def missingForeignKey(name: String) =
     throw new ActiveRecordException("Cannot find declaration of foreign key: " + name)
+
+  def notfoundConfirmField(name: String) =
+    throw new ActiveRecordException("Cannot find confirmation field: " + name)
 }
 

@@ -47,7 +47,7 @@ trait Validatable extends Saveable {
 case class ValidationError(model: Class[_], key: String, message: String, args: Any*)
 
 trait Validator {
-  def apply(value: Any): Seq[(String, Seq[Any])]
+  def apply(value: Any, fieldName: String)(implicit companion: ProductModel): Seq[(String, Seq[Any])]
 }
 
 abstract class ValidatorFactory[T <: Annotation](implicit m: Manifest[T]) {
@@ -60,9 +60,11 @@ object ValidatorFactory {
   type Message = (String, Seq[Any])
   def message(msg: String, args: Any*): Message = (msg, args)
 
-  def apply[T <: Annotation](validate: (T, Any) => Seq[Message])(implicit m: Manifest[T]) = new ValidatorFactory[T] {
+  def apply[T <: Annotation](validate: (T, Any, String, ProductModel) => Seq[Message])
+    (implicit m: Manifest[T]): ValidatorFactory[T] = new ValidatorFactory[T] {
     def apply(a: T) = new Validator {
-      def apply(value: Any) = validate(a, value)
+      def apply(value: Any, fieldName: String)(implicit companion: ProductModel) =
+        validate(a, value, fieldName, companion)
     }
   }
 
@@ -73,7 +75,9 @@ object ValidatorFactory {
     classOf[annotations.Length] -> lengthValidatorFactory,
     classOf[annotations.Range] -> rangeValidatorFactory,
     classOf[annotations.Email] -> emailValidatorFactory,
-    classOf[annotations.Checked] -> checkedValidatorFactory
+    classOf[annotations.Checked] -> checkedValidatorFactory,
+    classOf[annotations.Format] -> formatValidatorFactory,
+    classOf[annotations.Confirm] -> confirmValidatorFactory
   )
 
   def register[T <: Annotation](factory: ValidatorFactory[T])(implicit m: Manifest[T]) =
@@ -91,11 +95,11 @@ object ValidatorFactory {
     get(annotation.annotationType)
 
   val requiredValidatorFactory = ValidatorFactory[annotations.Required] {
-    (_, value) => if (value != null && value.toString.isEmpty)
+    (_, value, _, _) => if (value != null && value.toString.isEmpty)
       Seq(message("required")) else Nil
   }
 
-  val lengthValidatorFactory = ValidatorFactory[annotations.Length] { (a, value) =>
+  val lengthValidatorFactory = ValidatorFactory[annotations.Length] { (a, value, _, _) =>
     val l = if (value == null) 0 else value.toString.length
     Seq(
       (l < a.min, message("minLength", a.min)),
@@ -105,7 +109,7 @@ object ValidatorFactory {
     }
   }
 
-  val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value) =>
+  val rangeValidatorFactory = ValidatorFactory[annotations.Range] { (a, value, _ , _) =>
     def range[T <% Ordered[T]](min: T, v: T, max: T) = Seq(
       (v < min, message("minValue", min)),
       (v > max, message("maxValue", max))
@@ -122,15 +126,35 @@ object ValidatorFactory {
     }
   }
 
-  val checkedValidatorFactory = ValidatorFactory[annotations.Checked] { (_, value) =>
+  val checkedValidatorFactory = ValidatorFactory[annotations.Checked] { (_, value, _, _) =>
     value match {
       case b: Boolean if !b => Seq(message("checked"))
       case _ => Nil
     }
   }
 
-  val emailValidatorFactory = ValidatorFactory[annotations.Email] { (_, value) =>
+  val emailValidatorFactory = ValidatorFactory[annotations.Email] { (_, value, _, _) =>
     if (value != null && isEmail(value.toString)) Nil else Seq(message("invalid"))
+  }
+
+  val formatValidatorFactory = ValidatorFactory[annotations.Format] {
+    (a, value, _, _) => if (value != null && a.value != null &&
+      a.value.r.findFirstIn(value.toString).isDefined) Nil else Seq(message("format"))
+  }
+
+  val confirmValidatorFactory = ValidatorFactory[annotations.Confirm] {
+    (a, value, fieldName, model) =>
+      import ReflectionUtil._
+      val confirmFieldName = fieldName + "Confirmation"
+      val confirmValue = try {
+        model.getValue[String](confirmFieldName)
+      } catch {
+        case e => throw ActiveRecordException.notfoundConfirmField(confirmFieldName)
+      }
+      if (value != null && value.toString == confirmValue)
+        Nil
+      else
+        Seq(message("confirmation"))
   }
 }
 
@@ -138,7 +162,8 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
   import ReflectionUtil._
 
   abstract override def doValidate(): Unit = {
-    self._companion.fieldInfo.foreach {
+    implicit val model = self
+    _companion.fieldInfo.foreach {
       case (name, _) =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
@@ -146,7 +171,7 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
             case v: Option[_] => v
             case v => Some(v)
           }).foreach(value =>
-            validators.foreach(_(value).collect{ case (message, args) =>
+            validators.foreach(_(value, name).collect{ case (message, args) =>
               errors.add(name, message, args:_*)
             })
           )

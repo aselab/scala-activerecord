@@ -28,4 +28,8 @@ trait Annotations {
   type Checked = annotations.Checked @field
 
   type Email = annotations.Email @field
+
+  type Format = annotations.Format @field
+
+  type Confirm = annotations.Confirm @field
 }

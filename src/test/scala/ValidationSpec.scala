@@ -40,17 +40,26 @@ object ValidationSpec extends ActiveRecordSpecification {
     @Range(min = 5, max = 10) range: Int = 7,
     @Checked checked: Boolean = true,
     @Email email: String = "test@example.com",
+    @Format("""\d+""") format: String = "100",
     @Length(min=3, max=10) lengthOption: Option[String] = Some("aaaaa"),
     @Range(max=5.3) maxValueOption: Option[Double] = Some(0),
     @Range(min=0) minValueOption: Option[Long] = Some(1),
     @Range(min = 5, max = 10) rangeOption: Option[Int] = Some(7),
     @Checked checkedOption: Option[Boolean] = Some(true),
-    @Email emailOption: Option[String] = Some("test@example.com")
+    @Email emailOption: Option[String] = Some("test@example.com"),
+    @Format("""\d+""") formatOption: Option[String] = Some("100")
   ) extends ActiveRecord {
     def this() = this(null)
   }
 
   object Dummy3 extends ActiveRecordCompanion[Dummy3]
+
+  case class UserModel(
+    @Transient @Confirm var password: String,
+    @Transient var passwordConfirmation: String
+  ) extends ActiveRecord
+
+  object UserModel extends ActiveRecordCompanion[UserModel]
 
   case class ValidateModel(
     @Email email: String = ""
@@ -155,8 +164,8 @@ object ValidationSpec extends ActiveRecordSpecification {
     }
 
     "Validator" in {
-      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value) => if (value.toString == "dummy") Seq(("dummy", Nil)) else Nil}
-      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value) => if (value.toString == "dummy2") Seq(("dummy2", Nil)) else Nil}
+      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value, _, _) => if (value.toString == "dummy") Seq(("dummy", Nil)) else Nil}
+      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value, _, _) => if (value.toString == "dummy2") Seq(("dummy2", Nil)) else Nil}
       dummyValidator.register
       dummyValidator2.register
 
@@ -177,6 +186,16 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.errors must contain(ValidationError(c, "s1", "dummy"))
           m2.errors must contain(ValidationError(c, "s2", "dummy2"))
           m3.errors must contain(ValidationError(c, "s1", "dummy"), ValidationError(c, "s2", "dummy2"))
+        }
+
+        "@Confirm" in {
+          val c = classOf[UserModel]
+          val m1 = UserModel("aaa", "bbb")
+          val m2 = UserModel("aaa", "aaa")
+          m1.validate
+          m2.validate
+          m1.errors must contain(ValidationError(c, "password", "confirmation"))
+          m2.errors must beEmpty
         }
 
         "@Length" in {
@@ -359,6 +378,35 @@ object ValidationSpec extends ActiveRecordSpecification {
           m2.errors must contain(ValidationError(c, "emailOption", "invalid"))
           m3.errors must beEmpty
           m4.errors must contain(ValidationError(c, "emailOption", "invalid"))
+        }
+
+        "@Format" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(format = "200")
+          val m2 = Dummy3(format = "aaa")
+          val m3 = Dummy3(format = null)
+          m1.validate
+          m2.validate
+          m3.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError(c, "format", "format"))
+          m3.errors must contain(ValidationError(c, "format", "format"))
+        }
+
+        "@Format (Option)" in {
+          val c = classOf[Dummy3]
+          val m1 = Dummy3(formatOption = Some("200"))
+          val m2 = Dummy3(formatOption = Some("aaa"))
+          val m3 = Dummy3(formatOption = None)
+          val m4 = Dummy3(formatOption = Some(null))
+          m1.validate
+          m2.validate
+          m3.validate
+          m4.validate
+          m1.errors must beEmpty
+          m2.errors must contain(ValidationError(c, "formatOption", "format"))
+          m3.errors must beEmpty
+          m4.errors must contain(ValidationError(c, "formatOption", "format"))
         }
       }
 
