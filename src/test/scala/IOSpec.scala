@@ -1,8 +1,5 @@
 package com.github.aselab.activerecord.experimental
 
-import org.specs2.mutable._
-import org.specs2.specification._
-
 import com.github.aselab.activerecord._
 import models._
 import java.util.{Date, UUID}
