@@ -61,6 +61,11 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   object UserModel extends ActiveRecordCompanion[UserModel]
 
+  case class MissingConfirmField(
+    @Confirm test: String
+  ) extends ActiveRecord
+  object MissingConfirmField extends ActiveRecordCompanion[MissingConfirmField]
+
   case class ValidateModel(
     @Email email: String = ""
   ) extends ProductModel with CRUDable with ValidationSupport {
@@ -164,12 +169,23 @@ object ValidationSpec extends ActiveRecordSpecification {
 
         "@Confirm" in {
           val c = classOf[UserModel]
-          val m1 = UserModel("aaa", "bbb")
-          val m2 = UserModel("aaa", "aaa")
-          m1.validate
-          m2.validate
-          m1.errors must contain(ValidationError(c, "password", "confirmation"))
-          m2.errors must beEmpty
+          
+          "not equals confirmation field" in {
+            val m = UserModel("aaa", "bbb")
+            m.validate must beFalse
+            m.errors must contain(ValidationError(c, "password", "confirmation"))
+          }
+
+          "equals confirmation field" in {
+            val m = UserModel("aaa", "aaa")
+            m.validate must beTrue
+            m.errors must beEmpty
+          }
+
+          "throws exception when confirmation field is not defined" in {
+            val m = MissingConfirmField("aaa")
+            m.validate must throwA[ActiveRecordException]
+          }
         }
 
         "@Length" in {
