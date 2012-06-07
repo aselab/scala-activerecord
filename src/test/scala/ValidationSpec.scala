@@ -164,10 +164,15 @@ object ValidationSpec extends ActiveRecordSpecification {
     }
 
     "Validator" in {
-      val dummyValidator =  ValidatorFactory[annotations.Unique]{(_, value, _, _) => if (value.toString == "dummy") Seq(("dummy", Nil)) else Nil}
-      val dummyValidator2 = ValidatorFactory[annotations.Required]{(_, value, _, _) => if (value.toString == "dummy2") Seq(("dummy2", Nil)) else Nil}
-      dummyValidator.register
-      dummyValidator2.register
+      val dummyValidator =  new Validator[annotations.Unique]{
+        def validate(value: Any) =
+          if (value.toString == "dummy") errors.add(fieldName, "dummy")
+      }.register
+
+      val dummyValidator2 = new Validator[annotations.Required]{
+        def validate(value: Any) =
+          if (value.toString == "dummy2") errors.add(fieldName, "dummy2")
+      }.register
 
       "get" in {
         ValidatorFactory.get(classOf[annotations.Unique]) must beSome(dummyValidator)
@@ -361,7 +366,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "email", "invalid"))
-          m3.errors must contain(ValidationError(c, "email", "invalid"))
+          m3.errors must beEmpty
         }
 
         "@Email (Option)" in {
@@ -377,7 +382,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "emailOption", "invalid"))
           m3.errors must beEmpty
-          m4.errors must contain(ValidationError(c, "emailOption", "invalid"))
+          m4.errors must beEmpty
         }
 
         "@Format" in {
@@ -390,7 +395,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m3.validate
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "format", "format"))
-          m3.errors must contain(ValidationError(c, "format", "format"))
+          m3.errors must beEmpty
         }
 
         "@Format (Option)" in {
@@ -406,7 +411,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           m1.errors must beEmpty
           m2.errors must contain(ValidationError(c, "formatOption", "format"))
           m3.errors must beEmpty
-          m4.errors must contain(ValidationError(c, "formatOption", "format"))
+          m4.errors must beEmpty
         }
       }
 

@@ -5,6 +5,7 @@ import org.squeryl.dsl._
 import org.squeryl.PrimitiveTypeMode._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
+import java.lang.annotation.Annotation
 import mojolly.inflector.InflectorImports._
 
 trait ProductModel extends Product {
@@ -43,9 +44,9 @@ trait ProductModelCompanion[T <: ProductModel] {
       f.getName.contains("$")
     }.toList
 
-  lazy val validators: Map[String, Seq[Validator]] = fieldInfo.map {
+  lazy val validators: Map[String, Seq[(Annotation, Validator[_])]] = fieldInfo.map {
     case (name, info) => (name, info.annotations.flatMap { a =>
-      ValidatorFactory.get(a.annotationType).map(_.apply(a))
+      ValidatorFactory.get(a.annotationType).map(a -> _)
     })
   }.toMap
 }
