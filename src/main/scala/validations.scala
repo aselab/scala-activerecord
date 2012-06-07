@@ -69,20 +69,20 @@ abstract class Validator[T <: Annotation](implicit m: Manifest[T]) {
   }
 
   def register = {
-    ValidatorFactory.register(this)
+    Validator.register(this)
     this
   }
 
   def unregister = {
-    ValidatorFactory.unregister(this)
+    Validator.unregister(this)
     this
   }
 }
 
-object ValidatorFactory {
+object Validator {
   type A = Class[_ <: Annotation]
 
-  lazy val factories = collection.mutable.Map[A, Validator[_ <: Annotation]](
+  lazy val validators = collection.mutable.Map[A, Validator[_ <: Annotation]](
     classOf[annotations.Required] -> requiredValidator,
     classOf[annotations.Length] -> lengthValidator,
     classOf[annotations.Range] -> rangeValidator,
@@ -93,15 +93,15 @@ object ValidatorFactory {
   )
 
   def register[T <: Annotation](validator: Validator[T])(implicit m: Manifest[T]) =
-    factories += (m.erasure.asInstanceOf[Class[T]] -> validator)
+    validators += (m.erasure.asInstanceOf[Class[T]] -> validator)
 
-  def unregister(annotation: A): Unit = factories -= annotation
+  def unregister(annotation: A): Unit = validators -= annotation
 
   def unregister[T <: Annotation](validator: Validator[T])(implicit m: Manifest[T]): Unit =
     unregister(m.erasure.asInstanceOf[Class[T]])
 
   def get(annotation: A): Option[Validator[Annotation]] =
-    factories.get(annotation).asInstanceOf[Option[Validator[Annotation]]]
+    validators.get(annotation).asInstanceOf[Option[Validator[Annotation]]]
 
   def get(annotation: Annotation): Option[Validator[Annotation]] =
     get(annotation.annotationType)
@@ -193,13 +193,3 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
   }
 }
 
-trait FormSupport[T <: ActiveRecord] {self: ActiveRecordCompanion[T] =>
-  import ReflectionUtil._
-
-  def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
-    source.assignFormValues(data)
-    source
-  }
-
-  def unbind(m: T): Map[String, String] = throw new UnsupportedOperationException()
-}

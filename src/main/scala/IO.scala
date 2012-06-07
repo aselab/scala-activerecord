@@ -73,3 +73,13 @@ object Converter {
   def get(fieldType: Class[_]) = converters.get(fieldType)
 }
 
+trait FormSupport[T <: ActiveRecord] {self: ActiveRecordCompanion[T] =>
+  import ReflectionUtil._
+
+  def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
+    source.assignFormValues(data)
+    source
+  }
+
+  def unbind(m: T): Map[String, String] = throw new UnsupportedOperationException()
+}

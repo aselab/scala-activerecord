@@ -46,7 +46,7 @@ trait ProductModelCompanion[T <: ProductModel] {
 
   lazy val validators: Map[String, Seq[(Annotation, Validator[_])]] = fieldInfo.map {
     case (name, info) => (name, info.annotations.flatMap { a =>
-      ValidatorFactory.get(a.annotationType).map(a -> _)
+      Validator.get(a.annotationType).map(a -> _)
     })
   }.toMap
 }
