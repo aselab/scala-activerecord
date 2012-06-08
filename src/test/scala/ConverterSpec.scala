@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord
 
 import com.github.aselab.activerecord._
-import java.util.{Date, UUID}
+import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 
 object ConverterSpec extends ActiveRecordSpecification {
@@ -13,17 +13,19 @@ object ConverterSpec extends ActiveRecordSpecification {
     }
 
     "DateConverter" in {
+      TimeZone.setDefault(TimeZone.getTimeZone("GMT"))
       val converter = Converter.get(classOf[Date]).get
       val serialized = new Date(5L * 1000 * 60 * 60 * 24)
-      val deserialized = "1970-01-06T09:00:00.000+09:00"
+      val deserialized = "1970-01-06T00:00:00.000Z"
       converter.serialize(deserialized) mustEqual serialized
       converter.deserialize(serialized) mustEqual deserialized
     }
 
     "TimestampConverter" in {
+      TimeZone.setDefault(TimeZone.getTimeZone("GMT"))
       val converter = Converter.get(classOf[Timestamp]).get
       val serialized = new Timestamp(5L)
-      val deserialized = "1970-01-01T09:00:00.005+09:00"
+      val deserialized = "1970-01-01T00:00:00.005Z"
       converter.serialize(deserialized) mustEqual serialized
       converter.deserialize(serialized) mustEqual deserialized
     }

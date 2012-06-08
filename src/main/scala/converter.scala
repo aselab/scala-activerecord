@@ -1,6 +1,6 @@
 package com.github.aselab.activerecord
 
-import java.util.{Date, UUID}
+import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 import org.scala_tools.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
@@ -41,8 +41,11 @@ object FloatConverter extends Converter[java.lang.Float] {
 object TimestampConverter extends Converter[Timestamp] {
   def serialize(s: String) =
     new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(s).millis)
-  override def deserialize(v: Any) =
-    new DateTime(v).toString(ISODateTimeFormat.dateTime)
+
+  override def deserialize(v: Any) = {
+    val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
+    new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
+  }
 }
 
 object UUIDConverter extends Converter[UUID] {
@@ -52,8 +55,11 @@ object UUIDConverter extends Converter[UUID] {
 object DateConverter extends Converter[Date] {
   def serialize(s: String) =
     ISODateTimeFormat.dateTime.parseDateTime(s).toDate
-  override def deserialize(v: Any) =
-    new DateTime(v).toString(ISODateTimeFormat.dateTime)
+
+  override def deserialize(v: Any) = {
+    val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
+    new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
+  }
 }
 
 object Converter {
