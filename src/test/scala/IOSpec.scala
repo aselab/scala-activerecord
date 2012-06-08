@@ -70,6 +70,18 @@ object IOSpec extends TimeZoneSpec {
       )
     }
 
+    "toFormValues" >> {
+      val m = ListModel(List("aa", "bb", "cc"), List(11, 22, 33))
+      m.toFormValues mustEqual Map(
+        "l1[0]" -> "aa",
+        "l1[1]" -> "bb",
+        "l1[2]" -> "cc",
+        "l2[0]" -> "11",
+        "l2[1]" -> "22",
+        "l2[2]" -> "33"
+      )
+    }
+
     "assgin" >> {
       val m = DummyModel.newModel(0)
       m.assign(Map(

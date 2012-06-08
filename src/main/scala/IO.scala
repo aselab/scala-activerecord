@@ -14,10 +14,19 @@ trait IO { this: ActiveRecordBase[_] =>
   }
 
   def toFormValues: Map[String, String] =
-    toMap.map{ case (k, v) =>
-      val fieldType = _companion.fieldInfo(k).fieldType
-      val converter = FormConverter.get(fieldType).getOrElse(ActiveRecordException.unsupportedType(k))
-      (k, converter.serialize(v))
+    toMap.flatMap { case (k, v) =>
+      val info = _companion.fieldInfo(k)
+      val fieldType = info.fieldType
+      if (info.isSeq) {
+        v.asInstanceOf[List[_]].zipWithIndex.map{ case (value, index) =>
+          val key = "%s[%d]".format(k, index)
+          val converter = FormConverter.get(value.getClass).getOrElse(ActiveRecordException.unsupportedType(key))
+          key -> converter.serialize(value)
+        }
+      } else {
+        val converter = FormConverter.get(info.fieldType).getOrElse(ActiveRecordException.unsupportedType(k))
+        Option(k -> converter.serialize(v))
+      }
     }
 
   def assign(data: Map[String, Any]) = {
