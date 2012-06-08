@@ -25,7 +25,7 @@ trait IO { this: ActiveRecordBase[_] =>
   def assignFormValues(data: Map[String, String]) = {
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
-        val converter = Converter.get(info.fieldType).getOrElse(ActiveRecordException.unsupportedType(name))
+        val converter = FormConverter.get(info.fieldType).getOrElse(ActiveRecordException.unsupportedType(name))
         val v = data.get(name)
         try {
           if (info.isSeq) {
