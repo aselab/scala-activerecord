@@ -6,60 +6,60 @@ import org.scala_tools.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 
 trait Converter[T] {
-  def serialize(s: String): T
-  def deserialize(v: Any): String = v.toString
+  def serialize(v: Any): String = v.toString
+  def deserialize(s: String): T
 }
 
 object StringConverter extends Converter[String] {
-  def serialize(s: String) = s
+  def deserialize(s: String) = s
 }
 
 object IntegerConverter extends Converter[java.lang.Integer] {
-  def serialize(s: String) = s.toInt
+  def deserialize(s: String) = s.toInt
 }
 
 object LongConverter extends Converter[java.lang.Long] {
-  def serialize(s: String) = s.toLong
+  def deserialize(s: String) = s.toLong
 }
 
 object DoubleConverter extends Converter[java.lang.Double] {
-  def serialize(s: String) = s.toDouble
+  def deserialize(s: String) = s.toDouble
 }
 
 object BooleanConverter extends Converter[java.lang.Boolean] {
-  def serialize(s: String) = s.toBoolean
+  def deserialize(s: String) = s.toBoolean
 }
 
 object BigDecimalConverter extends Converter[BigDecimal] {
-  def serialize(s: String) = BigDecimal(s)
+  def deserialize(s: String) = BigDecimal(s)
 }
 
 object FloatConverter extends Converter[java.lang.Float] {
-  def serialize(s: String) = s.toFloat
+  def deserialize(s: String) = s.toFloat
 }
 
 object TimestampConverter extends Converter[Timestamp] {
-  def serialize(s: String) =
-    new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(s).millis)
-
-  override def deserialize(v: Any) = {
+  override def serialize(v: Any) = {
     val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
     new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
   }
+
+  def deserialize(s: String) =
+    new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(s).millis)
 }
 
 object UUIDConverter extends Converter[UUID] {
-  def serialize(s: String) = UUID.fromString(s)
+  def deserialize(s: String) = UUID.fromString(s)
 }
 
 object DateConverter extends Converter[Date] {
-  def serialize(s: String) =
-    ISODateTimeFormat.dateTime.parseDateTime(s).toDate
-
-  override def deserialize(v: Any) = {
+  override def serialize(v: Any) = {
     val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
     new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
   }
+
+  def deserialize(s: String) =
+    ISODateTimeFormat.dateTime.parseDateTime(s).toDate
 }
 
 object Converter {

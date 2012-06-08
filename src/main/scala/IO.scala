@@ -30,14 +30,14 @@ trait IO { this: ActiveRecordBase[_] =>
         try {
           if (info.isSeq) {
             val keys = Stream.from(0).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
-            Option(name -> keys.map(key => converter.serialize(data(key))).toList)
+            Option(name -> keys.map(key => converter.deserialize(data(key))).toList)
           } else if (info.isOption && v.get.isEmpty) {
             None
           } else if (info.required && v.get.isEmpty) {
             this.errors.add(name, "is required")
             None
           } else {
-            Option(name -> converter.serialize(v.get))
+            Option(name -> converter.deserialize(v.get))
           }
         } catch {
           case e =>
