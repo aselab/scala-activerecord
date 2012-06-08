@@ -4,19 +4,7 @@ import com.github.aselab.activerecord._
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 
-object ConverterSpec extends ActiveRecordSpecification {
-  val defaultZone = TimeZone.getDefault
-
-  override def before = {
-    super.before
-    TimeZone.setDefault(TimeZone.getTimeZone("GMT"))
-  }
-
-  override def after = {
-    super.after
-    TimeZone.setDefault(defaultZone)
-  }
-
+object ConverterSpec extends TimeZoneSpec {
   "FormConverter" should {
     "String" in {
       val converter = FormConverter.get(classOf[String]).get

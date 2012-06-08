@@ -13,9 +13,16 @@ trait IO { this: ActiveRecordBase[_] =>
     }.toMap
   }
 
+  def toFormValues: Map[String, String] =
+    toMap.map{ case (k, v) =>
+      val fieldType = _companion.fieldInfo(k).fieldType
+      val converter = FormConverter.get(fieldType).getOrElse(ActiveRecordException.unsupportedType(k))
+      (k, converter.serialize(v))
+    }
+
   def assign(data: Map[String, Any]) = {
     import ReflectionUtil._
-    data.foreach{case (k, v) =>
+    data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
       val value = if (info.isOption) Some(v) else v
       this.setValue(k, value)
@@ -56,5 +63,5 @@ trait FormSupport[T <: ActiveRecord] {self: ActiveRecordCompanion[T] =>
     source
   }
 
-  def unbind(m: T): Map[String, String] = throw new UnsupportedOperationException()
+  def unbind(m: T): Map[String, String] = m.toFormValues
 }

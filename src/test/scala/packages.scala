@@ -6,12 +6,11 @@ import org.specs2.specification._
 import org.squeryl._
 import experimental._
 import dsl._
+import java.sql.Timestamp
+import java.util.{Date, UUID, TimeZone}
 
 package models {
   import com.github.aselab.activerecord.annotations._
-  import java.util.{Date, UUID}
-  import java.sql.Timestamp
-
   object DummyTables extends ActiveRecordTables with VersionTable {
     val dummyModels = table[DummyModel]
     val dummyModels2 = table[DummyModel2]
@@ -171,3 +170,16 @@ trait ActiveRecordSpecification extends Specification {
   }
 }
 
+trait TimeZoneSpec extends ActiveRecordSpecification {
+  val defaultZone = TimeZone.getDefault
+
+  override def before = {
+    super.before
+    TimeZone.setDefault(TimeZone.getTimeZone("GMT"))
+  }
+
+  override def after = {
+    super.after
+    TimeZone.setDefault(defaultZone)
+  }
+}

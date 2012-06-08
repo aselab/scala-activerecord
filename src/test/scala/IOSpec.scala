@@ -1,11 +1,11 @@
-package com.github.aselab.activerecord.experimental
+package com.github.aselab.activerecord
 
 import com.github.aselab.activerecord._
 import models._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-object SerializationsSpec extends ActiveRecordSpecification {
+object IOSpec extends TimeZoneSpec {
 
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord {
     def this() = this(List(""), List(0))
@@ -43,8 +43,33 @@ object SerializationsSpec extends ActiveRecordSpecification {
 
   object FormSupportModel extends ActiveRecordCompanion[FormSupportModel] with FormSupport[FormSupportModel]
 
-
   "IO" should {
+    "toFormValues" >> {
+      val m = DummyModel.newModel(5)
+      m.toFormValues mustEqual Map(
+        "boolean" -> "true",
+        "oboolean" -> "true",
+        "timestamp" -> "1970-01-01T00:00:00.005Z",
+        "otimestamp" -> "1970-01-01T00:00:00.005Z",
+        "float" -> "5.0",
+        "ofloat" -> "5.0",
+        "long" -> "5",
+        "olong" -> "5",
+        "string" -> "string5",
+        "ostring" -> "string5",
+        "bigDecimal" -> "5",
+        "obigDecimal" -> "5",
+        "double" -> "5.0",
+        "odouble" -> "5.0",
+        "date" -> "1970-01-06T00:00:00.000Z",
+        "odate" -> "1970-01-06T00:00:00.000Z",
+        "int" -> "5",
+        "oint" -> "5",
+        "uuid" -> "00000000-0000-0005-0000-000000000005",
+        "ouuid" -> "00000000-0000-0005-0000-000000000005"
+      )
+    }
+
     "assgin" >> {
       val m = DummyModel.newModel(0)
       m.assign(Map(
