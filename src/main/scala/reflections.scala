@@ -11,7 +11,7 @@ case class ClassInfo[T <: AnyRef](clazz: Class[T]) {
 
   lazy val factory: () => T = {
     if (isSeq(clazz)) {
-      nilFactory
+      factories.nilHandler
     } else {
       getFactory(clazz)
     }
@@ -19,35 +19,28 @@ case class ClassInfo[T <: AnyRef](clazz: Class[T]) {
 }
 
 object ClassInfo {
-  val booleanFactory = () => new java.lang.Boolean(false)
-  val intFactory = () => new java.lang.Integer(0)
-  val longFactory = () => new java.lang.Long(0)
-  val floatFactory = () => new java.lang.Float(0)
-  val doubleFactory = () => new java.lang.Double(0.0)
-  val nilFactory = () => Nil.asInstanceOf[AnyRef]
   def isSeq(clazz: Class[_]) = clazz.isAssignableFrom(Nil.getClass)
 
-  val factories = collection.mutable.Map[Class[_], () => AnyRef](
-    (classOf[String], () => ""),
-    (classOf[java.lang.Boolean], booleanFactory),
-    (classOf[Boolean], booleanFactory),
-    (classOf[java.lang.Integer], intFactory),
-    (classOf[Int], intFactory),
-    (classOf[java.lang.Long], longFactory),
-    (classOf[Long], longFactory),
-    (classOf[java.lang.Float], floatFactory),
-    (classOf[Float], floatFactory),
-    (classOf[java.lang.Double], doubleFactory),
-    (classOf[Double], doubleFactory),
-    (classOf[java.util.Date], () => new java.util.Date(0)),
-    (classOf[java.sql.Timestamp], () => new java.sql.Timestamp(0)),
-    (classOf[java.util.UUID], () => new java.util.UUID(0, 0)),
-    (classOf[BigDecimal], () => BigDecimal(0)),
-    (classOf[Option[_]], () => None),
-    (classOf[Array[Byte]], () => Array.empty[Byte])
-  )
+  lazy val factories = new PrimitiveHandler[() => AnyRef] {
+    val stringHandler = () => ""
+    val booleanHandler = () => new java.lang.Boolean(false)
+    val intHandler = () => new java.lang.Integer(0)
+    val longHandler = () => new java.lang.Long(0)
+    val floatHandler = () => new java.lang.Float(0)
+    val doubleHandler = () => new java.lang.Double(0.0)
+    val dateHandler = () => new java.util.Date(0)
+    val timestampHandler = () => new java.sql.Timestamp(0)
+    val uuidHandler = () => new java.util.UUID(0, 0)
+    val bigDecimalHandler = () => BigDecimal(0)
+    val nilHandler = () => Nil.asInstanceOf[AnyRef]
 
-  def getFactory(clazz: Class[_]) = factories.getOrElseUpdate(clazz, {
+    registrations ++= Seq(
+      (classOf[Option[_]], () => None),
+      (classOf[Array[Byte]], () => Array.empty[Byte])
+    )
+  }
+
+  def getFactory(clazz: Class[_]) = factories.getOrRegister(clazz, {
     clazz.getConstructors.map(
       c => (c, c.getParameterTypes.toSeq)
     ).sortBy(_._2.size).toStream.flatMap {

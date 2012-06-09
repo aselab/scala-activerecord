@@ -83,10 +83,8 @@ object ReflectionSpec extends Specification {
       }
 
       "is added to ClassInfo.factories" in {
-        ClassInfo.factories - classOf[PrimitiveModel]
         val factory = ClassInfo(classOf[ComplexModel]).factory
         ClassInfo.factories.get(classOf[ComplexModel]).isDefined must beTrue
-        ClassInfo.factories.get(classOf[PrimitiveModel]).isDefined must beTrue
       }
     }
   }
