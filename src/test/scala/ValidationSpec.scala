@@ -10,7 +10,7 @@ import java.sql.Timestamp
 object ValidationSpec extends ActiveRecordSpecification {
   class SaveableImpl extends Saveable {
     var calledMethods = List[String]()
-    def save = {
+    override def save = {
       calledMethods :+= "save"
       true
     }
@@ -68,12 +68,7 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   case class ValidateModel(
     @Email email: String = ""
-  ) extends ProductModel with CRUDable with ValidationSupport {
-    def doDelete(): Boolean = true
-    def doUpdate(): Boolean = true
-    def doCreate(): Boolean = true
-    def this() = this("")
-  }
+  ) extends ProductModel
 
   object ValidateModel extends ProductModelCompanion[ValidateModel]
 

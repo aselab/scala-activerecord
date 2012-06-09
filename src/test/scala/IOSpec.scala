@@ -7,10 +7,10 @@ import java.sql.Timestamp
 
 object IOSpec extends TimeZoneSpec {
 
-  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord {
+  case class ListModel(l1: List[String], l2: List[Int]) extends ProductModel with IO {
     def this() = this(List(""), List(0))
   }
-  object ListModel extends ActiveRecordCompanion[ListModel]
+  object ListModel extends ProductModelCompanion[ListModel]
 
   case class FormSupportModel(
     string: String,
@@ -33,7 +33,7 @@ object IOSpec extends TimeZoneSpec {
     otimestamp: Option[Timestamp],
     odate: Option[Date],
     ouuid: Option[UUID]
-  ) extends ActiveRecord {
+  ) extends ProductModel with IO {
     def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
       new Timestamp(0), new Date(0), new UUID(0, 0),
       Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
@@ -41,7 +41,7 @@ object IOSpec extends TimeZoneSpec {
     )
   }
 
-  object FormSupportModel extends ActiveRecordCompanion[FormSupportModel] with FormSupport[FormSupportModel]
+  object FormSupportModel extends ProductModelCompanion[FormSupportModel] with FormSupport[FormSupportModel]
 
   "IO" should {
     "toFormValues" >> {

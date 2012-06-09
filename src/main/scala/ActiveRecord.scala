@@ -8,7 +8,7 @@ import java.sql.Timestamp
 import java.lang.annotation.Annotation
 import mojolly.inflector.InflectorImports._
 
-trait ProductModel extends Product {
+trait ProductModel extends Product with Saveable with ValidationSupport with IO{
   @dsl.Ignore
   lazy val _companion = ReflectionUtil.classToCompanion(getClass)
     .asInstanceOf[ProductModelCompanion[this.type]]
@@ -52,8 +52,7 @@ trait ProductModelCompanion[T <: ProductModel] {
 }
 
 trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
-  with CRUDable with ValidationSupport
-  with ActiveRecordBaseRelationSupport with IO
+  with CRUDable with ActiveRecordBaseRelationSupport
 {
   /** corresponding ActiveRecordCompanion object */
   lazy val recordCompanion = _companion.asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]

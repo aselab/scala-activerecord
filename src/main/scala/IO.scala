@@ -1,6 +1,6 @@
 package com.github.aselab.activerecord
 
-trait IO { this: ActiveRecordBase[_] =>
+trait IO { this: ProductModel =>
   import ReflectionUtil._
 
   def toMap: Map[String, Any] = {
@@ -64,7 +64,7 @@ trait IO { this: ActiveRecordBase[_] =>
   }
 }
 
-trait FormSupport[T <: ActiveRecord] {self: ActiveRecordCompanion[T] =>
+trait FormSupport[T <: ProductModel] {self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {

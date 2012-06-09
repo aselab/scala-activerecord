@@ -3,7 +3,7 @@ package com.github.aselab.activerecord
 import org.squeryl.annotations.Transient
 
 trait Saveable {
-  def save(): Boolean
+  def save(): Boolean = false
 }
 
 /**
@@ -22,7 +22,7 @@ trait CRUDable extends Saveable {
    * If not, it calls doUpdate method.
    * before and after callbacks are available.
    */
-  def save(): Boolean = {
+  override def save(): Boolean = {
     val onCreate = isNewInstance
 
     if (onCreate) beforeCreate() else beforeUpdate()
