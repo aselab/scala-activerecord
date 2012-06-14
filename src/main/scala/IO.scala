@@ -13,21 +13,32 @@ trait IO { this: ProductModel =>
     }.toMap
   }
 
-  def toFormValues: Map[String, String] =
+  def toFormValues: Map[String, String] = toFormValues(None)
+
+  def toFormValues(prefix: Option[String]): Map[String, String] = {
+    def serialize(c: Class[_], value: Any, key: String) =
+      if (classOf[ProductModel].isAssignableFrom(c)) {
+        value.asInstanceOf[ProductModel].toFormValues(Some(key))
+      } else {
+        Map(FormConverter.get(c).map(key -> _.serialize(value)).getOrElse(
+          ActiveRecordException.unsupportedType(key)
+        ))
+      }
+
     toMap.flatMap { case (k, v) =>
       val info = _companion.fieldInfo(k)
-      val fieldType = info.fieldType
+      val key = prefix.map("%s[%s]".format(_, k)).getOrElse(k)
+
       if (info.isSeq) {
-        v.asInstanceOf[List[_]].zipWithIndex.map{ case (value, index) =>
-          val key = "%s[%d]".format(k, index)
-          val converter = FormConverter.get(value.getClass).getOrElse(ActiveRecordException.unsupportedType(key))
-          key -> converter.serialize(value)
+        v.asInstanceOf[Seq[_]].zipWithIndex.flatMap { case (value, index) =>
+          val k = "%s[%d]".format(key, index)
+          serialize(info.fieldType, value, k)
         }
       } else {
-        val converter = FormConverter.get(info.fieldType).getOrElse(ActiveRecordException.unsupportedType(k))
-        Option(k -> converter.serialize(v))
+        serialize(info.fieldType, v, key)
       }
     }
+  }
 
   def assign(data: Map[String, Any]) = {
     import ReflectionUtil._

@@ -7,10 +7,27 @@ import java.sql.Timestamp
 
 object IOSpec extends TimeZoneSpec {
 
-  case class ListModel(l1: List[String], l2: List[Int]) extends ProductModel with IO {
+  case class ListModel(l1: List[String], l2: List[Int]) extends ProductModel {
     def this() = this(List(""), List(0))
   }
   object ListModel extends ProductModelCompanion[ListModel]
+
+  case class NestModel(
+    int: Int,
+    list: ListModel
+  ) extends ProductModel {
+    def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
+  }
+  object NestModel extends ProductModelCompanion[NestModel]
+
+  case class ComplexModel(
+    int: Int,
+    nest: NestModel,
+    nestlist: List[NestModel]
+  ) extends ProductModel {
+    def this() = this(1, new NestModel, List(new NestModel, new NestModel))
+  }
+  object ComplexModel extends ProductModelCompanion[ComplexModel]
 
   case class FormSupportModel(
     string: String,
@@ -33,7 +50,7 @@ object IOSpec extends TimeZoneSpec {
     otimestamp: Option[Timestamp],
     odate: Option[Date],
     ouuid: Option[UUID]
-  ) extends ProductModel with IO {
+  ) extends ProductModel {
     def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
       new Timestamp(0), new Date(0), new UUID(0, 0),
       Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
@@ -45,41 +62,76 @@ object IOSpec extends TimeZoneSpec {
 
   "IO" should {
     "toFormValues" >> {
-      val m = DummyModel.newModel(5)
-      m.toFormValues mustEqual Map(
-        "boolean" -> "true",
-        "oboolean" -> "true",
-        "timestamp" -> "1970-01-01T00:00:00.005Z",
-        "otimestamp" -> "1970-01-01T00:00:00.005Z",
-        "float" -> "5.0",
-        "ofloat" -> "5.0",
-        "long" -> "5",
-        "olong" -> "5",
-        "string" -> "string5",
-        "ostring" -> "string5",
-        "bigDecimal" -> "5",
-        "obigDecimal" -> "5",
-        "double" -> "5.0",
-        "odouble" -> "5.0",
-        "date" -> "1970-01-06T00:00:00.000Z",
-        "odate" -> "1970-01-06T00:00:00.000Z",
-        "int" -> "5",
-        "oint" -> "5",
-        "uuid" -> "00000000-0000-0005-0000-000000000005",
-        "ouuid" -> "00000000-0000-0005-0000-000000000005"
-      )
-    }
+      "primitive and options" >> {
+        val m = DummyModel.newModel(5)
+        m.toFormValues mustEqual Map(
+          "boolean" -> "true",
+          "oboolean" -> "true",
+          "timestamp" -> "1970-01-01T00:00:00.005Z",
+          "otimestamp" -> "1970-01-01T00:00:00.005Z",
+          "float" -> "5.0",
+          "ofloat" -> "5.0",
+          "long" -> "5",
+          "olong" -> "5",
+          "string" -> "string5",
+          "ostring" -> "string5",
+          "bigDecimal" -> "5",
+          "obigDecimal" -> "5",
+          "double" -> "5.0",
+          "odouble" -> "5.0",
+          "date" -> "1970-01-06T00:00:00.000Z",
+          "odate" -> "1970-01-06T00:00:00.000Z",
+          "int" -> "5",
+          "oint" -> "5",
+          "uuid" -> "00000000-0000-0005-0000-000000000005",
+          "ouuid" -> "00000000-0000-0005-0000-000000000005"
+        )
+      }
 
-    "toFormValues" >> {
-      val m = ListModel(List("aa", "bb", "cc"), List(11, 22, 33))
-      m.toFormValues mustEqual Map(
-        "l1[0]" -> "aa",
-        "l1[1]" -> "bb",
-        "l1[2]" -> "cc",
-        "l2[0]" -> "11",
-        "l2[1]" -> "22",
-        "l2[2]" -> "33"
-      )
+      "primitive list" >> {
+        val m = ListModel(List("aa", "bb", "cc"), List(11, 22, 33))
+        m.toFormValues mustEqual Map(
+          "l1[0]" -> "aa",
+          "l1[1]" -> "bb",
+          "l1[2]" -> "cc",
+          "l2[0]" -> "11",
+          "l2[1]" -> "22",
+          "l2[2]" -> "33"
+        )
+      }
+
+      "nest model" >> {
+        val m = new NestModel
+        m.toFormValues mustEqual Map(
+          "int" -> "1",
+          "list[l1][0]" -> "a",
+          "list[l1][1]" -> "b",
+          "list[l2][0]" -> "1",
+          "list[l2][1]" -> "2"
+        )
+      }
+
+      "complex model" >> {
+        val m = new ComplexModel
+        m.toFormValues mustEqual Map(
+          "int" -> "1",
+          "nest[int]" -> "1",
+          "nest[list][l1][0]" -> "a",
+          "nest[list][l1][1]" -> "b",
+          "nest[list][l2][0]" -> "1",
+          "nest[list][l2][1]" -> "2",
+          "nestlist[0][int]" -> "1",
+          "nestlist[0][list][l1][0]" -> "a",
+          "nestlist[0][list][l1][1]" -> "b",
+          "nestlist[0][list][l2][0]" -> "1",
+          "nestlist[0][list][l2][1]" -> "2",
+          "nestlist[1][int]" -> "1",
+          "nestlist[1][list][l1][0]" -> "a",
+          "nestlist[1][list][l1][1]" -> "b",
+          "nestlist[1][list][l2][0]" -> "1",
+          "nestlist[1][list][l2][1]" -> "2"
+        )
+      }
     }
 
     "assgin" >> {
