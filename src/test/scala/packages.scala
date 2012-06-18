@@ -159,6 +159,13 @@ trait ActiveRecordSpecification extends Specification {
     "schema" -> "com.github.aselab.activerecord.models.DummyTables"
   )
 
+  def withRollback[T](f: => T) = dsl.transaction {
+    val s = org.squeryl.Session.currentSession
+    val result = f
+    s.connection.rollback
+    result
+  }
+
   def schema: ActiveRecordTables = models.DummyTables
 
   override def map(fs: => Fragments) = {

@@ -421,6 +421,31 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
     create
   }
 
+  private var _session: (Option[Session], Option[Session]) = (None, None)
+
+  def start = {
+    val oldSession = Session.currentSessionOption
+    val newSession = SessionFactory.newSession
+    oldSession.foreach(_.unbindFromCurrentThread)
+    newSession.bindToCurrentThread
+    val c = newSession.connection
+    try {
+      if (c.getAutoCommit)
+        c.setAutoCommit(false)
+    } catch { case e => }
+    _session = (oldSession, Option(newSession))
+  }
+
+  def clean = _session match {
+    case (oldSession, Some(newSession)) =>
+      newSession.connection.rollback
+      newSession.unbindFromCurrentThread
+      oldSession.foreach(_.bindToCurrentThread)
+      _session = (None, None)
+    case _ =>
+      ActiveRecordException.cannotCleanSession
+  }
+
   override protected def table[T]()(implicit m: Manifest[T]) =
     super.table[T]
     

@@ -36,5 +36,8 @@ object ActiveRecordException {
 
   def notfoundConfirmField(name: String) =
     throw new ActiveRecordException("Cannot find confirmation field: " + name)
+
+  def cannotCleanSession =
+    throw new ActiveRecordException("Required start session by ActiveRecordTables#start()")
 }
 

@@ -316,6 +316,23 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       DummyModel.find(m.id) must beNone
     }
 
+    "session" >> {
+      "clean throws exception when not start session" >> {
+        DummyTables.clean must throwA[ActiveRecordException]
+      }
+
+      "start and clean" >> {
+        DummyTables.start
+        val users: List[User] = User.all.toList
+        User("testuser").save
+        User("testuser2").save
+        User("testuser3").save
+        println(User.all.toList)
+        DummyTables.clean
+        User.all.toList mustEqual users
+      }
+    }
+
   }
 
 }
