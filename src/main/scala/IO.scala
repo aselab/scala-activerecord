@@ -21,7 +21,7 @@ trait IO { this: ProductModel =>
         value.asInstanceOf[ProductModel].toFormValues(Some(key))
       } else {
         Map(FormConverter.get(c).map(key -> _.serialize(value)).getOrElse(
-          ActiveRecordException.unsupportedType(key)
+          throw ActiveRecordException.unsupportedType(key)
         ))
       }
 
@@ -52,7 +52,9 @@ trait IO { this: ProductModel =>
   def assignFormValues(data: Map[String, String]) = {
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
-        val converter = FormConverter.get(info.fieldType).getOrElse(ActiveRecordException.unsupportedType(name))
+        val converter = FormConverter.get(info.fieldType).getOrElse(
+          throw ActiveRecordException.unsupportedType(name)
+        )
         val v = data.get(name)
         try {
           if (info.isSeq) {

@@ -228,7 +228,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
       case Some(v: Date) => {m: T => m.getValue[Option[Date]](name) === Some(v)}
       case v: UUID => {m: T => m.getValue[UUID](name) === v}
       case Some(v: UUID) => {m: T => m.getValue[Option[UUID]](name) === Some(v)}
-      case _ => ActiveRecordException.unsupportedType(
+      case _ => throw ActiveRecordException.unsupportedType(
         "%s by %s".format(name, value.toString))
     })(query)
   }
@@ -443,7 +443,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
       oldSession.foreach(_.bindToCurrentThread)
       _session = (None, None)
     case _ =>
-      ActiveRecordException.cannotCleanSession
+      throw ActiveRecordException.cannotCleanSession
   }
 
   override protected def table[T]()(implicit m: Manifest[T]) =

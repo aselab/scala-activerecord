@@ -53,11 +53,11 @@ object ClassInfo {
         () => try {
           const.newInstance(facts.map(_.apply):_*).asInstanceOf[AnyRef]
         } catch {
-          case e => ActiveRecordException.cannotCreateInstance(
+          case e => throw ActiveRecordException.cannotCreateInstance(
             clazz.getName, e.getMessage)
         }
       }
-    }.headOption.getOrElse(ActiveRecordException.cannotCreateInstance(
+    }.headOption.getOrElse(throw ActiveRecordException.cannotCreateInstance(
       clazz.getName, "No usable constructor is found. It is recommended to implement default constructor.")
     )
   })
@@ -77,7 +77,7 @@ case class FieldInfo(
   lazy val unique = annotationMap.isDefinedAt("Unique")
 
   lazy val fieldType = fieldTypeOption.getOrElse {
-    if (isOption) ActiveRecordException.optionValueMustBeSome(name)
+    throw if (isOption) ActiveRecordException.optionValueMustBeSome(name)
     else if (isSeq) ActiveRecordException.traversableValueMustNotBeNil(name)
     else ActiveRecordException.cannotDetectType(name)
   }

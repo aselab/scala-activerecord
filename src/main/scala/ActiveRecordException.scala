@@ -1,43 +1,40 @@
 package com.github.aselab.activerecord
 
-class ActiveRecordException(msg: String) extends RuntimeException(msg)
+case class ActiveRecordException(msg: String) extends RuntimeException(msg)
 
 object ActiveRecordException {
-  def unsupportedType(name: String) =
-    throw new ActiveRecordException("Unsupported type: " + name)
+  def unsupportedType(name: String) = apply("Unsupported type: " + name)
 
-  def defaultConstructorRequired =
-    throw new ActiveRecordException("Must implement default constructor")
+  def defaultConstructorRequired = apply("Must implement default constructor")
 
   def cannotCreateInstance(className: String, cause: String) =
-    throw new ActiveRecordException("Cannot create instance of " + className +
-      "\ncause: " + cause)
+    apply("Cannot create instance of " + className + "\ncause: " + cause)
 
   def optionValueMustBeSome(name: String) =
-    throw new ActiveRecordException("Cannot detect generic type of '%s' because of type erasure. Default value of Option field must not be None.".format(name))
+    apply("Cannot detect generic type of '%s' because of type erasure. Default value of Option field must not be None.".format(name))
 
   def traversableValueMustNotBeNil(name: String) =
-    throw new ActiveRecordException("Cannot detect generic type of '%s' because of type erasure. Default value of Seq field must not be Nil".format(name))
+    apply("Cannot detect generic type of '%s' because of type erasure. Default value of Seq field must not be Nil".format(name))
 
   def cannotDetectType(name: String) =
-    throw new ActiveRecordException("Cannot detect type of '%s'.".format(name))
+    apply("Cannot detect type of '%s'.".format(name))
 
   def unsupportedDriver(driver: String) =
-    throw new ActiveRecordException("Unsupported database driver: " + driver)
+    apply("Unsupported database driver: " + driver)
 
   def missingDriver(driver: String) =
-    throw new ActiveRecordException("Cannot load database driver: " + driver)
+    apply("Cannot load database driver: " + driver)
 
   def missingRelation =
-    throw new ActiveRecordException("Cannot find definition of relation")
+    apply("Cannot find definition of relation")
 
   def missingForeignKey(name: String) =
-    throw new ActiveRecordException("Cannot find declaration of foreign key: " + name)
+    apply("Cannot find declaration of foreign key: " + name)
 
   def notfoundConfirmField(name: String) =
-    throw new ActiveRecordException("Cannot find confirmation field: " + name)
+    apply("Cannot find confirmation field: " + name)
 
   def cannotCleanSession =
-    throw new ActiveRecordException("Required start session by ActiveRecordTables#start()")
+    apply("Required start session by ActiveRecordTables#start()")
 }
 

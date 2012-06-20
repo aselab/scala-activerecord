@@ -327,7 +327,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
         User("testuser").save
         User("testuser2").save
         User("testuser3").save
-        println(User.all.toList)
+        User.all.toList
         DummyTables.clean
         User.all.toList mustEqual users
       }

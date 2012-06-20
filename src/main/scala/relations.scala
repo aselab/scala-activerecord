@@ -94,7 +94,7 @@ trait ActiveRecordBaseRelationSupport {self: ActiveRecordBase[_] =>
 
   protected def getRelation(left: Class[_], right: Class[_]) =
     relations.get(left.getName -> right.getName)
-     .getOrElse(ActiveRecordException.missingRelation)
+     .getOrElse(throw ActiveRecordException.missingRelation)
 
   protected def belongsTo[T <: ActiveRecord](implicit m: Manifest[T]) =
     getRelation(m.erasure, getClass).belongsTo(self).asInstanceOf[ActiveRecordManyToOne[T]]
@@ -142,7 +142,7 @@ trait TableRelationSupport extends Schema {
     c.getDeclaredField(name).getType.getName == "scala.Option"
   } catch {
     case e: java.lang.NoSuchFieldException =>
-      ActiveRecordException.missingForeignKey(name)
+      throw ActiveRecordException.missingForeignKey(name)
   }
 
   def oneToMany[O <: AR, M <: ActiveRecordBase[_]](ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]) = {

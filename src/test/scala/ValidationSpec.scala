@@ -179,7 +179,7 @@ object ValidationSpec extends ActiveRecordSpecification {
 
           "throws exception when confirmation field is not defined" in {
             val m = MissingConfirmField("aaa")
-            m.validate must throwA[ActiveRecordException]
+            m.validate must throwA(ActiveRecordException.notfoundConfirmField("testConfirmation"))
           }
         }
 

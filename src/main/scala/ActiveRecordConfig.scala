@@ -46,14 +46,14 @@ abstract class AbstractDefaultConfig(
     case "org.h2.Driver" => new H2Adapter
     case "org.postgresql.Driver" => new PostgreSqlAdapter
     case "com.mysql.jdbc.Driver" => new MySQLAdapter
-    case driver => ActiveRecordException.unsupportedDriver(driver)
+    case driver => throw ActiveRecordException.unsupportedDriver(driver)
   }
 
   lazy val pool = {
     try {
       Class.forName(driverClass)
     } catch {
-      case e => ActiveRecordException.missingDriver(driverClass)
+      case e => throw ActiveRecordException.missingDriver(driverClass)
     }
 
     val conf = new BoneCPConfig
