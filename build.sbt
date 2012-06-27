@@ -30,7 +30,7 @@ crossPaths := false
 
 parallelExecution in Test := false
 
-compileOrder := CompileOrder.JavaThenScala
+compileOrder in Compile := CompileOrder.JavaThenScala
 
 publishTo := Some(Resolver.file("file", file("target/publish")))
 
