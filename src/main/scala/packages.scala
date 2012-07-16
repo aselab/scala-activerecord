@@ -5,11 +5,11 @@ object dsl extends org.squeryl.PrimitiveTypeMode with Annotations
 package object support {
   val primitiveClasses: PartialFunction[String, Class[_]] = {
     case "scala.Predef.String" | "java.lang.String" => classOf[String]
-    case "scala.Boolean" | "java.lang.Boolean" => classOf[Boolean]
-    case "scala.Int" | "java.lang.Integer" => classOf[Int]
-    case "scala.Long" | "java.lang.Long" => classOf[Long]
-    case "scala.Float" | "java.lang.Float" => classOf[Float]
-    case "scala.Double" | "java.lang.Double" => classOf[Double]
+    case "boolean" | "scala.Boolean" | "java.lang.Boolean" => classOf[Boolean]
+    case "int" | "scala.Int" | "java.lang.Integer" => classOf[Int]
+    case "long" | "scala.Long" | "java.lang.Long" => classOf[Long]
+    case "float" | "scala.Float" | "java.lang.Float" => classOf[Float]
+    case "double" | "scala.Double" | "java.lang.Double" => classOf[Double]
     case "scala.package.BigDecimal" | "scala.math.BigDecimal" => classOf[BigDecimal]
     case "java.sql.Timestamp" => classOf[java.sql.Timestamp]
     case "java.util.Date" => classOf[java.util.Date]
@@ -29,4 +29,6 @@ package object support {
       case e => false
     }
   }
+
+  val allClasses = primitiveClasses.orElse(modelClass)
 }

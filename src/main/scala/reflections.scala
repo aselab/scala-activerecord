@@ -5,21 +5,41 @@ import java.lang.reflect.{Field, ParameterizedType}
 import scala.reflect.Manifest
 import scala.util.control.Exception._
 import annotations._
+import scala.tools.scalap.scalax.rules.scalasig._
 
-case class ClassInfo[T <: AnyRef](clazz: Class[T]) {
+class ClassInfo[T <: AnyRef](clazz: Class[T]) {
   import ClassInfo._
 
+  val name = clazz.getName
+
   lazy val factory: () => T = {
-    if (isSeq(clazz)) {
+    if (ReflectionUtil.isSeq(clazz)) {
       factories.nilHandler
     } else {
       getFactory(clazz)
     }
   }.asInstanceOf[() => T]
+
+  lazy val fields: List[java.lang.reflect.Field] = {
+    clazz.getDeclaredFields.filterNot {f =>
+      f.isAnnotationPresent(classOf[annotations.Ignore]) ||
+      classOf[RecordRelation].isAssignableFrom(f.getType) ||
+      f.getName.contains("$")
+    }.toList
+  }
+
+  lazy val fieldInfo: Map[String, FieldInfo] = {
+    fields.map { f => (f.getName, FieldInfo(f, this)) }.toMap
+  }
+
+  lazy val scalaSigInfo = ScalaSigInfo(clazz)
 }
 
 object ClassInfo {
-  def isSeq(clazz: Class[_]) = clazz.isAssignableFrom(Nil.getClass)
+  private val cache = collection.mutable.Map[Class[_], ClassInfo[_]]()
+
+  def apply[T <: AnyRef](clazz: Class[T]) = cache.getOrElseUpdate(
+    clazz, new ClassInfo(clazz)).asInstanceOf[ClassInfo[T]]
 
   lazy val factories = new PrimitiveHandler[() => AnyRef] {
     val stringHandler = () => ""
@@ -47,7 +67,7 @@ object ClassInfo {
       case (const, params) => allCatch.opt {
         // test creation parameters
         val facts = params.map(c =>
-          ClassInfo(c.asInstanceOf[Class[AnyRef]]).factory)
+          apply(c.asInstanceOf[Class[AnyRef]]).factory)
         facts.foreach(_.apply)
 
         () => try {
@@ -64,7 +84,7 @@ object ClassInfo {
 }
 
 case class FieldInfo(
-  name: String, fieldTypeOption: Option[Class[_]],
+  name: String, fieldType: Class[_],
   isOption: Boolean, isSeq: Boolean,
   annotations: Seq[Annotation] = Nil
 ) {
@@ -75,32 +95,60 @@ case class FieldInfo(
   lazy val required = annotationMap.isDefinedAt("Required")
   lazy val ignored = annotationMap.isDefinedAt("Ignore")
   lazy val unique = annotationMap.isDefinedAt("Unique")
-
-  lazy val fieldType = fieldTypeOption.getOrElse {
-    throw if (isOption) ActiveRecordException.optionValueMustBeSome(name)
-    else if (isSeq) ActiveRecordException.traversableValueMustNotBeNil(name)
-    else ActiveRecordException.cannotDetectType(name)
-  }
 }
 
 object FieldInfo {
-  def apply(name: String, value: Any, field: Option[Field]): FieldInfo = value match {
-    case Some(v) => apply(name, v, field).copy(isOption = true)
-    case None => FieldInfo(name, None, true, false)
+  import ReflectionUtil._
 
-    case l: Traversable[_] => l.toSeq match {
-      case Seq(v, _*) => apply(name, v, field).copy(isSeq = true)
-      case Nil => FieldInfo(name, None, false, true)
+  def apply(field: Field, classInfo: ClassInfo[_]): FieldInfo = {
+    def notSupported = throw ActiveRecordException.unsupportedType(
+      classInfo.name + "#" + field.getName
+    )
+
+    def genericType = getGenericType(field) match {
+      case c if c == classOf[Object] =>
+        // detect generic primitive type from ScalaSig
+        classInfo.scalaSigInfo.genericTypes.getOrElse(
+          field.getName, notSupported
+        )
+
+      case c => c
     }
 
-    case v: Any => FieldInfo(name, Option(v.getClass), false, false)
-    case v => FieldInfo(name, field.map(_.getType), false, false)
+    def fieldInfo(clazz: Class[_]): FieldInfo = clazz match {
+      case c if isOption(c) =>
+        fieldInfo(genericType).copy(isOption = true)
+      case c if isSeq(c) =>
+        fieldInfo(genericType).copy(isSeq = true)
+      case c if support.allClasses.isDefinedAt(c.getName) =>
+        FieldInfo(field.getName, c, false, false, field.getAnnotations.toSeq)
+      case c => notSupported
+    }
+
+    fieldInfo(field.getType)
+  }
+}
+
+case class ScalaSigInfo(clazz: Class[_]) {
+  def error = throw ActiveRecordException.scalaSig(clazz)
+
+  val scalaSig = {
+    def find(c: Class[_]): Option[ScalaSig] =
+      ScalaSigParser.parse(c).orElse(find(c.getDeclaringClass))
+    find(clazz).getOrElse(error)
   }
 
-  def apply(name: String, value: Any): FieldInfo = apply(name, value, None)
+  val classSymbol = scalaSig.symbols.toIterator.collect {
+    case symbol: ClassSymbol if !symbol.isModule => symbol
+  }.find(_.name == clazz.getSimpleName).getOrElse(error)
 
-  def apply(field: Field, value: Any): FieldInfo =
-    apply(field.getName, value, Some(field)).copy(annotations = field.getAnnotations.toSeq)
+  lazy val genericTypes: Map[String, Class[_]] = classSymbol.children.collect {
+    case m: MethodSymbol if m.isLocal => (m.name.trim, m.infoType)
+  }.collect {
+    case (name, TypeRefType(_, symbol, Seq(TypeRefType(_, s, Nil))))
+      if support.primitiveClasses.isDefinedAt(s.path) =>
+        (name, support.primitiveClasses(s.path))
+  }.toMap
 }
 
 trait ReflectionUtil {
@@ -143,6 +191,9 @@ trait ReflectionUtil {
 
   def getGenericType(field: Field) = getGenericTypes(field).head
   def getGenericTypes(field: Field) = field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
+
+  def isSeq(clazz: Class[_]) = clazz.isAssignableFrom(Nil.getClass)
+  def isOption(clazz: Class[_]) = clazz == classOf[Option[_]]
 }
 
 object ReflectionUtil extends ReflectionUtil

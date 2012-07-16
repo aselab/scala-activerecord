@@ -29,20 +29,9 @@ trait ProductModelCompanion[T <: ProductModel] {
   lazy val classInfo: ClassInfo[T] = ClassInfo(targetClass)
 
   /** ProductModel fields information */
-  lazy val fieldInfo: Map[String, FieldInfo] = {
-    val m = newInstance
-    formatFields.map { f =>
-      val name = f.getName
-      (name, FieldInfo(f, m.getValue[Any](name)))
-    }.toMap
-  }
+  lazy val fieldInfo: Map[String, FieldInfo] = classInfo.fieldInfo
 
-  lazy val formatFields: List[java.lang.reflect.Field] =
-    targetClass.getDeclaredFields.filterNot {f =>
-      f.isAnnotationPresent(classOf[annotations.Ignore]) ||
-      classOf[RecordRelation].isAssignableFrom(f.getType) ||
-      f.getName.contains("$")
-    }.toList
+  lazy val formatFields: List[java.lang.reflect.Field] = classInfo.fields
 
   lazy val validators: Map[String, Seq[(Annotation, Validator[_])]] = fieldInfo.map {
     case (name, info) => (name, info.annotations.flatMap { a =>

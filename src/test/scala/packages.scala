@@ -86,36 +86,31 @@ package models {
   object Foo extends ActiveRecordCompanion[Foo]
   object Bar extends ActiveRecordCompanion[Bar]
 
+  case class SeqModel(list: List[Int], seq: Seq[Double])
+
   case class DummyModel(
     @Unique var string: String,
-    @Ignore var boolean: Boolean,
-    @Ignore var int: Int,
-    @Ignore var long: Long,
-    @Ignore var float: Float,
-    @Ignore var double: Double,
-    @Ignore var bigDecimal: BigDecimal,
-    @Ignore var timestamp: Timestamp,
-    @Ignore var date: Date,
-    @Ignore var uuid: UUID,
+    var boolean: Boolean,
+    var int: Int,
+    var long: Long,
+    var float: Float,
+    var double: Double,
+    var bigDecimal: BigDecimal,
+    var timestamp: Timestamp,
+    var date: Date,
+    var uuid: UUID,
 
     var ostring: Option[String],
-
-    @Ignore var oboolean: Option[Boolean],
-    @Ignore var oint: Option[Int],
-    @Ignore var olong: Option[Long],
-    @Ignore var ofloat: Option[Float],
-    @Ignore var odouble: Option[Double],
-    @Ignore var obigDecimal: Option[BigDecimal],
-    @Ignore var otimestamp: Option[Timestamp],
-    @Ignore var odate: Option[Date],
-    @Ignore var ouuid: Option[UUID]
-  ) extends ActiveRecord {
-    def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
-      new Timestamp(0), new Date(0), new UUID(0, 0),
-      Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
-      Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), Some(new UUID(0, 0))
-    )
-  }
+    var oboolean: Option[Boolean],
+    var oint: Option[Int],
+    var olong: Option[Long],
+    var ofloat: Option[Float],
+    var odouble: Option[Double],
+    var obigDecimal: Option[BigDecimal],
+    var otimestamp: Option[Timestamp],
+    var odate: Option[Date],
+    var ouuid: Option[UUID]
+  ) extends ActiveRecord
 
   object DummyModel extends ActiveRecordCompanion[DummyModel] {
     def newModel(i: Int, none: Boolean = false) = DummyModel(

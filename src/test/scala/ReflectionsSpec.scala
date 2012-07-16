@@ -89,47 +89,55 @@ object ReflectionSpec extends Specification {
     }
   }
 
-  "FieldInfo#apply" should {
+  "ClassInfo#fieldInfo" should {
     "detect type of Option value" in {
+      val c = new ClassInfo(classOf[models.DummyModel])
       "Int" in {
-        FieldInfo.apply("int", Some(3)) mustEqual
-          FieldInfo("int", Some(classOf[java.lang.Integer]), true, false)
+        c.fieldInfo("oint") mustEqual
+          FieldInfo("oint", classOf[Int], true, false)
       }
 
       "String" in {
-         FieldInfo.apply("string", Some("test")) mustEqual
-           FieldInfo("string", Some(classOf[String]), true, false)
-      }
-
-      "Object" in {
-         FieldInfo.apply("object", Some(new Dummy)) mustEqual
-           FieldInfo("object", Some(classOf[Dummy]), true, false)
+         c.fieldInfo("ostring") mustEqual
+           FieldInfo("ostring", classOf[String], true, false)
       }
     }
 
     "detect type of List value" in {
+      val c = new ClassInfo(classOf[models.SeqModel])
       "Int" in {
-        FieldInfo.apply("int", Seq(3)) mustEqual
-          FieldInfo("int", Some(classOf[java.lang.Integer]), false, true)
+        c.fieldInfo("list") mustEqual
+          FieldInfo("list", classOf[Int], false, true)
       }
 
       "String" in {
-         FieldInfo.apply("string", Seq("test")) mustEqual
-           FieldInfo("string", Some(classOf[String]), false, true)
-      }
-
-      "Object" in {
-         FieldInfo.apply("object", Seq(new Dummy)) mustEqual
-           FieldInfo("object", Some(classOf[Dummy]), false, true)
+         c.fieldInfo("seq") mustEqual
+           FieldInfo("seq", classOf[Double], false, true)
       }
     }
+  }
+  
+  "ScalaSigInfo#genericTypes" should {
+    "detect generic primitive types of Option field" in {
+      ScalaSigInfo(classOf[models.DummyModel]).genericTypes must contain(
+        "ostring" -> classOf[String],
+        "oboolean" -> classOf[Boolean],
+        "oint" -> classOf[Int],
+        "olong" -> classOf[Long],
+        "ofloat" -> classOf[Float],
+        "odouble" -> classOf[Double],
+        "obigDecimal" -> classOf[BigDecimal],
+        "otimestamp" -> classOf[java.sql.Timestamp],
+        "odate" -> classOf[java.util.Date],
+        "ouuid" -> classOf[java.util.UUID]
+      )
+    }
 
-    "Option[List]" in {
-       FieldInfo.apply("listint", Some(Seq(3, 4))) mustEqual
-         FieldInfo("listint", Some(classOf[java.lang.Integer]), true, true)
-
-       FieldInfo.apply("listobject", Some(Seq(new Dummy))) mustEqual
-         FieldInfo("listobject", Some(classOf[Dummy]), true, true)
+    "detect generic primitive types of Seq field" in {
+      ScalaSigInfo(classOf[models.SeqModel]).genericTypes must contain(
+        "list" -> classOf[Int],
+        "seq" -> classOf[Double]
+      )
     }
   }
 }

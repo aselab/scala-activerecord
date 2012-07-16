@@ -36,5 +36,8 @@ object ActiveRecordException {
 
   def cannotCleanSession =
     apply("Required start session by ActiveRecordTables#start()")
+
+  def scalaSig(c: Class[_]) =
+    apply("Failed to extract ScalaSig from class " + c.getName)
 }
 
