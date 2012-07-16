@@ -191,8 +191,14 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
         }
 
         "multiple fields" >> {
-          query.orderBy(m => m.boolean asc, m => m.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
-            (m1, m2) => m1.boolean < m2.boolean || m1.int > m2.int
+          query.orderBy(m => m.oint asc, m => m.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
+            (m1, m2) => (m1.oint, m2.oint) match {
+              case (a, b) if a == b => m1.int > m2.int
+              case (Some(a), Some(b)) => a < b
+              case (None, Some(b)) => true
+              case (Some(a), None) => false
+              case _ => throw new Exception("")
+            }
           }
         }
       }
