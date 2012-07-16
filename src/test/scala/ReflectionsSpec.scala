@@ -91,7 +91,7 @@ object ReflectionSpec extends Specification {
 
   "ClassInfo#fieldInfo" should {
     "detect type of Option value" in {
-      val c = new ClassInfo(classOf[models.DummyModel])
+      val c = new ClassInfo(classOf[models.PrimitiveModel])
       "Int" in {
         c.fieldInfo("oint") mustEqual
           FieldInfo("oint", classOf[Int], true, false)
@@ -119,7 +119,7 @@ object ReflectionSpec extends Specification {
   
   "ScalaSigInfo#genericTypes" should {
     "detect generic primitive types of Option field" in {
-      ScalaSigInfo(classOf[models.DummyModel]).genericTypes must contain(
+      ScalaSigInfo(classOf[models.PrimitiveModel]).genericTypes must contain(
         "ostring" -> classOf[String],
         "oboolean" -> classOf[Boolean],
         "oint" -> classOf[Int],

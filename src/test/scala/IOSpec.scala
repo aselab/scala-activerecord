@@ -63,7 +63,7 @@ object IOSpec extends TimeZoneSpec {
   "IO" should {
     "toFormValues" >> {
       "primitive and options" >> {
-        val m = DummyModel.newModel(5)
+        val m = PrimitiveModel.newModel(5)
         m.toFormValues mustEqual Map(
           "boolean" -> "true",
           "oboolean" -> "true",
@@ -135,7 +135,7 @@ object IOSpec extends TimeZoneSpec {
     }
 
     "assgin" >> {
-      val m = DummyModel.newModel(0)
+      val m = PrimitiveModel.newModel(0)
       m.assign(Map(
         "boolean" -> true,
         "oboolean" -> true,
@@ -158,11 +158,11 @@ object IOSpec extends TimeZoneSpec {
         "uuid" -> new UUID(5L, 5L),
         "ouuid" -> new UUID(5L, 5L)
       ))
-      m must equalTo(DummyModel.newModel(5))
+      m must equalTo(PrimitiveModel.newModel(5))
     }
 
     "assignFormValues" >> {
-      val m = DummyModel.newModel(0)
+      val m = PrimitiveModel.newModel(0)
       m.assignFormValues(Map(
         "boolean" -> "true",
         "oboolean" -> "true",
@@ -185,7 +185,7 @@ object IOSpec extends TimeZoneSpec {
         "uuid" -> "00000000-0000-0005-0000-000000000005",
         "ouuid" -> "00000000-0000-0005-0000-000000000005"
       ))
-      m must equalTo(DummyModel.newModel(5))
+      m must equalTo(PrimitiveModel.newModel(5))
     }
 
     "assignFormValues(list)" >> {
@@ -202,7 +202,7 @@ object IOSpec extends TimeZoneSpec {
     }
 
     "toMap" >> {
-      val m = DummyModel.newModel(5)
+      val m = PrimitiveModel.newModel(5)
       m.ofloat = None
       m.otimestamp = None
       m.odate = None

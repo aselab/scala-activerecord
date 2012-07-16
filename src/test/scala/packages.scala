@@ -11,9 +11,9 @@ import java.util.{Date, UUID, TimeZone}
 
 package models {
   import com.github.aselab.activerecord.annotations._
-  object DummyTables extends ActiveRecordTables with VersionTable {
-    val dummyModels = table[DummyModel]
-    val dummyModels2 = table[DummyModel2]
+  object TestTables extends ActiveRecordTables with VersionTable {
+    val primitiveModels = table[PrimitiveModel]
+    val versionModels = table[VersionModel]
 
     val users = table[User]
     val groups = table[Group]
@@ -36,7 +36,7 @@ package models {
     val foosToBars = manyToMany(foos, bars)
 
     def createTestData = (1 to 100).foreach { i =>
-      DummyModel.newModel(i, i > 50).save
+      PrimitiveModel.newModel(i, i > 50).save
     }
   }
 
@@ -88,7 +88,7 @@ package models {
 
   case class SeqModel(list: List[Int], seq: Seq[Double])
 
-  case class DummyModel(
+  case class PrimitiveModel(
     @Unique var string: String,
     var boolean: Boolean,
     var int: Int,
@@ -112,8 +112,8 @@ package models {
     var ouuid: Option[UUID]
   ) extends ActiveRecord
 
-  object DummyModel extends ActiveRecordCompanion[DummyModel] {
-    def newModel(i: Int, none: Boolean = false) = DummyModel(
+  object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
+    def newModel(i: Int, none: Boolean = false) = PrimitiveModel(
       "string" + i,
       i % 2 == 1,
       i,
@@ -136,6 +136,15 @@ package models {
       Some(new UUID(i.toLong, i.toLong)).filterNot(_ => none)
     )
   }
+
+  case class VersionModel(
+    var string: String,
+    var boolean: Boolean,
+    var int: Int,
+    var optionString: Option[String]
+  ) extends ActiveRecord with Versionable
+
+  object VersionModel extends ActiveRecordCompanion[VersionModel]
 }
 
 trait ActiveRecordSpecification extends Specification {
@@ -151,7 +160,7 @@ trait ActiveRecordSpecification extends Specification {
   }
 
   def config: Map[String, String] = Map(
-    "schema" -> "com.github.aselab.activerecord.models.DummyTables"
+    "schema" -> "com.github.aselab.activerecord.models.TestTables"
   )
 
   def withRollback[T](f: => T) = dsl.transaction {
@@ -161,7 +170,7 @@ trait ActiveRecordSpecification extends Specification {
     result
   }
 
-  def schema: ActiveRecordTables = models.DummyTables
+  def schema: ActiveRecordTables = models.TestTables
 
   override def map(fs: => Fragments) = {
     Step {

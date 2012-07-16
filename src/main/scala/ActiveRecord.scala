@@ -412,6 +412,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
   private var _session: (Option[Session], Option[Session]) = (None, None)
 
+  /** Set rollback point for test */
   def start = {
     val oldSession = Session.currentSessionOption
     val newSession = SessionFactory.newSession
@@ -425,6 +426,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
     _session = (oldSession, Option(newSession))
   }
 
+  /** Rollback to start point */
   def clean = _session match {
     case (oldSession, Some(newSession)) =>
       newSession.connection.rollback
