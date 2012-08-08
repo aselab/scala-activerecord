@@ -1,2 +1,2 @@
 #!/bin/sh
-exec java -XX:+UseConcMarkSweepGC -XX:+CMSPermGenSweepingEnabled -XX:+CMSClassUnloadingEnabled -Xss2M -XX:MaxPermSize=512m -Xmx1G -Dfile.encoding=UTF-8 -jar `dirname $0`/sbt-launch.jar "$@"
+exec java -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Xss2M -XX:MaxPermSize=512m -Xmx1G -Dfile.encoding=UTF-8 -jar `dirname $0`/sbt-launch.jar "$@"
