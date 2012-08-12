@@ -64,7 +64,7 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   case class ValidateModel(
     @Email email: String = ""
-  ) extends ProductModel
+  ) extends ProductModel with ValidationSupport
 
   object ValidateModel extends ProductModelCompanion[ValidateModel]
 
@@ -402,10 +402,16 @@ object ValidationSpec extends ActiveRecordSpecification {
         Validator.get(classOf[annotations.Unique]) must beNone
       }
 
-      "not extends ActivevRecord" in {
+      "not extends ActiveRecord" in {
         val v = ValidateModel("aaa")
         v.validate
         v.errors must not beEmpty
+      }
+
+      "validate on save" in {
+        val m = UserModel("a", "b")
+        m.save must beFalse
+        m.errors must not beEmpty
       }
     }
   }

@@ -1,6 +1,6 @@
 package com.github.aselab.activerecord
 
-trait IO { this: ProductModel =>
+trait IO { this: ProductModel with Validatable =>
   import ReflectionUtil._
 
   def toMap: Map[String, Any] = {
@@ -17,8 +17,8 @@ trait IO { this: ProductModel =>
 
   def toFormValues(prefix: Option[String]): Map[String, String] = {
     def serialize(c: Class[_], value: Any, key: String) =
-      if (classOf[ProductModel].isAssignableFrom(c)) {
-        value.asInstanceOf[ProductModel].toFormValues(Some(key))
+      if (classOf[IO].isAssignableFrom(c)) {
+        value.asInstanceOf[IO].toFormValues(Some(key))
       } else {
         Map(FormConverter.get(c).map(key -> _.serialize(value)).getOrElse(
           throw ActiveRecordException.unsupportedType(key)
@@ -77,7 +77,7 @@ trait IO { this: ProductModel =>
   }
 }
 
-trait FormSupport[T <: ProductModel] {self: ProductModelCompanion[T] =>
+trait FormSupport[T <: ProductModel with IO] {self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {

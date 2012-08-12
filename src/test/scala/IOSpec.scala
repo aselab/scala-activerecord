@@ -7,27 +7,27 @@ import java.sql.Timestamp
 
 object IOSpec extends TimeZoneSpec {
 
-  case class ListModel(l1: List[String], l2: List[Int]) extends ProductModel {
+  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord {
     def this() = this(List(""), List(0))
   }
-  object ListModel extends ProductModelCompanion[ListModel]
+  object ListModel extends ActiveRecordCompanion[ListModel]
 
   case class NestModel(
     int: Int,
     list: ListModel
-  ) extends ProductModel {
+  ) extends ActiveRecord {
     def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
   }
-  object NestModel extends ProductModelCompanion[NestModel]
+  object NestModel extends ActiveRecordCompanion[NestModel]
 
   case class ComplexModel(
     int: Int,
     nest: NestModel,
     nestlist: List[NestModel]
-  ) extends ProductModel {
+  ) extends ActiveRecord {
     def this() = this(1, new NestModel, List(new NestModel, new NestModel))
   }
-  object ComplexModel extends ProductModelCompanion[ComplexModel]
+  object ComplexModel extends ActiveRecordCompanion[ComplexModel]
 
   case class FormSupportModel(
     string: String,
@@ -50,7 +50,7 @@ object IOSpec extends TimeZoneSpec {
     otimestamp: Option[Timestamp],
     odate: Option[Date],
     ouuid: Option[UUID]
-  ) extends ProductModel {
+  ) extends ActiveRecord {
     def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
       new Timestamp(0), new Date(0), new UUID(0, 0),
       Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
@@ -58,7 +58,7 @@ object IOSpec extends TimeZoneSpec {
     )
   }
 
-  object FormSupportModel extends ProductModelCompanion[FormSupportModel] with FormSupport[FormSupportModel]
+  object FormSupportModel extends ActiveRecordCompanion[FormSupportModel]
 
   "IO" should {
     "toFormValues" >> {
