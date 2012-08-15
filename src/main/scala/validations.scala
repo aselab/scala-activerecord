@@ -4,21 +4,47 @@ import org.squeryl.annotations.Transient
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
+import java.util.Locale
 
 class Errors(model: Class[_]) extends Iterable[ValidationError] {
-  private val errors = collection.mutable.MutableList[ValidationError]()
+  protected val errorList =
+    collection.mutable.MutableList.empty[ValidationError]
 
-  def iterator = errors.iterator
-
-  def add(message: String) {
-    errors += ValidationError(model, "", message)
+  private var changed = false
+  private var _errors = Map.empty[String, Seq[ValidationError]]
+  protected def errors = {
+    if (changed) {
+      _errors = errorList.groupBy(_.key)
+      changed = false
+    }
+    _errors
   }
+
+  def iterator = errorList.iterator
+
+  def add(message: String): Unit = add("", message)
 
   def add(fieldName: String, message: String, args: Any*) {
-    errors += ValidationError(model, fieldName, message, args:_*)
+    errorList += ValidationError(model, fieldName, message, args:_*)
+    changed = true
   }
 
-  def clear = errors.clear
+  def exists(fieldName: String): Boolean = errors.isDefinedAt(fieldName)
+
+  def get(fieldName: String): Seq[ValidationError] =
+    errors.getOrElse(fieldName, Nil)
+
+  def apply(fieldName: String): Seq[ValidationError] = get(fieldName)
+
+  def global: Seq[ValidationError] = get("")
+
+  def clear {
+    errorList.clear
+    changed = true
+  }
+
+  def messages(implicit locale: Locale = Locale.getDefault): Seq[String] =
+    iterator.toSeq.map(_.translate)
 }
 
 trait Validatable extends Saveable {
@@ -26,8 +52,8 @@ trait Validatable extends Saveable {
   @dsl.Ignore
   val errors = new Errors(getClass)
 
-  def globalErrors = errors.filter(_.key == "")
-  def fieldErrors = errors.filter(_.key != "")
+  def globalErrors: Seq[ValidationError] = errors.global
+  def fieldErrors: Seq[ValidationError] = errors.filterNot(_.isGlobal).toSeq
 
   abstract override def save() = validate && super.save
 
@@ -45,7 +71,18 @@ trait Validatable extends Saveable {
   protected def beforeValidation() {}
 }
 
-case class ValidationError(model: Class[_], key: String, message: String, args: Any*)
+case class ValidationError(
+  model: Class[_], key: String, message: String, args: Any*
+) {
+  lazy val translator = Config.translator
+
+  def isGlobal: Boolean = key == ""
+
+  def translate(implicit locale: Locale = Locale.getDefault): String =
+    translator.translate(this)
+
+  override def toString = translate
+}
 
 abstract class Validator[T <: Annotation](implicit m: Manifest[T]) {
   val _annotation = new DynamicVariable[Annotation](null)

@@ -457,6 +457,6 @@ object Config {
 
   def cleanup = conf.cleanup
 
-  def translator = conf.translator
+  def translator = new I18n(conf.translator)
 }
 

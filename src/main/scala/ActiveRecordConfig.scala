@@ -15,7 +15,7 @@ trait ActiveRecordConfig {
     Session.cleanupResources
   }
 
-  def translator = new I18n(i18n.DefaultTranslator)
+  def translator: i18n.Translator = i18n.DefaultTranslator
 }
 
 abstract class AbstractDefaultConfig(

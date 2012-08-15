@@ -5,9 +5,16 @@ import java.text.MessageFormat
 import mojolly.inflector.InflectorImports._
 
 class I18n(val translator: i18n.Translator) {
-  def translate(error: ValidationError)(implicit locale: Locale = Locale.getDefault) =
-    translator.translateField(error.model, error.key) + " " +
-    translator.translateMessage(error.message, error.args:_*)
+  def translate(error: ValidationError)
+    (implicit locale: Locale = Locale.getDefault): String =
+  {
+    val message = translator.translateMessage(error.message, error.args:_*)
+    if (error.isGlobal) {
+      message
+    } else {
+      translator.translateField(error.model, error.key) + " " + message
+    }
+  }
 }
 
 package i18n {

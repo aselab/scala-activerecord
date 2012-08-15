@@ -7,13 +7,20 @@ import i18n._
 
 object i18nSpec extends Specification with Mockito {
   "I18n" should {
-    val mockTranslator = mock[Translator]
-    val mockI18n = new I18n(mockTranslator)
-    "translate" in {
-      implicit val locale = Locale.ENGLISH
+    implicit val locale = Locale.ENGLISH
+    val translator = mock[Translator]
+    translator.translateMessage("test", "a", "b") returns "test a b"
+    translator.translateField(classOf[models.User], "name") returns "user name"
+    translator.translateMessage("minLength", 4) returns "is too short"
+    val mockI18n = new I18n(translator)
+
+    "translate global error" in {
+      val error = ValidationError(classOf[models.User], "", "test", "a", "b")
+      mockI18n.translate(error) mustEqual "test a b"
+    }
+
+    "translate field error" in {
       val error = ValidationError(classOf[models.User], "name", "minLength", 4)
-      mockTranslator.translateField(classOf[models.User], "name") returns "user name"
-      mockTranslator.translateMessage("minLength", 4) returns "is too short"
       mockI18n.translate(error) mustEqual "user name is too short"
     }
   }
