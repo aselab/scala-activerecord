@@ -8,7 +8,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import java.util.Locale
 
-object ErrorsSpec extends Specification with Mockito {
+object ErrorsSpec extends ActiveRecordSpecification with Mockito {
   val userClass = classOf[models.User]
 
   "Errors" should {
