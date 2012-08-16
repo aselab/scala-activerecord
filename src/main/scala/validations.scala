@@ -84,7 +84,7 @@ case class ValidationError(
   override def toString = translate
 }
 
-abstract class Validator[T <: Annotation](implicit m: Manifest[T]) {
+abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T]) {
   val _annotation = new DynamicVariable[Annotation](null)
   val _fieldName = new DynamicVariable[String](null)
   val _model = new DynamicVariable[Validatable](null)
@@ -93,6 +93,9 @@ abstract class Validator[T <: Annotation](implicit m: Manifest[T]) {
   def model = _model.value
 
   def errors = model.errors
+  def message(default: String) =
+    Option(annotation.message).filter(!_.isEmpty).getOrElse(default)
+
   def validate(value: Any): Unit
 
   def validateWith(v: Any, a: Annotation, model: Validatable, name: String) = {
@@ -117,9 +120,13 @@ abstract class Validator[T <: Annotation](implicit m: Manifest[T]) {
 }
 
 object Validator {
+  type AnnotationType = Annotation with ({
+    def message(): String
+    def on(): String
+  })
   type A = Class[_ <: Annotation]
 
-  lazy val validators = collection.mutable.Map[A, Validator[_ <: Annotation]](
+  lazy val validators = collection.mutable.Map[A, Validator[_ <: AnnotationType]](
     classOf[annotations.Required] -> requiredValidator,
     classOf[annotations.Length] -> lengthValidator,
     classOf[annotations.Range] -> rangeValidator,
@@ -129,25 +136,25 @@ object Validator {
     classOf[annotations.Confirm] -> confirmValidator
   )
 
-  def register[T <: Annotation](validator: Validator[T])(implicit m: Manifest[T]) =
-    validators += (m.erasure.asInstanceOf[Class[T]] -> validator)
+  def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]) =
+    validators += (m.erasure.asInstanceOf[A] -> validator)
 
   def unregister(annotation: A): Unit = validators -= annotation
 
-  def unregister[T <: Annotation](validator: Validator[T])(implicit m: Manifest[T]): Unit =
+  def unregister[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]): Unit =
     unregister(m.erasure.asInstanceOf[Class[T]])
 
-  def get(annotation: A): Option[Validator[Annotation]] =
-    validators.get(annotation).asInstanceOf[Option[Validator[Annotation]]]
+  def get(annotation: A): Option[Validator[AnnotationType]] =
+    validators.get(annotation).asInstanceOf[Option[Validator[AnnotationType]]]
 
-  def get(annotation: Annotation): Option[Validator[Annotation]] =
+  def get(annotation: Annotation): Option[Validator[AnnotationType]] =
     get(annotation.annotationType)
 
   def isBlank(value: Any) = value == null || value.toString.isEmpty
 
   val requiredValidator = new Validator[annotations.Required] {
     def validate(value: Any) =
-      if (isBlank(value)) errors.add(fieldName, "required")
+      if (isBlank(value)) errors.add(fieldName, message("required"))
   }
 
   val lengthValidator = new Validator[annotations.Length] {
@@ -155,8 +162,12 @@ object Validator {
       val l = if (value == null) 0 else value.toString.length
       val min = annotation.min
       val max = annotation.max
-      if (l < min) errors.add(fieldName, "minLength", min)
-      if (l > max) errors.add(fieldName, "maxLength", max)
+      if (annotation.message.isEmpty) {
+        if (l < min) errors.add(fieldName, "minLength", min)
+        if (l > max) errors.add(fieldName, "maxLength", max)
+      } else {
+        if (l < min || l > max) errors.add(fieldName, annotation.message)
+      }
     }
   }
 
@@ -165,8 +176,12 @@ object Validator {
     def max = annotation.max
 
     def range[T <% Ordered[T]](min: T, v: T, max: T) = {
-      if (v < min) errors.add(fieldName, "minValue", min)
-      if (v > max) errors.add(fieldName, "maxValue", max)
+      if (annotation.message.isEmpty) {
+        if (v < min) errors.add(fieldName, "minValue", min)
+        if (v > max) errors.add(fieldName, "maxValue", max)
+      } else {
+        if (v < min || v > max) errors.add(fieldName, annotation.message)
+      }
     }
 
     def validate(value: Any) = value match {
@@ -180,18 +195,18 @@ object Validator {
 
   val checkedValidator = new Validator[annotations.Checked] {
     def validate(value: Any) =
-      if (value != true) errors.add(fieldName, "checked")
+      if (value != true) errors.add(fieldName, message("checked"))
   }
 
   val emailValidator = new Validator[annotations.Email] {
     def validate(value: Any) = if (!isBlank(value) && !isEmail(value.toString))
-      errors.add(fieldName, "invalid")
+      errors.add(fieldName, message("invalid"))
   }
 
   val formatValidator = new Validator[annotations.Format] {
     def validate(value: Any) = {
       val pattern = annotation.value
-      if (!isBlank(value) && !isBlank(pattern) && pattern.r.findFirstIn(value.toString).isEmpty) errors.add(fieldName, "format")
+      if (!isBlank(value) && !isBlank(pattern) && pattern.r.findFirstIn(value.toString).isEmpty) errors.add(fieldName, message("format"))
     }
   }
 
@@ -206,7 +221,7 @@ object Validator {
           throw ActiveRecordException.notfoundConfirmField(confirmFieldName)
       }
       if (!isBlank(value) && value != confirmValue)
-        errors.add(fieldName, "confirmation")
+        errors.add(fieldName, message("confirmation"))
     }
   }
 }

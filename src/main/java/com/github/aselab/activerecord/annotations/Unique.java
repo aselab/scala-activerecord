@@ -5,4 +5,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.FIELD })
 public @interface Unique {
+  String message() default "";
+  String on() default "save";
 }

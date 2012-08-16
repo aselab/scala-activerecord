@@ -6,4 +6,6 @@ import java.lang.annotation.*;
 @Target({ ElementType.FIELD })
 public @interface Format {
   String value();
+  String message() default "";
+  String on() default "save";
 }

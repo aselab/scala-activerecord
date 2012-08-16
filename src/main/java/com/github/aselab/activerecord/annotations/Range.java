@@ -7,4 +7,6 @@ import java.lang.annotation.*;
 public @interface Range {
   double max() default Double.POSITIVE_INFINITY;
   double min() default Double.NEGATIVE_INFINITY;
+  String message() default "";
+  String on() default "save";
 }

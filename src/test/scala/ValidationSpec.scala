@@ -156,6 +156,18 @@ object ValidationSpec extends ActiveRecordSpecification {
     @Email email: String = ""
   ) extends ProductModel with ValidationSupport
 
+  case class AnnotationOptionModel(
+    @Required(message="custom message") message: String = "a",
+    @Required(on="save") onSave: String = "a",
+    @Required(on="create") onCreate: String = "a",
+    @Required(on="update") onUpdate: String = "a",
+    persisted: Boolean = false
+  ) extends ActiveRecord {
+    override def isNewInstance =  !persisted
+  }
+
+  object AnnotationOptionModel extends ActiveRecordCompanion[AnnotationOptionModel]
+
   object ValidateModel extends ProductModelCompanion[ValidateModel]
 
   "Validatable" should {
@@ -224,28 +236,19 @@ object ValidationSpec extends ActiveRecordSpecification {
           if (value.toString == "dummy") errors.add(fieldName, "dummy")
       }.register
 
-      val dummyValidator2 = new Validator[annotations.Required]{
-        def validate(value: Any) =
-          if (value.toString == "dummy2") errors.add(fieldName, "dummy2")
-      }.register
-
       "get" in {
         Validator.get(classOf[annotations.Unique]) must beSome(dummyValidator)
-        Validator.get(classOf[annotations.Required]) must beSome(dummyValidator2)
       }
 
       "doValidate" in {
         "add custom annotations" in {
           val c = classOf[Dummy]
-          val m1 = Dummy("dummy", "")
-          val m2 = Dummy("", "dummy2")
-          val m3 = Dummy("dummy", "dummy2")
+          val m1 = Dummy("dummy", "a")
+          val m2 = Dummy("", "a")
           m1.validate
           m2.validate
-          m3.validate
           m1.errors must contain(ValidationError(c, "s1", "dummy"))
-          m2.errors must contain(ValidationError(c, "s2", "dummy2"))
-          m3.errors must contain(ValidationError(c, "s1", "dummy"), ValidationError(c, "s2", "dummy2"))
+          m2.errors must beEmpty
         }
 
         "@Confirm" in {
@@ -487,8 +490,8 @@ object ValidationSpec extends ActiveRecordSpecification {
       }
 
       "unregister" in {
+        Validator.get(classOf[annotations.Unique]) must beSome(dummyValidator)
         dummyValidator.unregister
-        Validator.get(classOf[annotations.Required]) must beSome(dummyValidator2)
         Validator.get(classOf[annotations.Unique]) must beNone
       }
 
@@ -498,11 +501,52 @@ object ValidationSpec extends ActiveRecordSpecification {
         v.errors must not beEmpty
       }
 
+      "annotation options" in {
+        val c = classOf[AnnotationOptionModel]
+
+        "message" in {
+          val m = AnnotationOptionModel(message = "")
+          m.validate must beFalse
+          m.errors must contain(ValidationError(c, "message", "custom message"))
+        }
+
+        "on save" in {
+          val onCreate = AnnotationOptionModel(onSave = "")
+          onCreate.validate must beFalse
+          onCreate.errors must not beEmpty
+
+          val onUpdate = AnnotationOptionModel(onSave = "", persisted = true)
+          onUpdate.validate must beFalse
+          onUpdate.errors must not beEmpty
+        }
+
+        "on create" in {
+          val onCreate = AnnotationOptionModel(onCreate = "")
+          onCreate.validate must beFalse
+          onCreate.errors must not beEmpty
+
+          val onUpdate = AnnotationOptionModel(onCreate = "", persisted = true)
+          onUpdate.validate must beTrue
+          onUpdate.errors must not beEmpty
+        }.pendingUntilFixed
+
+        "on update" in {
+          val onCreate = AnnotationOptionModel(onUpdate = "")
+          onCreate.validate must beTrue
+          onCreate.errors must beEmpty
+
+          val onUpdate = AnnotationOptionModel(onUpdate = "", persisted = true)
+          onUpdate.validate must beFalse
+          onUpdate.errors must not beEmpty
+        }.pendingUntilFixed
+      }
+
       "validate on save" in {
         val m = UserModel("a", "b")
         m.save must beFalse
         m.errors must not beEmpty
       }
+
     }
   }
 }
