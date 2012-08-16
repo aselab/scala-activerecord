@@ -102,7 +102,13 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
     _annotation.withValue(a) {
       _model.withValue(model) {
         _fieldName.withValue(name) {
-          validate(v)
+          val skip = (annotation.on match {
+            case "save" => false
+            case "create" if model.isNewInstance => false
+            case "update" if !model.isNewInstance => false
+            case _ => true
+          })
+          if (!skip) validate(v)
         }
       }
     }

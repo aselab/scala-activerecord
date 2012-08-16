@@ -4,6 +4,7 @@ import org.squeryl.annotations.Transient
 
 trait Saveable {
   def save(): Boolean = false
+  def isNewInstance: Boolean
 }
 
 /**

@@ -104,6 +104,7 @@ object ValidationSpec extends ActiveRecordSpecification {
       calledMethods :+= "save"
       true
     }
+    val isNewInstance = true
   }
 
   case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable {
@@ -154,7 +155,9 @@ object ValidationSpec extends ActiveRecordSpecification {
 
   case class ValidateModel(
     @Email email: String = ""
-  ) extends ProductModel with ValidationSupport
+  ) extends ProductModel with ValidationSupport {
+    val isNewInstance = true
+  }
 
   case class AnnotationOptionModel(
     @Required(message="custom message") message: String = "a",
@@ -527,8 +530,8 @@ object ValidationSpec extends ActiveRecordSpecification {
 
           val onUpdate = AnnotationOptionModel(onCreate = "", persisted = true)
           onUpdate.validate must beTrue
-          onUpdate.errors must not beEmpty
-        }.pendingUntilFixed
+          onUpdate.errors must beEmpty
+        }
 
         "on update" in {
           val onCreate = AnnotationOptionModel(onUpdate = "")
@@ -538,7 +541,7 @@ object ValidationSpec extends ActiveRecordSpecification {
           val onUpdate = AnnotationOptionModel(onUpdate = "", persisted = true)
           onUpdate.validate must beFalse
           onUpdate.errors must not beEmpty
-        }.pendingUntilFixed
+        }
       }
 
       "validate on save" in {
