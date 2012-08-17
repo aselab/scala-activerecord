@@ -447,7 +447,11 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 }
 
 object Config {
-  var conf: ActiveRecordConfig = _
+  private var _conf: ActiveRecordConfig = _
+
+  def confOption = Option(_conf)
+  def conf = confOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def conf_=(value: ActiveRecordConfig) = _conf = value
 
   lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
     .asInstanceOf[ActiveRecordTables]
@@ -457,6 +461,7 @@ object Config {
 
   def cleanup = conf.cleanup
 
-  def translator = new I18n(conf.translator)
+  def translator = new I18n(confOption.map(_.translator).
+    getOrElse(i18n.DefaultTranslator))
 }
 

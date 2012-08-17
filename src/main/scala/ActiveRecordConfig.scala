@@ -14,8 +14,7 @@ trait ActiveRecordConfig {
   def cleanup: Unit = {
     Session.cleanupResources
   }
-
-  def translator: i18n.Translator = i18n.DefaultTranslator
+  def translator: i18n.Translator
 }
 
 abstract class AbstractDefaultConfig(
@@ -72,6 +71,7 @@ abstract class AbstractDefaultConfig(
   }
 
   def connection = pool.getConnection
+  val translator = i18n.DefaultTranslator
 }
 
 case class DefaultConfig(

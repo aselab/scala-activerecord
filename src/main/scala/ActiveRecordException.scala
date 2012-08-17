@@ -3,6 +3,8 @@ package com.github.aselab.activerecord
 case class ActiveRecordException(msg: String) extends RuntimeException(msg)
 
 object ActiveRecordException {
+  def notInitialized = apply("Not initialized")
+
   def unsupportedType(name: String) = apply("Unsupported type: " + name)
 
   def cannotCreateInstance(className: String, cause: String) =
