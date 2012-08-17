@@ -164,8 +164,10 @@ object Validator {
   }
 
   val lengthValidator = new Validator[annotations.Length] {
-    def validate(value: Any) = {
+    def validate(value: Any) {
       val l = if (value == null) 0 else value.toString.length
+      if (l == 0) return
+
       val min = annotation.min
       val max = annotation.max
       if (annotation.message.isEmpty) {

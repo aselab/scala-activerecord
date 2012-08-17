@@ -109,6 +109,52 @@ object ValidatorSpec extends Specification with Mockito {
       }
     }
 
+    "lengthValidator" in {
+      val validator = Validator.lengthValidator
+      val a = {
+        val a = mockAnnotation[annotations.Length]()
+        a.min returns 2
+        a.max returns 4
+        a
+      }
+        
+      "skip if value is null or empty string" in {
+        val m1 = Model(null)
+        val m2 = Model("")
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "valid if length is within min to max" in {
+        val m1 = Model("aa")
+        val m2 = Model("aaaa")
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "invalid if length is shorter than min value" in {
+        val m = Model("a")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "minLength", 2)).only
+      }
+
+      "invalid if length is longer than max value" in {
+        val m = Model("aaaaa")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "maxLength", 4)).only
+      }
+
+      "annotation message" in {
+        val a = mockAnnotation[annotations.Length](message="test")
+        val m = Model("a")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test")).only
+      }
+    }
   }
 }
 

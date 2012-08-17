@@ -110,37 +110,31 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
 
       "@Length" in {
         val c = classOf[ValidationModel]
-        val m1 = ValidationModel(length = "")
+        val m1 = ValidationModel(length = "a")
         val m2 = ValidationModel(length = "a" * 5)
         val m3 = ValidationModel(length = "a" * 11)
-        val m4 = ValidationModel(length = null)
         m1.validate
         m2.validate
         m3.validate
-        m4.validate
         m1.errors must contain(ValidationError(c, "length", "minLength", 3))
         m2.errors must beEmpty
         m3.errors must contain(ValidationError(c, "length", "maxLength", 10))
-        m4.errors must contain(ValidationError(c, "length", "minLength", 3))
       }
 
       "@Length (Option)" in {
         val c = classOf[ValidationModel]
-        val m1 = ValidationModel(lengthOption = Some(""))
+        val m1 = ValidationModel(lengthOption = Some("a"))
         val m2 = ValidationModel(lengthOption = Some("a" * 5))
         val m3 = ValidationModel(lengthOption = Some("a" * 11))
         val m4 = ValidationModel(lengthOption = None)
-        val m5 = ValidationModel(lengthOption = Some(null))
         m1.validate
         m2.validate
         m3.validate
         m4.validate
-        m5.validate
         m1.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
         m2.errors must beEmpty
         m3.errors must contain(ValidationError(c, "lengthOption", "maxLength", 10))
         m4.errors must beEmpty
-        m5.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
       }
 
       "@Range max" in {
