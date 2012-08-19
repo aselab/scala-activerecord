@@ -141,7 +141,8 @@ object Validator {
     classOf[annotations.Format] -> formatValidator,
     classOf[annotations.Confirmation] -> confirmationValidator,
     classOf[annotations.StringEnum] -> stringEnumValidator,
-    classOf[annotations.NumberEnum] -> numberEnumValidator
+    classOf[annotations.NumberEnum] -> numberEnumValidator,
+    classOf[annotations.Unique] -> uniqueValidator
   )
 
   def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]) =
@@ -255,6 +256,14 @@ object Validator {
       if (values.indexOf(value) < 0) {
         errors.add(fieldName, message("enum"), values.mkString(", "))
       }
+    }
+  }
+
+  val uniqueValidator = new Validator[annotations.Unique] {
+    def validate(value: Any) = model match {
+      case m: ActiveRecordBase[_] if !m.recordCompanion.isUnique(fieldName, m)
+        => errors.add(fieldName, message("unique"), value)
+      case _ =>
     }
   }
 

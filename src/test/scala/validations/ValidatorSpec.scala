@@ -21,7 +21,8 @@ object ValidatorSpec extends Specification with Mockito {
     a
   }
 
-  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Model) =
+  type Value = {val value: Any}
+  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable with Value) =
     validator.validateWith(m.value, a, m, "value")
 
   case class Model(value: Any, isNewInstance: Boolean = true) extends Validatable {
@@ -29,6 +30,10 @@ object ValidatorSpec extends Specification with Mockito {
     var other = value
   }
   val modelClass = classOf[Model]
+
+  case class ARModel(value: Any) extends ActiveRecord {
+    override lazy val recordCompanion = mock[ActiveRecordCompanion[this.type]]
+  }
 
   "Validator" should {
     "be able to register and unregister custom validator" in {
@@ -439,6 +444,40 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model(1)
         validate(validator, am, m)
         m.errors must contain(ValidationError(modelClass, "value", "test", "2, 3"))
+      }
+    }
+
+    "uniqueValidator" in {
+      val validator = Validator.uniqueValidator
+      def a = mockAnnotation[annotations.Unique]()
+      
+      "skip if model is not ActiveRecordBase" in {
+        val m = Model(1)
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "valid if value is unique" in {
+        val m = ARModel("aaa")
+        m.recordCompanion.isUnique("value", m) returns true
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "invalid if value is not unique" in {
+        val m = ARModel("aaa")
+        m.recordCompanion.isUnique("value", m) returns false
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(classOf[ARModel], "value", "unique", "aaa"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = ARModel("aaa")
+        m.recordCompanion.isUnique("value", m) returns false
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(classOf[ARModel], "value", "test", "aaa"))
       }
     }
 
