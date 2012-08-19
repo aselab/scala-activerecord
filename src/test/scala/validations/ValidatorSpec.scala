@@ -26,6 +26,7 @@ object ValidatorSpec extends Specification with Mockito {
 
   case class Model(value: Any, isNewInstance: Boolean = true) extends Validatable {
     var valueConfirmation = value
+    var other = value
   }
   val modelClass = classOf[Model]
 
@@ -346,6 +347,22 @@ object ValidatorSpec extends Specification with Mockito {
         m.valueConfirmation = "zzz"
         validate(validator, a, m)
         m.errors must contain(ValidationError(modelClass, "valueConfirmation", "confirmation"))
+      }
+
+      "change confirmation field" in {
+        val ac = a
+        ac.value returns "other"
+        val m = Model("aaa")
+        m.other = "zzz"
+        validate(validator, ac, m)
+        m.errors must contain(ValidationError(modelClass, "other", "confirmation"))
+      }
+
+      "throws exception when confirmation field does not exists" in {
+        val ac = a
+        ac.value returns "notExists"
+        val m = Model("aaa")
+        validate(validator, ac, m) must throwA(ActiveRecordException.notfoundConfirmationField("notExists"))
       }
 
       "annotation message" in {

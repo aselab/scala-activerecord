@@ -225,7 +225,8 @@ object Validator {
       if (isBlank(value)) return
 
       import ReflectionUtil._
-      val confirmationFieldName = fieldName + "Confirmation"
+      val confirmationFieldName = Option(annotation.value).filter(!_.isEmpty)
+        .getOrElse(fieldName + "Confirmation")
       val confirmationValue = try {
         model.getValue[Any](confirmationFieldName)
       } catch {
