@@ -139,7 +139,9 @@ object Validator {
     classOf[annotations.Email] -> emailValidator,
     classOf[annotations.Accepted] -> acceptedValidator,
     classOf[annotations.Format] -> formatValidator,
-    classOf[annotations.Confirmation] -> confirmationValidator
+    classOf[annotations.Confirmation] -> confirmationValidator,
+    classOf[annotations.StringEnum] -> stringEnumValidator,
+    classOf[annotations.NumberEnum] -> numberEnumValidator
   )
 
   def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]) =
@@ -237,6 +239,25 @@ object Validator {
         errors.add(confirmationFieldName, message("confirmation"))
     }
   }
+
+  val stringEnumValidator = new Validator[annotations.StringEnum] {
+    def validate(value: Any) = {
+      val values = annotation.value.toSeq.asInstanceOf[Seq[Any]]
+      if (values.indexOf(value) < 0) {
+        errors.add(fieldName, message("enum"), values.mkString(", "))
+      }
+    }
+  }
+
+  val numberEnumValidator = new Validator[annotations.NumberEnum] {
+    def validate(value: Any) = {
+      val values = annotation.value.toSeq.asInstanceOf[Seq[Any]]
+      if (values.indexOf(value) < 0) {
+        errors.add(fieldName, message("enum"), values.mkString(", "))
+      }
+    }
+  }
+
 }
 
 trait ValidationSupport extends Validatable {self: ProductModel =>

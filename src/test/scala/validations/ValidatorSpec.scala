@@ -375,6 +375,70 @@ object ValidatorSpec extends Specification with Mockito {
       }
     }
 
+    "stringEnumValidator" in {
+      val validator = Validator.stringEnumValidator
+      def a = {
+        val a = mockAnnotation[annotations.StringEnum]()
+        a.value returns Array("a", "b")
+        a
+      }
+        
+      "valid if it is enumerated value" in {
+        val m1 = Model("a")
+        val m2 = Model("b")
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "invalid if it is not enumerated value" in {
+        val m = Model("c")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model("c")
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test", "a, b"))
+      }
+    }
+
+    "numberEnumValidator" in {
+      val validator = Validator.numberEnumValidator
+      def a = {
+        val a = mockAnnotation[annotations.NumberEnum]()
+        a.value returns Array(2, 3)
+        a
+      }
+        
+      "valid if it is enumerated value" in {
+        val m1 = Model(2)
+        val m2 = Model(3)
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "invalid if it is not enumerated value" in {
+        val m = Model(1)
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "enum", "2, 3"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model(1)
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test", "2, 3"))
+      }
+    }
+
   }
 }
 

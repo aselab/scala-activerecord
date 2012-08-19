@@ -32,4 +32,7 @@ trait Annotations {
   type Format = annotations.Format @field
 
   type Confirmation = annotations.Confirmation @field
+
+  type StringEnum = annotations.StringEnum @field
+  type NumberEnum = annotations.NumberEnum @field
 }
