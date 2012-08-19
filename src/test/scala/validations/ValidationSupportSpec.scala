@@ -22,14 +22,16 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
     @Range(min = 5, max = 10) range: Int = 7,
     @Accepted accepted: Boolean = true,
     @Email email: String = "test@example.com",
-    @Format("""\d+""") format: String = "100",
+    @Format("""^\d+$""") format: String = "100",
+    @StringEnum(Array("a", "b")) stringEnum: String = "a",
+    @NumberEnum(Array(1, 2)) numberEnum: Int = 1,
     @Length(min=3, max=10) lengthOption: Option[String] = Some("aaaaa"),
     @Range(max=5.3) maxValueOption: Option[Double] = Some(0),
     @Range(min=0) minValueOption: Option[Long] = Some(1),
     @Range(min = 5, max = 10) rangeOption: Option[Int] = Some(7),
     @Accepted acceptedOption: Option[Boolean] = Some(true),
     @Email emailOption: Option[String] = Some("test@example.com"),
-    @Format("""\d+""") formatOption: Option[String] = Some("100")
+    @Format("""^\d+$""") formatOption: Option[String] = Some("100")
   ) extends ActiveRecord
 
   case class UserModel(
@@ -93,13 +95,11 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         "not equals confirmation field" in {
           val m = UserModel("aaa", "bbb")
           m.validate must beFalse
-          m.errors must contain(ValidationError(c, "passwordConfirmation", "confirmation"))
         }
 
         "equals confirmation field" in {
           val m = UserModel("aaa", "aaa")
           m.validate must beTrue
-          m.errors must beEmpty
         }
 
         "throws exception when confirmation field is not defined" in {
@@ -292,7 +292,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
       "@Format" in {
         val c = classOf[ValidationModel]
         val m1 = ValidationModel(format = "200")
-        val m2 = ValidationModel(format = "aaa")
+        val m2 = ValidationModel(format = "a1a")
         val m3 = ValidationModel(format = null)
         m1.validate
         m2.validate
@@ -305,7 +305,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
       "@Format (Option)" in {
         val c = classOf[ValidationModel]
         val m1 = ValidationModel(formatOption = Some("200"))
-        val m2 = ValidationModel(formatOption = Some("aaa"))
+        val m2 = ValidationModel(formatOption = Some("a1a"))
         val m3 = ValidationModel(formatOption = None)
         val m4 = ValidationModel(formatOption = Some(null))
         m1.validate
@@ -317,6 +317,21 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.errors must beEmpty
         m4.errors must beEmpty
       }
+      
+      "@StringEnum" in {
+        val c = classOf[ValidationModel]
+        val m1 = ValidationModel(stringEnum = "z")
+        val m2 = ValidationModel(stringEnum = null)
+        m1.validate must beFalse
+        m2.validate must beFalse
+      }
+
+      "@NumberEnum" in {
+        val c = classOf[ValidationModel]
+        val m = ValidationModel(numberEnum = 5)
+        m.validate must beFalse
+      }
+
     }
 
     "annotation options" in {

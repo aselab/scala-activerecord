@@ -393,9 +393,12 @@ object ValidatorSpec extends Specification with Mockito {
       }
 
       "invalid if it is not enumerated value" in {
-        val m = Model("c")
-        validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
+        val m1 = Model("c")
+        val m2 = Model(null)
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
+        m2.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
       }
 
       "annotation message" in {
