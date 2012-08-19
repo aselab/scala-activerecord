@@ -25,11 +25,11 @@ trait Annotations {
 
   type Range = annotations.Range @field
 
-  type Checked = annotations.Checked @field
+  type Accepted = annotations.Accepted @field
 
   type Email = annotations.Email @field
 
   type Format = annotations.Format @field
 
-  type Confirm = annotations.Confirm @field
+  type Confirmation = annotations.Confirmation @field
 }

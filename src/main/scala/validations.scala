@@ -137,9 +137,9 @@ object Validator {
     classOf[annotations.Length] -> lengthValidator,
     classOf[annotations.Range] -> rangeValidator,
     classOf[annotations.Email] -> emailValidator,
-    classOf[annotations.Checked] -> checkedValidator,
+    classOf[annotations.Accepted] -> acceptedValidator,
     classOf[annotations.Format] -> formatValidator,
-    classOf[annotations.Confirm] -> confirmValidator
+    classOf[annotations.Confirmation] -> confirmationValidator
   )
 
   def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]) =
@@ -201,9 +201,11 @@ object Validator {
     }
   }
 
-  val checkedValidator = new Validator[annotations.Checked] {
-    def validate(value: Any) =
-      if (value != true) errors.add(fieldName, message("checked"))
+  val acceptedValidator = new Validator[annotations.Accepted] {
+    def validate(value: Any) = value match {
+      case v: Boolean => if (!v) errors.add(fieldName, message("accepted"))
+      case _ =>
+    }
   }
 
   val emailValidator = new Validator[annotations.Email] {
@@ -218,18 +220,20 @@ object Validator {
     }
   }
 
-  val confirmValidator = new Validator[annotations.Confirm] {
-    def validate(value: Any) = {
+  val confirmationValidator = new Validator[annotations.Confirmation] {
+    def validate(value: Any) {
+      if (isBlank(value)) return
+
       import ReflectionUtil._
-      val confirmFieldName = fieldName + "Confirmation"
-      val confirmValue = try {
-        model.getValue[Any](confirmFieldName)
+      val confirmationFieldName = fieldName + "Confirmation"
+      val confirmationValue = try {
+        model.getValue[Any](confirmationFieldName)
       } catch {
-        case e =>
-          throw ActiveRecordException.notfoundConfirmField(confirmFieldName)
+        case e => throw ActiveRecordException.notfoundConfirmationField(
+          confirmationFieldName)
       }
-      if (!isBlank(value) && value != confirmValue)
-        errors.add(fieldName, message("confirmation"))
+      if (value != confirmationValue)
+        errors.add(confirmationFieldName, message("confirmation"))
     }
   }
 }

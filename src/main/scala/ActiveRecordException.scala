@@ -22,7 +22,7 @@ object ActiveRecordException {
   def missingForeignKey(name: String) =
     apply("Cannot find declaration of foreign key: " + name)
 
-  def notfoundConfirmField(name: String) =
+  def notfoundConfirmationField(name: String) =
     apply("Cannot find declaration of confirmation field: " + name)
 
   def cannotCleanSession =

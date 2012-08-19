@@ -13,10 +13,10 @@ object ValidatorSpec extends Specification with Mockito {
   }
 
   def mockAnnotation[T <: Validator.AnnotationType](
-    message: String = "", on: String = "save"
+    on: String = "save"
   )(implicit m: Manifest[T]) = {
     val a = mock[T]
-    a.message returns message
+    a.message returns ""
     a.on returns on
     a
   }
@@ -24,7 +24,9 @@ object ValidatorSpec extends Specification with Mockito {
   def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Model) =
     validator.validateWith(m.value, a, m, "value")
 
-  case class Model(value: Any, isNewInstance: Boolean = true) extends Validatable
+  case class Model(value: Any, isNewInstance: Boolean = true) extends Validatable {
+    var valueConfirmation = value
+  }
   val modelClass = classOf[Model]
 
   "Validator" should {
@@ -81,7 +83,7 @@ object ValidatorSpec extends Specification with Mockito {
 
     "requiredValidator" in {
       val validator = Validator.requiredValidator
-      val a = mockAnnotation[annotations.Required]()
+      def a = mockAnnotation[annotations.Required]()
         
       "invalid if value is null" in {
         val m = Model(null)
@@ -102,16 +104,17 @@ object ValidatorSpec extends Specification with Mockito {
       }
 
       "annotation message" in {
-        val a = mockAnnotation[annotations.Required](message="test")
+        val am = a
+        am.message returns "test"
         val m = Model("")
-        validate(validator, a, m)
+        validate(validator, am, m)
         m.errors must contain(ValidationError(modelClass, "value", "test"))
       }
     }
 
     "lengthValidator" in {
       val validator = Validator.lengthValidator
-      val a = {
+      def a = {
         val a = mockAnnotation[annotations.Length]()
         a.min returns 2
         a.max returns 4
@@ -149,12 +152,212 @@ object ValidatorSpec extends Specification with Mockito {
       }
 
       "annotation message" in {
-        val a = mockAnnotation[annotations.Length](message="test")
+        val am = a
+        am.message returns "test"
         val m = Model("a")
-        validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "test")).only
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test"))
       }
     }
+
+    "rangeValidator" in {
+      val validator = Validator.rangeValidator
+      def a = {
+        val a = mockAnnotation[annotations.Range]()
+        a.min returns -2
+        a.max returns 2
+        a
+      }
+       
+      "skip if value is not number" in {
+        val m1 = Model(null)
+        val m2 = Model("test")
+        val m3 = Model(new Object)
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        validate(validator, a, m3)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+        m3.errors must beEmpty
+      }
+
+      "valid if value is within min to max" in {
+        val m1 = Model(-2)
+        val m2 = Model(2)
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "invalid if value is less than min value" in {
+        val m = Model(-2.01)
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "minValue", -2)).only
+      }
+
+      "invalid if value is greater than max value" in {
+        val m = Model(2.01)
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "maxValue", 2)).only
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model(33)
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test"))
+      }
+    }
+
+    "acceptedValidator" in {
+      val validator = Validator.acceptedValidator
+      def a = mockAnnotation[annotations.Accepted]()
+        
+      "skip if value is not Boolean" in {
+        val m1 = Model(null)
+        val m2 = Model("aaa")
+        val m3 = Model(new Object)
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        validate(validator, a, m3)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+        m3.errors must beEmpty
+      }
+
+      "valid if value is true" in {
+        val m = Model(true)
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "invalid if value is false" in {
+        val m = Model(false)
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "accepted"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model(false)
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test"))
+      }
+    }
+
+    "emailValidator" in {
+      val validator = Validator.emailValidator
+      def a = mockAnnotation[annotations.Email]()
+        
+      "skip if value is null or empty string" in {
+        val m1 = Model(null)
+        val m2 = Model("")
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "valid email" in {
+        val m = Model("user@some.com")
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "invalid email" in {
+        val m = Model("aaa")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "invalid"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model("aaa")
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test"))
+      }
+    }
+
+    "formatValidator" in {
+      val validator = Validator.formatValidator
+      def a = {
+        val a = mockAnnotation[annotations.Format]()
+        a.value returns "^[a-z]+$"
+        a
+      }
+        
+      "skip if value is null or empty string" in {
+        val m1 = Model(null)
+        val m2 = Model("")
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "valid format" in {
+        val m = Model("abcxyz")
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "invalid format" in {
+        val m = Model("a123z")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "format"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model("123")
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "value", "test"))
+      }
+    }
+
+    "confirmationValidator" in {
+      val validator = Validator.confirmationValidator
+      def a = mockAnnotation[annotations.Confirmation]()
+      
+      "skip if value is null or empty string" in {
+        val m1 = Model(null)
+        val m2 = Model("")
+        m1.valueConfirmation = "aaa"
+        m2.valueConfirmation = "aaa"
+        validate(validator, a, m1)
+        validate(validator, a, m2)
+        m1.errors must beEmpty
+        m2.errors must beEmpty
+      }
+
+      "equals confirmation field" in {
+        val m = Model("aaa")
+        validate(validator, a, m)
+        m.errors must beEmpty
+      }
+
+      "not equals confirmation field" in {
+        val m = Model("aaa")
+        m.valueConfirmation = "zzz"
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "confirmation"))
+      }
+
+      "annotation message" in {
+        val am = a
+        am.message returns "test"
+        val m = Model("aaa")
+        m.valueConfirmation = "zzz"
+        validate(validator, am, m)
+        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "test"))
+      }
+    }
+
   }
 }
 

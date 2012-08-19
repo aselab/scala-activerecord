@@ -20,25 +20,25 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
     @Range(max=5.3) maxValue: Double = 0,
     @Range(min=0) minValue: Long = 1,
     @Range(min = 5, max = 10) range: Int = 7,
-    @Checked checked: Boolean = true,
+    @Accepted accepted: Boolean = true,
     @Email email: String = "test@example.com",
     @Format("""\d+""") format: String = "100",
     @Length(min=3, max=10) lengthOption: Option[String] = Some("aaaaa"),
     @Range(max=5.3) maxValueOption: Option[Double] = Some(0),
     @Range(min=0) minValueOption: Option[Long] = Some(1),
     @Range(min = 5, max = 10) rangeOption: Option[Int] = Some(7),
-    @Checked checkedOption: Option[Boolean] = Some(true),
+    @Accepted acceptedOption: Option[Boolean] = Some(true),
     @Email emailOption: Option[String] = Some("test@example.com"),
     @Format("""\d+""") formatOption: Option[String] = Some("100")
   ) extends ActiveRecord
 
   case class UserModel(
-    @Transient @Confirm var password: String,
+    @Transient @Confirmation var password: String,
     @Transient var passwordConfirmation: String
   ) extends ActiveRecord
 
-  case class MissingConfirmField(
-    @Confirm test: String
+  case class MissingConfirmationField(
+    @Confirmation test: String
   ) extends ActiveRecord
 
   case class ValidationSupportModel(
@@ -61,7 +61,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
   object ValidationModel extends ActiveRecordCompanion[ValidationModel]
   object UserModel extends ActiveRecordCompanion[UserModel]
 
-  object MissingConfirmField extends ActiveRecordCompanion[MissingConfirmField]
+  object MissingConfirmationField extends ActiveRecordCompanion[MissingConfirmationField]
 
   object ValidationSupportModel extends ProductModelCompanion[ValidationSupportModel]
 
@@ -87,13 +87,13 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m2.errors must beEmpty
       }
 
-      "@Confirm" in {
+      "@Confirmation" in {
         val c = classOf[UserModel]
         
         "not equals confirmation field" in {
           val m = UserModel("aaa", "bbb")
           m.validate must beFalse
-          m.errors must contain(ValidationError(c, "password", "confirmation"))
+          m.errors must contain(ValidationError(c, "passwordConfirmation", "confirmation"))
         }
 
         "equals confirmation field" in {
@@ -103,8 +103,8 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         }
 
         "throws exception when confirmation field is not defined" in {
-          val m = MissingConfirmField("aaa")
-          m.validate must throwA(ActiveRecordException.notfoundConfirmField("testConfirmation"))
+          val m = MissingConfirmationField("aaa")
+          m.validate must throwA(ActiveRecordException.notfoundConfirmationField("testConfirmation"))
         }
       }
 
@@ -238,25 +238,25 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         ))
       }
 
-      "@Checked" in {
+      "@Accepted" in {
         val c = classOf[ValidationModel]
-        val m1 = ValidationModel(checked = true)
-        val m2 = ValidationModel(checked = false)
+        val m1 = ValidationModel(accepted = true)
+        val m2 = ValidationModel(accepted = false)
         m1.validate
         m2.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "checked", "checked"))
+        m2.errors must contain(ValidationError(c, "accepted", "accepted"))
       }
 
-      "@Checked (Option)" in {
+      "@Accepted (Option)" in {
         val c = classOf[ValidationModel]
-        val m1 = ValidationModel(checkedOption = Some(true))
-        val m2 = ValidationModel(checkedOption = Some(false))
-        val m3 = ValidationModel(checkedOption = None)
+        val m1 = ValidationModel(acceptedOption = Some(true))
+        val m2 = ValidationModel(acceptedOption = Some(false))
+        val m3 = ValidationModel(acceptedOption = None)
         m1.validate
         m2.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "checkedOption", "checked"))
+        m2.errors must contain(ValidationError(c, "acceptedOption", "accepted"))
         m3.errors must beEmpty
       }
 
