@@ -11,7 +11,7 @@ object i18nSpec extends Specification with Mockito {
     val translator = mock[Translator]
     translator.translateMessage("test", "a", "b") returns "test a b"
     translator.translateField(classOf[models.User], "name") returns "user name"
-    translator.translateMessage("minLength", 4) returns "is too short"
+    translator.translateMessage("minLength", "user name", 4) returns "user name is too short"
     val mockI18n = new I18n(translator)
 
     "translate global error" in {
@@ -40,7 +40,7 @@ object i18nSpec extends Specification with Mockito {
       }
 
       "fallback" in {
-        DefaultTranslator.get("activerecord.errors.required")(Locale.FRENCH) must beSome("is required")
+        DefaultTranslator.get("activerecord.errors.required")(Locale.FRENCH) must beSome("{0} is required")
       }
     }
 

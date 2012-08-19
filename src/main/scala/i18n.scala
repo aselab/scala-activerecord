@@ -8,11 +8,12 @@ class I18n(val translator: i18n.Translator) {
   def translate(error: ValidationError)
     (implicit locale: Locale = Locale.getDefault): String =
   {
-    val message = translator.translateMessage(error.message, error.args:_*)
     if (error.isGlobal) {
-      message
+      translator.translateMessage(error.message, error.args:_*)
     } else {
-      translator.translateField(error.model, error.key) + " " + message
+      val fieldLabel = translator.translateField(error.model, error.key)
+      val args = fieldLabel :: error.args.toList
+      translator.translateMessage(error.message, args:_*)
     }
   }
 }
