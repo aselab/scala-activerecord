@@ -351,7 +351,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model("aaa")
         m.valueConfirmation = "zzz"
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "confirmation"))
+        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "confirmation", "value"))
       }
 
       "change confirmation field" in {
@@ -360,7 +360,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model("aaa")
         m.other = "zzz"
         validate(validator, ac, m)
-        m.errors must contain(ValidationError(modelClass, "other", "confirmation"))
+        m.errors must contain(ValidationError(modelClass, "other", "confirmation", "value"))
       }
 
       "throws exception when confirmation field does not exists" in {
@@ -376,7 +376,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model("aaa")
         m.valueConfirmation = "zzz"
         validate(validator, am, m)
-        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "test"))
+        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "test", "value"))
       }
     }
 

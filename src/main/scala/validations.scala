@@ -44,7 +44,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
   }
 
   def messages(implicit locale: Locale = Locale.getDefault): Seq[String] =
-    iterator.toSeq.map(_.translate)
+    iterator.toSeq.map(_.translation)
 }
 
 trait Validatable extends Saveable {
@@ -72,16 +72,22 @@ trait Validatable extends Saveable {
 }
 
 case class ValidationError(
-  model: Class[_], key: String, message: String, args: Any*
+  model: Class[_], key: String, error: String, args: Any*
 ) {
   lazy val translator = Config.translator
 
-  def isGlobal: Boolean = key == ""
+  val isGlobal: Boolean = key == ""
 
-  def translate(implicit locale: Locale = Locale.getDefault): String =
-    translator.translate(this)
+  def label(implicit locale: Locale): String = translator.field(model, key)
 
-  override def toString = translate
+  def message(implicit locale: Locale): String =
+    translator.errorMessage(error, args:_*)
+
+  def translation(implicit locale: Locale): String = {
+    if (isGlobal) message else label + " " + message
+  }
+
+  override def toString = translation(Locale.getDefault)
 }
 
 abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T]) {
@@ -237,7 +243,7 @@ object Validator {
           confirmationFieldName)
       }
       if (value != confirmationValue)
-        errors.add(confirmationFieldName, message("confirmation"))
+        errors.add(confirmationFieldName, message("confirmation"), fieldName)
     }
   }
 

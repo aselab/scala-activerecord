@@ -74,8 +74,8 @@ object ErrorsSpec extends ActiveRecordSpecification with Mockito {
       val messagesJa = Seq("メッセージ1", "メッセージ2")
       val mockErrors = (messagesEn, messagesJa).zipped.map {case (en, ja) =>
         val e = mock[ValidationError]
-        e.translate(Locale.ENGLISH) returns en
-        e.translate(Locale.JAPANESE) returns ja
+        e.translation(Locale.ENGLISH) returns en
+        e.translation(Locale.JAPANESE) returns ja
         e
       }
       val errors = new Errors(userClass) {

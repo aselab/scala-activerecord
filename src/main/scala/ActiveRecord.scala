@@ -461,7 +461,7 @@ object Config {
 
   def cleanup = conf.cleanup
 
-  def translator = new I18n(confOption.map(_.translator).
-    getOrElse(i18n.DefaultTranslator))
+  def translator: i18n.Translator =
+    confOption.map(_.translator).getOrElse(i18n.DefaultTranslator)
 }
 
