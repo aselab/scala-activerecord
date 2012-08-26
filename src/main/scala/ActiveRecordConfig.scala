@@ -11,15 +11,23 @@ trait ActiveRecordConfig {
   def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
+
+  def adapter(driverClass: String): DatabaseAdapter = driverClass match {
+    case "org.h2.Driver" => new H2Adapter
+    case "org.postgresql.Driver" => new PostgreSqlAdapter
+    case "com.mysql.jdbc.Driver" => new MySQLAdapter
+    case driver => throw ActiveRecordException.unsupportedDriver(driver)
+  }
+
   def cleanup: Unit = {
     Session.cleanupResources
   }
   def translator: i18n.Translator
 }
 
-abstract class AbstractDefaultConfig(
-  config: Config,
-  overrideSettings: Map[String, Any]
+class DefaultConfig(
+  config: Config = ConfigFactory.load(),
+  overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
   val env = System.getProperty("run.mode", "dev")
 
@@ -41,12 +49,7 @@ abstract class AbstractDefaultConfig(
   lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
   lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
 
-  lazy val adapter = driverClass match {
-    case "org.h2.Driver" => new H2Adapter
-    case "org.postgresql.Driver" => new PostgreSqlAdapter
-    case "com.mysql.jdbc.Driver" => new MySQLAdapter
-    case driver => throw ActiveRecordException.unsupportedDriver(driver)
-  }
+  lazy val adapter: DatabaseAdapter = adapter(driverClass)
 
   lazy val pool = {
     try {
@@ -73,9 +76,3 @@ abstract class AbstractDefaultConfig(
   def connection = pool.getConnection
   val translator = i18n.DefaultTranslator
 }
-
-case class DefaultConfig(
-  config: Config = ConfigFactory.load(),
-  overrideSettings: Map[String, Any] = Map()
-) extends AbstractDefaultConfig(config, overrideSettings)
-

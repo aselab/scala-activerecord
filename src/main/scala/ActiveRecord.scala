@@ -400,7 +400,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   def cleanup = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    DefaultConfig(overrideSettings = config)
+    new DefaultConfig(overrideSettings = config)
 
   def session = Session.create(Config.connection, Config.adapter)
 
