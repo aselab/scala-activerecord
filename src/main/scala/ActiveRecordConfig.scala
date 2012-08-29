@@ -74,5 +74,5 @@ class DefaultConfig(
   }
 
   def connection = pool.getConnection
-  val translator = i18n.DefaultTranslator
+  val translator: i18n.Translator = i18n.DefaultTranslator
 }
