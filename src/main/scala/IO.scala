@@ -65,14 +65,14 @@ trait IO { this: ProductModel with Validatable =>
           } else if (info.isOption && v.isEmpty) {
             None
           } else if (info.required && v.isEmpty) {
-            this.errors.add(name, "required")
+            this.errors.add(name, Validator.ERROR_PREFIX + "required")
             None
           } else {
             Option(name -> converter.deserialize(v.get))
           }
         } catch {
           case e =>
-            this.errors.add(name, "invalid")
+            this.errors.add(name, Validator.ERROR_PREFIX + "invalid")
             None
         }
     })

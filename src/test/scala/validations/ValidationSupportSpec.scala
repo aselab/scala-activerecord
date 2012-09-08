@@ -116,9 +116,9 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m1.validate
         m2.validate
         m3.validate
-        m1.errors must contain(ValidationError(c, "length", "minLength", 3))
+        m1.errors must contain(ValidationError(c, "length", "activerecord.errors.minLength", 3))
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "length", "maxLength", 10))
+        m3.errors must contain(ValidationError(c, "length", "activerecord.errors.maxLength", 10))
       }
 
       "@Length (Option)" in {
@@ -131,9 +131,9 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m2.validate
         m3.validate
         m4.validate
-        m1.errors must contain(ValidationError(c, "lengthOption", "minLength", 3))
+        m1.errors must contain(ValidationError(c, "lengthOption", "activerecord.errors.minLength", 3))
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "lengthOption", "maxLength", 10))
+        m3.errors must contain(ValidationError(c, "lengthOption", "activerecord.errors.maxLength", 10))
         m4.errors must beEmpty
       }
 
@@ -147,7 +147,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "maxValue", "maxValue", 5.3))
+        m3.errors must contain(ValidationError(c, "maxValue", "activerecord.errors.maxValue", 5.3))
       }
 
      "@Range min" in {
@@ -160,7 +160,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "minValue", "minValue", 0))
+        m3.errors must contain(ValidationError(c, "minValue", "activerecord.errors.minValue", 0))
       }
 
      "@Range" in {
@@ -174,12 +174,12 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
           ValidationModel(range = 11))
         models.foreach(_.validate)
         models.map(_.errors.toList) must equalTo(List(
-          List(ValidationError(c, "range", "minValue", 5)),
+          List(ValidationError(c, "range", "activerecord.errors.minValue", 5)),
           Nil,
           Nil,
           Nil,
           Nil,
-          List(ValidationError(c, "range", "maxValue", 10))
+          List(ValidationError(c, "range", "activerecord.errors.maxValue", 10))
         ))
       }
 
@@ -195,7 +195,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m4.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "maxValueOption", "maxValue", 5.3))
+        m3.errors must contain(ValidationError(c, "maxValueOption", "activerecord.errors.maxValue", 5.3))
         m4.errors must beEmpty
       }
 
@@ -211,7 +211,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m4.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "minValueOption", "minValue", 0))
+        m3.errors must contain(ValidationError(c, "minValueOption", "activerecord.errors.minValue", 0))
         m4.errors must beEmpty
       }
 
@@ -228,12 +228,12 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         )
         models.foreach(_.validate)
         models.map(_.errors.toList) must equalTo(List(
-          List(ValidationError(c, "rangeOption", "minValue", 5)),
+          List(ValidationError(c, "rangeOption", "activerecord.errors.minValue", 5)),
           Nil,
           Nil,
           Nil,
           Nil,
-          List(ValidationError(c, "rangeOption", "maxValue", 10)),
+          List(ValidationError(c, "rangeOption", "activerecord.errors.maxValue", 10)),
           Nil
         ))
       }
@@ -245,7 +245,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m1.validate
         m2.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "accepted", "accepted"))
+        m2.errors must contain(ValidationError(c, "accepted", "activerecord.errors.accepted"))
       }
 
       "@Accepted (Option)" in {
@@ -256,7 +256,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m1.validate
         m2.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "acceptedOption", "accepted"))
+        m2.errors must contain(ValidationError(c, "acceptedOption", "activerecord.errors.accepted"))
         m3.errors must beEmpty
       }
 
@@ -269,7 +269,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m2.validate
         m3.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "email", "invalid"))
+        m2.errors must contain(ValidationError(c, "email", "activerecord.errors.invalid"))
         m3.errors must beEmpty
       }
 
@@ -284,7 +284,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.validate
         m4.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "emailOption", "invalid"))
+        m2.errors must contain(ValidationError(c, "emailOption", "activerecord.errors.invalid"))
         m3.errors must beEmpty
         m4.errors must beEmpty
       }
@@ -298,7 +298,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m2.validate
         m3.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "format", "format"))
+        m2.errors must contain(ValidationError(c, "format", "activerecord.errors.format"))
         m3.errors must beEmpty
       }
 
@@ -313,7 +313,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.validate
         m4.validate
         m1.errors must beEmpty
-        m2.errors must contain(ValidationError(c, "formatOption", "format"))
+        m2.errors must contain(ValidationError(c, "formatOption", "activerecord.errors.format"))
         m3.errors must beEmpty
         m4.errors must beEmpty
       }

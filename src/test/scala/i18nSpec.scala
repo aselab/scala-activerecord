@@ -39,18 +39,6 @@ object i18nSpec extends Specification with Mockito {
         translator(None).field(classOf[models.User], "fieldName") mustEqual "Field Name"
       }
     }
-
-    "errorMessage" in {
-      "get translation of activerecord.errors.errorKey" in {
-        val t = translator(Some("aaa"))
-        t.errorMessage("someError", "a", 1) mustEqual "aaa"
-        t.args mustEqual List("activerecord.errors.someError", "a", 1)
-      }
-
-      "returns error when translation is missing" in {
-        translator(None).errorMessage("someError", "a") mustEqual "someError"
-      }
-    }
   }
 
   "DefaultTranslator" should {
@@ -72,7 +60,7 @@ object i18nSpec extends Specification with Mockito {
       }
 
       "minValue validation error message" in {
-        DefaultTranslator.errorMessage("minValue", 3)(Locale.JAPANESE) mustEqual "は3以上でなければなりません"
+        DefaultTranslator.apply("activerecord.errors.minValue", 3)(Locale.JAPANESE) mustEqual "は3以上でなければなりません"
         
       }
     }

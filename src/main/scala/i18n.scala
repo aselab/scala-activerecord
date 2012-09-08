@@ -14,10 +14,6 @@ trait Translator {
     val key = "activerecord.models." + model.getSimpleName + "." + name
     get(key).getOrElse(name.titleize)
   }
-
-  def errorMessage(error: String, args: Any*)(implicit locale: Locale): String
-    = get("activerecord.errors." + error, args:_*).
-      getOrElse(apply(error, args:_*))
 }
 
 object DefaultTranslator extends Translator {

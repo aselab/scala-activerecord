@@ -94,13 +94,13 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if value is null" in {
         val m = Model(null)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "required"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.required"))
       }
 
       "invalid if value is empty string" in {
         val m = Model("")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "required"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.required"))
       }
 
       "valid if value is not empty" in {
@@ -148,13 +148,13 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if length is shorter than min value" in {
         val m = Model("a")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "minLength", 2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minLength", 2)).only
       }
 
       "invalid if length is longer than max value" in {
         val m = Model("aaaaa")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "maxLength", 4)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxLength", 4)).only
       }
 
       "annotation message" in {
@@ -199,13 +199,13 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if value is less than min value" in {
         val m = Model(-2.01)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "minValue", -2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minValue", -2)).only
       }
 
       "invalid if value is greater than max value" in {
         val m = Model(2.01)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "maxValue", 2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxValue", 2)).only
       }
 
       "annotation message" in {
@@ -242,7 +242,7 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if value is false" in {
         val m = Model(false)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "accepted"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.accepted"))
       }
 
       "annotation message" in {
@@ -276,7 +276,7 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid email" in {
         val m = Model("aaa")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "invalid"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.invalid"))
       }
 
       "annotation message" in {
@@ -314,7 +314,7 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid format" in {
         val m = Model("a123z")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "format"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.format"))
       }
 
       "annotation message" in {
@@ -351,7 +351,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model("aaa")
         m.valueConfirmation = "zzz"
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "confirmation", "value"))
+        m.errors must contain(ValidationError(modelClass, "valueConfirmation", "activerecord.errors.confirmation", "value"))
       }
 
       "change confirmation field" in {
@@ -360,7 +360,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = Model("aaa")
         m.other = "zzz"
         validate(validator, ac, m)
-        m.errors must contain(ValidationError(modelClass, "other", "confirmation", "value"))
+        m.errors must contain(ValidationError(modelClass, "other", "activerecord.errors.confirmation", "value"))
       }
 
       "throws exception when confirmation field does not exists" in {
@@ -402,8 +402,8 @@ object ValidatorSpec extends Specification with Mockito {
         val m2 = Model(null)
         validate(validator, a, m1)
         validate(validator, a, m2)
-        m1.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
-        m2.errors must contain(ValidationError(modelClass, "value", "enum", "a, b"))
+        m1.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.enum", "a, b"))
+        m2.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.enum", "a, b"))
       }
 
       "annotation message" in {
@@ -435,7 +435,7 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if it is not enumerated value" in {
         val m = Model(1)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "enum", "2, 3"))
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.enum", "2, 3"))
       }
 
       "annotation message" in {
@@ -468,7 +468,7 @@ object ValidatorSpec extends Specification with Mockito {
         val m = ARModel("aaa")
         m.recordCompanion.isUnique("value", m) returns false
         validate(validator, a, m)
-        m.errors must contain(ValidationError(classOf[ARModel], "value", "unique", "aaa"))
+        m.errors must contain(ValidationError(classOf[ARModel], "value", "activerecord.errors.unique", "aaa"))
       }
 
       "annotation message" in {

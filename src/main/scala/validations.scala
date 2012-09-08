@@ -81,7 +81,7 @@ case class ValidationError(
   def label(implicit locale: Locale): String = translator.field(model, key)
 
   def message(implicit locale: Locale): String =
-    translator.errorMessage(error, args:_*)
+    translator.apply(error, args:_*)
 
   def translation(implicit locale: Locale): String = {
     if (isGlobal) message else label + " " + message
@@ -99,8 +99,8 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
   def model = _model.value
 
   def errors = model.errors
-  def message(default: String) =
-    Option(annotation.message).filter(!_.isEmpty).getOrElse(default)
+  def message(error: String) = Option(annotation.message).filter(!_.isEmpty)
+    .getOrElse(Validator.ERROR_PREFIX + error)
 
   def validate(value: Any): Unit
 
@@ -132,6 +132,8 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
 }
 
 object Validator {
+  val ERROR_PREFIX = "activerecord.errors."
+
   type AnnotationType = Annotation with ({
     def message(): String
     def on(): String
@@ -180,8 +182,8 @@ object Validator {
       val min = annotation.min
       val max = annotation.max
       if (annotation.message.isEmpty) {
-        if (l < min) errors.add(fieldName, "minLength", min)
-        if (l > max) errors.add(fieldName, "maxLength", max)
+        if (l < min) errors.add(fieldName, ERROR_PREFIX + "minLength", min)
+        if (l > max) errors.add(fieldName, ERROR_PREFIX + "maxLength", max)
       } else {
         if (l < min || l > max) errors.add(fieldName, annotation.message)
       }
@@ -194,8 +196,8 @@ object Validator {
 
     def range[T <% Ordered[T]](min: T, v: T, max: T) = {
       if (annotation.message.isEmpty) {
-        if (v < min) errors.add(fieldName, "minValue", min)
-        if (v > max) errors.add(fieldName, "maxValue", max)
+        if (v < min) errors.add(fieldName, ERROR_PREFIX + "minValue", min)
+        if (v > max) errors.add(fieldName, ERROR_PREFIX + "maxValue", max)
       } else {
         if (v < min || v > max) errors.add(fieldName, annotation.message)
       }
