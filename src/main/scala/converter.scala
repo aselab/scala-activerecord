@@ -11,7 +11,7 @@ trait Converter[A, B] {
 }
 
 trait FormConverter[T] extends Converter[T, String] {
-  override def serialize(v: Any): String = v.toString
+  override def serialize(v: Any): String = Option(v).map(_.toString).orNull
 }
 
 object FormConverter extends PrimitiveHandler[FormConverter[_]] {

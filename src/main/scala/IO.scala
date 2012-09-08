@@ -50,27 +50,29 @@ trait IO { this: ProductModel with Validatable =>
   }
 
   def assignFormValues(data: Map[String, String]) = {
+    def getData(key: String) = data.get(key).filterNot(_.isEmpty)
+
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
         val converter = FormConverter.get(info.fieldType).getOrElse(
           throw ActiveRecordException.unsupportedType(name)
         )
-        val v = data.get(name)
+        val v = getData(name)
         try {
           if (info.isSeq) {
             val keys = Stream.from(0).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
             Option(name -> keys.map(key => converter.deserialize(data(key))).toList)
-          } else if (info.isOption && v.get.isEmpty) {
+          } else if (info.isOption && v.isEmpty) {
             None
-          } else if (info.required && v.get.isEmpty) {
-            this.errors.add(name, "is required")
+          } else if (info.required && v.isEmpty) {
+            this.errors.add(name, "required")
             None
           } else {
             Option(name -> converter.deserialize(v.get))
           }
         } catch {
           case e =>
-            this.errors.add(name, "is invalid")
+            this.errors.add(name, "invalid")
             None
         }
     })
