@@ -156,8 +156,11 @@ trait ReflectionUtil {
    * returns companion object from class name
    * @param className class name
    */
-  def classToCompanion(className: String): Any = {
-    val cc = Class.forName(className + "$")
+  def classToCompanion(className: String)(
+    implicit classLoader: ClassLoader =
+      Thread.currentThread.getContextClassLoader
+  ): Any = {
+    val cc = classLoader.loadClass(className + "$")
     cc.getField("MODULE$").get(cc)
   }
 
@@ -165,13 +168,16 @@ trait ReflectionUtil {
    * returns companion object from class
    * @param c class
    */
-  def classToCompanion(c: Class[_]): Any = classToCompanion(c.getName)
+  def classToCompanion(c: Class[_]): Any = classToCompanion(c.getName)(c.getClassLoader)
 
   /**
    * returns corresponding class from companion object
-   * @param c companion object
+   * @param o companion object
    */
-  def companionToClass(c: Any) = Class.forName(c.getClass.getName.dropRight(1))
+  def companionToClass(o: Any): Class[_] = {
+    val c = o.getClass
+    c.getClassLoader.loadClass(c.getName.dropRight(1))
+  }
 
   implicit def toReflectable(o: Any) = new {
     val c = o.getClass
