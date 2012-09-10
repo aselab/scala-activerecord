@@ -1,6 +1,6 @@
 package com.github.aselab.activerecord
 
-trait IO { this: ProductModel with Validatable =>
+trait IO extends Validatable { this: ProductModel =>
   import ReflectionUtil._
 
   def toMap: Map[String, Any] = {
@@ -50,25 +50,20 @@ trait IO { this: ProductModel with Validatable =>
   }
 
   def assignFormValues(data: Map[String, String]) = {
-    def getData(key: String) = data.get(key).filterNot(_.isEmpty)
-
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
         val converter = FormConverter.get(info.fieldType).getOrElse(
           throw ActiveRecordException.unsupportedType(name)
         )
-        val v = getData(name)
         try {
           if (info.isSeq) {
             val keys = Stream.from(0).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
             Option(name -> keys.map(key => converter.deserialize(data(key))).toList)
-          } else if (info.isOption && v.isEmpty) {
-            None
-          } else if (info.required && v.isEmpty) {
-            this.errors.add(name, Validator.ERROR_PREFIX + "required")
-            None
           } else {
-            Option(name -> converter.deserialize(v.get))
+            data.get(name).collect {
+              case v if !(info.isOption && v.isEmpty) => 
+                name -> converter.deserialize(v)
+            }
           }
         } catch {
           case e =>
@@ -83,7 +78,9 @@ trait FormSupport[T <: ProductModel with IO] {self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
+    source.errors.clear
     source.assignFormValues(data)
+    source.validate(false)
     source
   }
 

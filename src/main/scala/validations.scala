@@ -59,12 +59,16 @@ trait Validatable extends Saveable {
 
   def saveWithoutValidation() = super.save
 
-  def validate(): Boolean = {
-    errors.clear
+  def validate(): Boolean = validate(true)
+
+  def validate(clear: Boolean): Boolean = {
+    if (clear) errors.clear
     beforeValidation()
     doValidate()
     errors.isEmpty
   }
+
+  def hasErrors: Boolean = !errors.isEmpty
 
   protected def doValidate(): Unit = {}
 
