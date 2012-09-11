@@ -1,4 +1,4 @@
-## Scala ActiveRecord [![Build Status](https://secure.travis-ci.org/aselab/scala-activerecord.png?branch=master)](http://travis-ci.org/aselab/scala-activerecord)
+## Scala ActiveRecord [![Build Status](https://aselab.ci.cloudbees.com/job/scala-activerecord/badge/icon)](https://aselab.ci.cloudbees.com/job/scala-activerecord/)
 
 scala-activerecord is an ORM library for Scala.
 
@@ -58,7 +58,7 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 ## Documents and other resources
 
 * [Wiki](https://github.com/aselab/scala-activerecord/wiki)
-* [ScalaDoc](http://aselab.github.com/doc/scala-activerecord/)
+* [ScalaDoc](https://aselab.ci.cloudbees.com/job/scala-activerecord/javadoc/)
 * [Sample project](https://github.com/aselab/scala-activerecord-sample)
 
 ## License
