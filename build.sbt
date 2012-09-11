@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.github.aselab" % "squeryl" % "0.9.5",
   "com.typesafe" % "config" % "0.5.0",
   "org.specs2" %% "specs2" % "1.12.1" % "test",
+  "junit" % "junit" % "4.10",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
   "org.slf4j" % "slf4j-nop" % "1.7.0" % "test",
@@ -27,6 +28,8 @@ resolvers ++= Seq(
 )
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
+
+testOptions in ScctTest += Tests.Argument("junitxml", "console")
 
 crossPaths := false
 
