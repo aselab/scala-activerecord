@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 
 resolvers ++= Seq(
   "aselab" at "http://aselab.github.com/maven/",
-  "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+  Classpaths.typesafeResolver
 )
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
@@ -40,7 +40,11 @@ publish <<= (publish, name).map {(_, name) =>
     "%s %s %s".format(script.getAbsolutePath, file("target/publish").getAbsolutePath, name) !
 }
 
-seq(lsSettings: _*)
+ScctPlugin.instrumentSettings
+
+parallelExecution in ScctTest := false
+
+lsSettings
 
 (LsKeys.tags in LsKeys.lsync) := Seq("orm", "db", "database")
 
