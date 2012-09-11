@@ -23,7 +23,7 @@ trait ProductModelCompanion[T <: ProductModel] {
   /**
    * Create a new model object.
    */
-  def newInstance = classInfo.factory.apply
+  def newInstance: T = classInfo.factory.apply
 
   /** ProductModel class information */
   lazy val classInfo: ClassInfo[T] = ClassInfo(targetClass)
@@ -52,7 +52,7 @@ trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
     case _ => false
   }
 
-  override def isNewInstance = !isPersisted
+  override def isNewInstance: Boolean = !isPersisted
 
   protected def doCreate = {
     recordCompanion.create(this)
@@ -66,7 +66,8 @@ trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
 
   protected def doDelete = recordCompanion.delete(id)
 
-  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] = recordCompanion.schema.relations
+  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] =
+    recordCompanion.schema.relations
 }
 
 /**
@@ -80,7 +81,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   /** primary key */
   val id: Long = 0L
 
-  override def isNewInstance = id == 0
+  override def isNewInstance: Boolean = id == 0
 }
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with FormSupport[T] {
@@ -103,34 +104,34 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRichQuery(query: Queryable[T])(implicit m: Manifest[T]) =
+  implicit def toRichQuery(query: Queryable[T])(implicit m: Manifest[T]): RichQuery[T] =
     RichQuery(query)
 
-  implicit def toRichQuery(t: this.type)(implicit m: Manifest[T]) =
+  implicit def toRichQuery(t: this.type)(implicit m: Manifest[T]): RichQuery[T] =
     RichQuery(t.table)
 
   implicit def toRichQuery(r: ActiveRecordOneToMany[T])
-    (implicit m: Manifest[T]) = RichQuery(r.relation)
+    (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
 
-  implicit def toModelList(query: Query[T]) = query.toList
-  implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]) = r.one
+  implicit def toModelList(query: Query[T]): List[T] = query.toList
+  implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
 
-  implicit def toQueryable(t: this.type) = t.table
+  implicit def toQueryable(t: this.type): Queryable[T] = t.table
 
   /**
    * all search.
    */
-  def all = from(table)(m => select(m))
+  def all: Query[T] = from(table)(m => select(m))
 
   /**
    * same as find method.
    */
-  def apply(id: K) = find(id)
+  def apply(id: K): Option[T] = find(id)
 
   /**
    * search by id.
    */
-  def find(id: K) = inTransaction { table.lookup(id) }
+  def find(id: K): Option[T] = inTransaction { table.lookup(id) }
 
   /**
    * query search.
@@ -156,7 +157,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param conditions multiple fieldname-value tuples(optional)
    * @param query table or subquery in from clause. default is table
    */
-  def findBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Option[T] = findAllBy(condition, conditions:_*).headOption
+  def findBy(condition: (String, Any), conditions: (String, Any)*)
+    (implicit query: Queryable[T]): Option[T] = findAllBy(condition, conditions:_*).headOption
 
   /**
    * Search by multiple fieldnames and values.
@@ -246,7 +248,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * delete all records.
    */
-  def deleteAll() = inTransaction {
+  def deleteAll(): List[T] = inTransaction {
     val models = all.toList
     models.foreach(_.delete)
     models
@@ -272,7 +274,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   lazy val uniqueFields =
     formatFields.filter(_.isAnnotationPresent(classOf[annotations.Unique]))
 
-  def fromMap(data: Map[String, Any]) = {
+  def fromMap(data: Map[String, Any]) {
     newInstance.assign(data)
   }
 }
@@ -283,10 +285,11 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
  * This class provides database table mapping and query logic.
  */
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
-  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])(implicit m: Manifest[T]) = RichQuery(r.relation)
+  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])
+    (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
 
-  implicit def toModelList(r: ActiveRecordOneToMany[T]) = r.toList
-  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]) = r.toList
+  implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
+  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
 }
 
 case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: Manifest[T]) {
@@ -320,7 +323,7 @@ case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: 
    * @param condition sort condition
    * @param conditions multiple sort conditions(optional)
    */
-  def orderBy(condition: (T) => OrderByExpression, conditions: (T => OrderByExpression)*) =
+  def orderBy(condition: (T) => OrderByExpression, conditions: (T => OrderByExpression)*): Query[T] =
     from(query)(m => select(m).orderBy((condition :: conditions.toList).map(_.apply(m))))
 
   /**
@@ -330,7 +333,7 @@ case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: 
    * }}}
    * @param count max count
    */
-  def limit(count: Int) = page(0, count)
+  def limit(count: Int): Query[T] = page(0, count)
 
   /**
    * returns page results.
@@ -340,7 +343,7 @@ case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: 
    * @param offset offset count
    * @param count max count
    */
-  def page(offset: Int, count: Int) = query match {
+  def page(offset: Int, count: Int): Query[T] = query match {
     case _: Query[_] => query.asInstanceOf[Query[T]].page(offset, count)
     case _ => from(query)(m => select(m)).page(offset, count)
   }
@@ -363,7 +366,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   /** All tables */
   lazy val all = tables.values
 
-  override def tableNameFromClass(c: Class[_]) = super.tableNameFromClass(c).pluralize
+  override def tableNameFromClass(c: Class[_]): String = super.tableNameFromClass(c).pluralize
 
   private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
@@ -397,15 +400,15 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   }
 
   /** cleanup database resources */
-  def cleanup = Config.cleanup
+  def cleanup: Unit = Config.cleanup
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
     new DefaultConfig(overrideSettings = config)
 
-  def session = Session.create(Config.connection, Config.adapter)
+  def session: Session = Session.create(Config.connection, Config.adapter)
 
   /** drop and create table */
-  def reset = inTransaction {
+  def reset: Unit = inTransaction {
     drop
     create
   }
@@ -413,7 +416,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   private var _session: (Option[Session], Option[Session]) = (None, None)
 
   /** Set rollback point for test */
-  def start = {
+  def start {
     val oldSession = Session.currentSessionOption
     val newSession = SessionFactory.newSession
     oldSession.foreach(_.unbindFromCurrentThread)
@@ -427,7 +430,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   }
 
   /** Rollback to start point */
-  def clean = _session match {
+  def clean: Unit = _session match {
     case (oldSession, Some(newSession)) =>
       newSession.connection.rollback
       newSession.unbindFromCurrentThread
@@ -439,7 +442,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
   override protected def table[T]()(implicit m: Manifest[T]) =
     super.table[T]
-    
+
   override protected def table[T](name: String)(implicit m: Manifest[T]) =
     if (m <:< manifest[IntermediateRecord]) new IntermediateTable[T](name)
     else super.table[T](name)
@@ -449,17 +452,17 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 object Config {
   private var _conf: ActiveRecordConfig = _
 
-  def confOption = Option(_conf)
-  def conf = confOption.getOrElse(throw ActiveRecordException.notInitialized)
-  def conf_=(value: ActiveRecordConfig) = _conf = value
+  def confOption: Option[ActiveRecordConfig] = Option(_conf)
+  def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
   lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
     .asInstanceOf[ActiveRecordTables]
 
-  def connection = conf.connection
-  def adapter = conf.adapter
+  def connection: java.sql.Connection = conf.connection
+  def adapter: internals.DatabaseAdapter = conf.adapter
 
-  def cleanup = conf.cleanup
+  def cleanup: Unit = conf.cleanup
 
   def translator: i18n.Translator =
     confOption.map(_.translator).getOrElse(i18n.DefaultTranslator)
