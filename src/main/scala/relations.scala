@@ -7,19 +7,19 @@ import mojolly.inflector.InflectorImports._
 
 trait RecordRelation
 
-case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]](override val relation: OneToMany[M]) extends StatefulOneToMany(relation) with RecordRelation
+case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]](override val relation: OneToMany[M])
+  extends StatefulOneToMany(relation) with RecordRelation
 {
-  
-  override def refresh = dsl.inTransaction { super.refresh }
+  override def refresh: Unit = dsl.inTransaction { super.refresh }
 
   private var requireRefresh = false
 
-  def assign(m: M) = {
+  def assign(m: M): M = {
     requireRefresh = true
     relation.assign(m)
   }
 
-  override def iterator = {
+  override def iterator: Iterator[M] = {
     if (requireRefresh) {
       refresh
       requireRefresh = false
@@ -27,37 +27,38 @@ case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]](override val relation
     super.iterator
   }
 
-  override def associate(m: M)(implicit ev: M <:< KeyedEntity[_]) =
+  override def associate(m: M)(implicit ev: M <:< KeyedEntity[_]): M =
     dsl.inTransaction { super.associate(m) }
 
-  override def deleteAll = dsl.inTransaction { super.deleteAll }
+  override def deleteAll: Int = dsl.inTransaction { super.deleteAll }
 }
 
-case class ActiveRecordManyToOne[O <: ActiveRecord](override val relation: ManyToOne[O]) extends StatefulManyToOne(relation) with RecordRelation
+case class ActiveRecordManyToOne[O <: ActiveRecord](override val relation: ManyToOne[O])
+  extends StatefulManyToOne(relation) with RecordRelation
 {
-  
-  override def refresh = dsl.inTransaction { super.refresh }
+  override def refresh: Unit = dsl.inTransaction { super.refresh }
 
-  override def delete = dsl.inTransaction { super.delete }
+  override def delete: Boolean = dsl.inTransaction { super.delete }
 }
 
-case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]](override val relation: ManyToMany[O, A]) extends StatefulManyToMany(relation) with RecordRelation
+case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]](override val relation: ManyToMany[O, A])
+  extends StatefulManyToMany(relation) with RecordRelation
 {
-  override def refresh = dsl.inTransaction { super.refresh }
+  override def refresh: Unit = dsl.inTransaction { super.refresh }
 
   private var requireRefresh = false
 
-  def assign(o: O, a: A) = {
+  def assign(o: O, a: A): A = {
     requireRefresh = true
     relation.assign(o, a)
   }
 
-  def assign(o: O) = {
+  def assign(o: O): A = {
     requireRefresh = true
     relation.assign(o)
   }
 
-  override def iterator = {
+  override def iterator: Iterator[O] = {
     if (requireRefresh) {
       refresh
       requireRefresh = false
@@ -65,14 +66,14 @@ case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]](overri
     super.iterator
   }
 
-  override def associate(o: O, a: A) =
+  override def associate(o: O, a: A): A =
     dsl.inTransaction { super.associate(o, a) }
-  
-  override def associate(o: O) = dsl.inTransaction { super.associate(o) }
 
-  override def dissociate(o: O) = dsl.inTransaction { super.dissociate(o) }
+  override def associate(o: O): A = dsl.inTransaction { super.associate(o) }
 
-  override def dissociateAll = dsl.inTransaction { super.dissociateAll }
+  override def dissociate(o: O): Boolean = dsl.inTransaction { super.dissociate(o) }
+
+  override def dissociateAll: Int = dsl.inTransaction { super.dissociateAll }
 }
 
 case class RelationWrapper[L <: ActiveRecord, R <: ActiveRecordBase[_]](relation: Relation[L, R]) {
@@ -136,9 +137,9 @@ trait TableRelationSupport extends Schema {
     }.toMap
   }
 
-  def foreignKeyName(c: Class[_]) = c.getSimpleName.underscore.camelize + "Id"
+  def foreignKeyName(c: Class[_]): String = c.getSimpleName.underscore.camelize + "Id"
 
-  def foreignKeyIsOption(c: Class[_], name: String) = try {
+  def foreignKeyIsOption(c: Class[_], name: String): Boolean = try {
     c.getDeclaredField(name).getType.getName == "scala.Option"
   } catch {
     case e: java.lang.NoSuchFieldException =>

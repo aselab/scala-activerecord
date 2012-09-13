@@ -16,7 +16,7 @@ trait IO extends Validatable { this: ProductModel =>
   def toFormValues: Map[String, String] = toFormValues(None)
 
   def toFormValues(prefix: Option[String]): Map[String, String] = {
-    def serialize(c: Class[_], value: Any, key: String) =
+    def serialize(c: Class[_], value: Any, key: String): Map[String, String] =
       if (classOf[IO].isAssignableFrom(c)) {
         value.asInstanceOf[IO].toFormValues(Some(key))
       } else {
@@ -40,7 +40,7 @@ trait IO extends Validatable { this: ProductModel =>
     }
   }
 
-  def assign(data: Map[String, Any]) = {
+  def assign(data: Map[String, Any]): Unit = {
     import ReflectionUtil._
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
@@ -49,7 +49,7 @@ trait IO extends Validatable { this: ProductModel =>
     }
   }
 
-  def assignFormValues(data: Map[String, String]) = {
+  def assignFormValues(data: Map[String, String]): Unit = {
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
         val converter = FormConverter.get(info.fieldType).getOrElse(

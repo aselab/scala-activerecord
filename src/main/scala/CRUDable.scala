@@ -14,7 +14,7 @@ trait CRUDable extends Saveable {
   @Transient
   protected var _isNewInstance = true
 
-  def isNewInstance = _isNewInstance
+  def isNewInstance: Boolean = _isNewInstance
 
   /**
    * Save model.

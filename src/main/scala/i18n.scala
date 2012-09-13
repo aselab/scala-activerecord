@@ -7,7 +7,7 @@ import mojolly.inflector.InflectorImports._
 trait Translator {
   def apply(key: String, args: Any*)(implicit locale: Locale): String =
     get(key, args:_*).getOrElse(key)
-  
+
   def get(key: String, args: Any*)(implicit locale: Locale): Option[String]
 
   def field(model: Class[_], name: String)(implicit locale: Locale): String = {
@@ -19,10 +19,10 @@ trait Translator {
 object DefaultTranslator extends Translator {
   val utf8Control = new CharsetResourceBundleControl
 
-  def bundle(implicit locale: Locale) = 
+  def bundle(implicit locale: Locale): ResourceBundle =
     ResourceBundle.getBundle("activerecord", locale, utf8Control)
 
-  def get(key: String, args: Any*)(implicit locale: Locale) = try {
+  def get(key: String, args: Any*)(implicit locale: Locale): Option[String] = try {
     Option(bundle.getString(key)).map(msg =>
       MessageFormat.format(msg, args.map(_.asInstanceOf[AnyRef]):_*)
     )
@@ -35,7 +35,7 @@ class CharsetResourceBundleControl(charset: String = "UTF8") extends ResourceBun
   override def newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle = {
     val bundleName = toBundleName(baseName, locale)
     val resourceName = toResourceName(bundleName, "properties")
-    
+
     (if (reload) {
       Option(loader.getResource(resourceName)) map {_.openConnection} map {conn =>
         conn.setUseCaches(false)

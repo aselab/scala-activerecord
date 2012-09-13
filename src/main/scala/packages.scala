@@ -19,11 +19,11 @@ package object support {
   val modelClass = new PartialFunction[String, Class[_]] {
     val c = classOf[ProductModel]
 
-    def apply(s: String) = s match {
+    def apply(s: String): Class[_] = s match {
       case s if isDefinedAt(s) => Class.forName(s)
     }
 
-    def isDefinedAt(s: String) = try {
+    def isDefinedAt(s: String): Boolean = try {
       c.isAssignableFrom(Class.forName(s))
     } catch {
       case e => false

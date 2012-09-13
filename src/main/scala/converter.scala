@@ -16,54 +16,54 @@ trait FormConverter[T] extends Converter[T, String] {
 
 object FormConverter extends PrimitiveHandler[FormConverter[_]] {
   val stringHandler = new FormConverter[String] {
-    def deserialize(s: String) = s
+    def deserialize(s: String): String = s
   }
 
   val intHandler = new FormConverter[java.lang.Integer] {
-    def deserialize(s: String) = s.toInt
+    def deserialize(s: String): java.lang.Integer = s.toInt
   }
 
   val longHandler = new FormConverter[java.lang.Long] {
-    def deserialize(s: String) = s.toLong
+    def deserialize(s: String): java.lang.Long = s.toLong
   }
 
   val doubleHandler = new FormConverter[java.lang.Double] {
-    def deserialize(s: String) = s.toDouble
+    def deserialize(s: String): java.lang.Double = s.toDouble
   }
 
   val booleanHandler = new FormConverter[java.lang.Boolean] {
-    def deserialize(s: String) = s.toBoolean
+    def deserialize(s: String): java.lang.Boolean = s.toBoolean
   }
 
   val bigDecimalHandler = new FormConverter[BigDecimal] {
-    def deserialize(s: String) = BigDecimal(s)
+    def deserialize(s: String): BigDecimal = BigDecimal(s)
   }
 
   val floatHandler = new FormConverter[java.lang.Float] {
-    def deserialize(s: String) = s.toFloat
+    def deserialize(s: String): java.lang.Float = s.toFloat
   }
 
   val timestampHandler = new FormConverter[Timestamp] {
-    override def serialize(v: Any) = {
+    override def serialize(v: Any): String = {
       val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
       new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
     }
 
-    def deserialize(s: String) =
+    def deserialize(s: String): Timestamp =
       new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(s).millis)
   }
 
   val uuidHandler = new FormConverter[UUID] {
-    def deserialize(s: String) = UUID.fromString(s)
+    def deserialize(s: String): UUID = UUID.fromString(s)
   }
 
   val dateHandler = new FormConverter[Date] {
-    override def serialize(v: Any) = {
+    override def serialize(v: Any): String = {
       val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
       new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
     }
 
-    def deserialize(s: String) =
+    def deserialize(s: String): Date =
       ISODateTimeFormat.dateTime.parseDateTime(s).toDate
   }
 }

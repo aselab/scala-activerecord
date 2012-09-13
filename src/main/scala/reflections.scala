@@ -38,7 +38,7 @@ class ClassInfo[T <: AnyRef](clazz: Class[T]) {
 object ClassInfo {
   private val cache = collection.mutable.Map[Class[_], ClassInfo[_]]()
 
-  def apply[T <: AnyRef](clazz: Class[T]) = cache.getOrElseUpdate(
+  def apply[T <: AnyRef](clazz: Class[T]): ClassInfo[T] = cache.getOrElseUpdate(
     clazz, new ClassInfo(clazz)).asInstanceOf[ClassInfo[T]]
 
   lazy val factories = new PrimitiveHandler[() => AnyRef] {
@@ -60,7 +60,7 @@ object ClassInfo {
     )
   }
 
-  def getFactory(clazz: Class[_]) = factories.getOrRegister(clazz, {
+  def getFactory(clazz: Class[_]): () => AnyRef = factories.getOrRegister(clazz, {
     clazz.getConstructors.map(
       c => (c, c.getParameterTypes.toSeq)
     ).sortBy(_._2.size).toStream.flatMap {
@@ -130,7 +130,7 @@ object FieldInfo {
 }
 
 case class ScalaSigInfo(clazz: Class[_]) {
-  def error = throw ActiveRecordException.scalaSig(clazz)
+  def error: Nothing = throw ActiveRecordException.scalaSig(clazz)
 
   val scalaSig = {
     def find(c: Class[_]): Option[ScalaSig] =
@@ -190,16 +190,17 @@ trait ReflectionUtil {
       f.set(o, value)
     }
 
-    def getFields[T](implicit m: Manifest[T]) = c.getDeclaredFields.filter {
+    def getFields[T](implicit m: Manifest[T]): Array[Field] = c.getDeclaredFields.filter {
       f => m.erasure.isAssignableFrom(f.getType)
     }
   }
 
-  def getGenericType(field: Field) = getGenericTypes(field).head
-  def getGenericTypes(field: Field) = field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
+  def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
+  def getGenericTypes(field: Field): List[Class[_]] =
+    field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
 
-  def isSeq(clazz: Class[_]) = clazz.isAssignableFrom(Nil.getClass)
-  def isOption(clazz: Class[_]) = clazz == classOf[Option[_]]
+  def isSeq(clazz: Class[_]): Boolean = clazz.isAssignableFrom(Nil.getClass)
+  def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
 }
 
 object ReflectionUtil extends ReflectionUtil

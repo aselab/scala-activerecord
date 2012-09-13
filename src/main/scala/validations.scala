@@ -20,7 +20,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
     _errors
   }
 
-  def iterator = errorList.iterator
+  def iterator: Iterator[ValidationError] = errorList.iterator
 
   def add(message: String): Unit = add("", message)
 
@@ -55,9 +55,9 @@ trait Validatable extends Saveable {
   def globalErrors: Seq[ValidationError] = errors.global
   def fieldErrors: Seq[ValidationError] = errors.filterNot(_.isGlobal).toSeq
 
-  abstract override def save() = validate && super.save
+  abstract override def save(): Boolean = validate && super.save
 
-  def saveWithoutValidation() = super.save
+  def saveWithoutValidation(): Boolean = super.save
 
   def validate(): Boolean = validate(true)
 
@@ -72,7 +72,7 @@ trait Validatable extends Saveable {
 
   protected def doValidate(): Unit = {}
 
-  protected def beforeValidation() {}
+  protected def beforeValidation(): Unit = {}
 }
 
 case class ValidationError(
@@ -98,17 +98,17 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
   val _annotation = new DynamicVariable[Annotation](null)
   val _fieldName = new DynamicVariable[String](null)
   val _model = new DynamicVariable[Validatable](null)
-  def annotation = _annotation.value.asInstanceOf[T]
-  def fieldName = _fieldName.value
-  def model = _model.value
+  def annotation: T = _annotation.value.asInstanceOf[T]
+  def fieldName: String = _fieldName.value
+  def model: Validatable = _model.value
 
-  def errors = model.errors
-  def message(error: String) = Option(annotation.message).filter(!_.isEmpty)
+  def errors: Errors = model.errors
+  def message(error: String): String = Option(annotation.message).filter(!_.isEmpty)
     .getOrElse(Validator.ERROR_PREFIX + error)
 
   def validate(value: Any): Unit
 
-  def validateWith(v: Any, a: Annotation, model: Validatable, name: String) = {
+  def validateWith(v: Any, a: Annotation, model: Validatable, name: String): Unit = {
     _annotation.withValue(a) {
       _model.withValue(model) {
         _fieldName.withValue(name) {
@@ -124,12 +124,12 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
     }
   }
 
-  def register = {
+  def register: Validator[T] = {
     Validator.register(this)
     this
   }
 
-  def unregister = {
+  def unregister: Validator[T] = {
     Validator.unregister(this)
     this
   }
@@ -179,7 +179,7 @@ object Validator {
   }
 
   val lengthValidator = new Validator[annotations.Length] {
-    def validate(value: Any) {
+    def validate(value: Any): Unit = {
       val l = if (value == null) 0 else value.toString.length
       if (l == 0) return
 
@@ -198,7 +198,7 @@ object Validator {
     def min = annotation.min
     def max = annotation.max
 
-    def range[T <% Ordered[T]](min: T, v: T, max: T) = {
+    def range[T <% Ordered[T]](min: T, v: T, max: T): Unit = {
       if (annotation.message.isEmpty) {
         if (v < min) errors.add(fieldName, ERROR_PREFIX + "minValue", min)
         if (v > max) errors.add(fieldName, ERROR_PREFIX + "maxValue", max)
@@ -207,7 +207,7 @@ object Validator {
       }
     }
 
-    def validate(value: Any) = value match {
+    def validate(value: Any): Unit = value match {
       case v: Int => range(min.toInt, v, max.toInt)
       case v: Long => range(min.toLong, v, max.toLong)
       case v: Float => range(min.toFloat, v, max.toFloat)
@@ -217,26 +217,26 @@ object Validator {
   }
 
   val acceptedValidator = new Validator[annotations.Accepted] {
-    def validate(value: Any) = value match {
+    def validate(value: Any): Unit = value match {
       case v: Boolean => if (!v) errors.add(fieldName, message("accepted"))
       case _ =>
     }
   }
 
   val emailValidator = new Validator[annotations.Email] {
-    def validate(value: Any) = if (!isBlank(value) && !isEmail(value.toString))
+    def validate(value: Any): Unit = if (!isBlank(value) && !isEmail(value.toString))
       errors.add(fieldName, message("invalid"))
   }
 
   val formatValidator = new Validator[annotations.Format] {
-    def validate(value: Any) = {
+    def validate(value: Any): Unit = {
       val pattern = annotation.value
       if (!isBlank(value) && !isBlank(pattern) && pattern.r.findFirstIn(value.toString).isEmpty) errors.add(fieldName, message("format"))
     }
   }
 
   val confirmationValidator = new Validator[annotations.Confirmation] {
-    def validate(value: Any) {
+    def validate(value: Any) :Unit = {
       if (isBlank(value)) return
 
       import ReflectionUtil._
@@ -254,7 +254,7 @@ object Validator {
   }
 
   val stringEnumValidator = new Validator[annotations.StringEnum] {
-    def validate(value: Any) = {
+    def validate(value: Any): Unit = {
       val values = annotation.value.toSeq.asInstanceOf[Seq[Any]]
       if (values.indexOf(value) < 0) {
         errors.add(fieldName, message("enum"), values.mkString(", "))
@@ -263,7 +263,7 @@ object Validator {
   }
 
   val numberEnumValidator = new Validator[annotations.NumberEnum] {
-    def validate(value: Any) = {
+    def validate(value: Any): Unit = {
       val values = annotation.value.toSeq.asInstanceOf[Seq[Any]]
       if (values.indexOf(value) < 0) {
         errors.add(fieldName, message("enum"), values.mkString(", "))
@@ -272,7 +272,7 @@ object Validator {
   }
 
   val uniqueValidator = new Validator[annotations.Unique] {
-    def validate(value: Any) = model match {
+    def validate(value: Any): Unit = model match {
       case m: ActiveRecordBase[_] if !m.recordCompanion.isUnique(fieldName, m)
         => errors.add(fieldName, message("unique"), value)
       case _ =>

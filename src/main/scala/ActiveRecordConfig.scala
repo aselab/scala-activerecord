@@ -37,8 +37,8 @@ class DefaultConfig(
   } catch {
     case e: ConfigException.Missing => None
   }
-  def getString(key: String) = get[String](key).orElse(get(key, config.getString))
-  def getInt(key: String) = get[Int](key).orElse(get(key, config.getInt))
+  def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
+  def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
 
   lazy val schemaClass = getString("schema").getOrElse("models.Tables")
   lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
@@ -68,11 +68,11 @@ class DefaultConfig(
     new BoneCP(conf)
   }
 
-  override def cleanup = {
+  override def cleanup: Unit = {
     super.cleanup
     //pool.shutdown
   }
 
-  def connection = pool.getConnection
+  def connection: Connection = pool.getConnection
   val translator: i18n.Translator = i18n.DefaultTranslator
 }
