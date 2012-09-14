@@ -3,7 +3,10 @@ package com.github.aselab.activerecord
 object dsl extends org.squeryl.PrimitiveTypeMode with Annotations
 
 package object support {
-  val primitiveClasses: PartialFunction[String, Class[_]] = {
+  import ReflectionUtil._
+  type PF = PartialFunction[String, Class[_]]
+
+  val primitiveClasses: PF = {
     case "scala.Predef.String" | "java.lang.String" => classOf[String]
     case "boolean" | "scala.Boolean" | "java.lang.Boolean" => classOf[Boolean]
     case "int" | "scala.Int" | "java.lang.Integer" => classOf[Int]
@@ -16,19 +19,21 @@ package object support {
     case "java.util.UUID" => classOf[java.util.UUID]
   }
 
-  val modelClass = new PartialFunction[String, Class[_]] {
-    val c = classOf[ProductModel]
+  def modelClass(implicit classLoader: ClassLoader = defaultLoader): PF =
+    new PF {
+      val c = classOf[ProductModel]
 
-    def apply(s: String): Class[_] = s match {
-      case s if isDefinedAt(s) => Class.forName(s)
+      def apply(s: String): Class[_] = s match {
+        case s if isDefinedAt(s) => ReflectionUtil.loadClass(s)
+      }
+
+      def isDefinedAt(s: String): Boolean = try {
+        c.isAssignableFrom(ReflectionUtil.loadClass(s))
+      } catch {
+        case e => false
+      }
     }
 
-    def isDefinedAt(s: String): Boolean = try {
-      c.isAssignableFrom(Class.forName(s))
-    } catch {
-      case e => false
-    }
-  }
-
-  val allClasses = primitiveClasses.orElse(modelClass)
+  def allClasses(implicit classLoader: ClassLoader = defaultLoader): PF =
+    primitiveClasses.orElse(modelClass)
 }

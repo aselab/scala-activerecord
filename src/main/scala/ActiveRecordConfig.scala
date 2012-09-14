@@ -53,7 +53,7 @@ class DefaultConfig(
 
   lazy val pool = {
     try {
-      Class.forName(driverClass)
+      ReflectionUtil.loadClass(driverClass)
     } catch {
       case e => throw ActiveRecordException.missingDriver(driverClass)
     }

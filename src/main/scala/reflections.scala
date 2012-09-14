@@ -120,7 +120,7 @@ object FieldInfo {
         fieldInfo(genericType).copy(isOption = true)
       case c if isSeq(c) =>
         fieldInfo(genericType).copy(isSeq = true)
-      case c if support.allClasses.isDefinedAt(c.getName) =>
+      case c if support.allClasses(c.getClassLoader).isDefinedAt(c.getName) =>
         FieldInfo(field.getName, c, false, false, field.getAnnotations.toSeq)
       case c => notSupported
     }
@@ -152,15 +152,20 @@ case class ScalaSigInfo(clazz: Class[_]) {
 }
 
 trait ReflectionUtil {
+  def defaultLoader: ClassLoader = Thread.currentThread.getContextClassLoader
+
+  def loadClass(name: String)(
+    implicit classLoader: ClassLoader = defaultLoader
+  ): Class[_] = classLoader.loadClass(name)
+
   /**
    * returns companion object from class name
    * @param className class name
    */
   def classToCompanion(className: String)(
-    implicit classLoader: ClassLoader =
-      Thread.currentThread.getContextClassLoader
+    implicit classLoader: ClassLoader = defaultLoader
   ): Any = {
-    val cc = classLoader.loadClass(className + "$")
+    val cc = loadClass(className + "$")
     cc.getField("MODULE$").get(cc)
   }
 
@@ -168,7 +173,8 @@ trait ReflectionUtil {
    * returns companion object from class
    * @param c class
    */
-  def classToCompanion(c: Class[_]): Any = classToCompanion(c.getName)(c.getClassLoader)
+  def classToCompanion(c: Class[_]): Any =
+    classToCompanion(c.getName)(c.getClassLoader)
 
   /**
    * returns corresponding class from companion object
@@ -176,7 +182,7 @@ trait ReflectionUtil {
    */
   def companionToClass(o: Any): Class[_] = {
     val c = o.getClass
-    c.getClassLoader.loadClass(c.getName.dropRight(1))
+    loadClass(c.getName.dropRight(1))(c.getClassLoader)
   }
 
   implicit def toReflectable(o: Any) = new {
