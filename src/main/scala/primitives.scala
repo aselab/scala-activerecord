@@ -3,10 +3,10 @@ package com.github.aselab.activerecord
 trait RegistrationManager[K, V] {
   protected val registrations: collection.mutable.Map[K, V]
 
-  def register(key: K, value: V) = registrations += (key -> value)
-  def unregister(key: K) = registrations -= key
-  def get(key: K) = registrations.get(key)
-  def getOrRegister(key: K, newValue: => V) =
+  def register(key: K, value: V):Unit  = registrations += (key -> value)
+  def unregister(key: K): Unit = registrations -= key
+  def get(key: K): Option[V] = registrations.get(key)
+  def getOrRegister(key: K, newValue: => V): V =
     registrations.getOrElseUpdate(key, newValue)
 }
 

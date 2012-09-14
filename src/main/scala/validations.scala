@@ -91,7 +91,7 @@ case class ValidationError(
     if (isGlobal) message else label + " " + message
   }
 
-  override def toString = translation(Locale.getDefault)
+  override def toString: String = translation(Locale.getDefault)
 }
 
 abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T]) {
@@ -157,7 +157,7 @@ object Validator {
     classOf[annotations.Unique] -> uniqueValidator
   )
 
-  def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]) =
+  def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]): Unit =
     validators += (m.erasure.asInstanceOf[A] -> validator)
 
   def unregister(annotation: A): Unit = validators -= annotation
@@ -171,10 +171,10 @@ object Validator {
   def get(annotation: Annotation): Option[Validator[AnnotationType]] =
     get(annotation.annotationType)
 
-  def isBlank(value: Any) = value == null || value.toString.isEmpty
+  def isBlank(value: Any): Boolean = value == null || value.toString.isEmpty
 
   val requiredValidator = new Validator[annotations.Required] {
-    def validate(value: Any) =
+    def validate(value: Any): Unit =
       if (isBlank(value)) errors.add(fieldName, message("required"))
   }
 
@@ -195,8 +195,8 @@ object Validator {
   }
 
   val rangeValidator = new Validator[annotations.Range] {
-    def min = annotation.min
-    def max = annotation.max
+    private def min = annotation.min
+    private def max = annotation.max
 
     def range[T <% Ordered[T]](min: T, v: T, max: T): Unit = {
       if (annotation.message.isEmpty) {

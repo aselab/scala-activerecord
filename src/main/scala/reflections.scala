@@ -101,11 +101,11 @@ object FieldInfo {
   import ReflectionUtil._
 
   def apply(field: Field, classInfo: ClassInfo[_]): FieldInfo = {
-    def notSupported = throw ActiveRecordException.unsupportedType(
+    def notSupported: Nothing = throw ActiveRecordException.unsupportedType(
       classInfo.name + "#" + field.getName
     )
 
-    def genericType = getGenericType(field) match {
+    def genericType: Class[_] = getGenericType(field) match {
       case c if c == classOf[Object] =>
         // detect generic primitive type from ScalaSig
         classInfo.scalaSigInfo.genericTypes.getOrElse(
@@ -188,9 +188,10 @@ trait ReflectionUtil {
   implicit def toReflectable(o: Any) = new {
     val c = o.getClass
 
-    def getValue[T](name: String) = c.getMethod(name).invoke(o).asInstanceOf[T]
+    def getValue[T](name: String): T =
+      c.getMethod(name).invoke(o).asInstanceOf[T]
 
-    def setValue(name: String, value: Any) = {
+    def setValue(name: String, value: Any): Unit = {
       val f = c.getDeclaredField(name)
       f.setAccessible(true)
       f.set(o, value)

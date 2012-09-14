@@ -7,7 +7,8 @@ import mojolly.inflector.InflectorImports._
 
 trait RecordRelation
 
-case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]](override val relation: OneToMany[M])
+case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]]
+  (override val relation: OneToMany[M])
   extends StatefulOneToMany(relation) with RecordRelation
 {
   override def refresh: Unit = dsl.inTransaction { super.refresh }
@@ -33,7 +34,8 @@ case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]](override val relation
   override def deleteAll: Int = dsl.inTransaction { super.deleteAll }
 }
 
-case class ActiveRecordManyToOne[O <: ActiveRecord](override val relation: ManyToOne[O])
+case class ActiveRecordManyToOne[O <: ActiveRecord]
+  (override val relation: ManyToOne[O])
   extends StatefulManyToOne(relation) with RecordRelation
 {
   override def refresh: Unit = dsl.inTransaction { super.refresh }
@@ -41,7 +43,8 @@ case class ActiveRecordManyToOne[O <: ActiveRecord](override val relation: ManyT
   override def delete: Boolean = dsl.inTransaction { super.delete }
 }
 
-case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]](override val relation: ManyToMany[O, A])
+case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]]
+  (override val relation: ManyToMany[O, A])
   extends StatefulManyToMany(relation) with RecordRelation
 {
   override def refresh: Unit = dsl.inTransaction { super.refresh }
@@ -77,15 +80,22 @@ case class ActiveRecordManyToMany[O <: ActiveRecord, A <: KeyedEntity[_]](overri
 }
 
 case class RelationWrapper[L <: ActiveRecord, R <: ActiveRecordBase[_]](relation: Relation[L, R]) {
-  def oneToManyRelation = relation.asInstanceOf[OneToManyRelation[L, R]]
-  def manyToManyRelation = relation.asInstanceOf[ManyToManyRelation[ActiveRecord, ActiveRecord, KeyedEntity[_]]]
+  type M2M = ActiveRecordManyToMany[ActiveRecord, KeyedEntity[_]]
 
-  def belongsTo(m: R) = ActiveRecordManyToOne(oneToManyRelation.right(m))
-  def hasMany(m: L) = ActiveRecordOneToMany(oneToManyRelation.left(m))
+  private def oneToManyRelation = relation.asInstanceOf[OneToManyRelation[L, R]]
+  private def manyToManyRelation =
+    relation.asInstanceOf[ManyToManyRelation[ActiveRecord, ActiveRecord, KeyedEntity[_]]]
 
-  def hasAndBelongsToManyL(m: L) =
+  def belongsTo(m: R): ActiveRecordManyToOne[L] =
+    ActiveRecordManyToOne(oneToManyRelation.right(m))
+
+  def hasMany(m: L): ActiveRecordOneToMany[R] =
+    ActiveRecordOneToMany(oneToManyRelation.left(m))
+
+  def hasAndBelongsToManyL(m: L): M2M =
     ActiveRecordManyToMany(manyToManyRelation.left(m))
-  def hasAndBelongsToManyR(m: R)(implicit ev: R <:< ActiveRecord) =
+
+  def hasAndBelongsToManyR(m: R)(implicit ev: R <:< ActiveRecord): M2M =
     ActiveRecordManyToMany(manyToManyRelation.right(m))
 }
 
@@ -146,11 +156,13 @@ trait TableRelationSupport extends Schema {
       throw ActiveRecordException.missingForeignKey(name)
   }
 
-  def oneToMany[O <: AR, M <: ActiveRecordBase[_]](ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]) = {
+  def oneToMany[O <: AR, M <: ActiveRecordBase[_]]
+    (ot: Table[O], mt:Table[M])(implicit om: Manifest[O], mm: Manifest[M]): Relation[O, M] =
+  {
     val foreignKey = foreignKeyName(om.erasure)
     val isOption= foreignKeyIsOption(mm.erasure, foreignKey)
 
-    val relation = oneToManyRelation(ot, mt).via {(o, m) => 
+    val relation = oneToManyRelation(ot, mt).via {(o, m) =>
       if (isOption) {
         o.id === m.getValue[Option[Long]](foreignKey)
       } else {
@@ -184,7 +196,9 @@ trait TableRelationSupport extends Schema {
     relation
   }
 
-  def manyToMany[L <: AR, R <: AR](lt: Table[L], rt:Table[R])(implicit lm: Manifest[L], rm: Manifest[R]): Relation[L, R] = {
+  def manyToMany[L <: AR, R <: AR](lt: Table[L], rt:Table[R])
+    (implicit lm: Manifest[L], rm: Manifest[R]): Relation[L, R] =
+  {
     val middleName =
       lm.erasure.getSimpleName.pluralize + rm.erasure.getSimpleName.pluralize
 
@@ -214,7 +228,7 @@ trait IntermediateRecordCompanion[T <: IntermediateRecord]
 case class DefaultIntermediateRecord() extends IntermediateRecord {
   val leftId: Long = 0
   val rightId: Long = 0
-  def id = compositeKey(leftId, rightId)
+  def id: CompositeKey2[Long, Long] = compositeKey(leftId, rightId)
 }
 
 class IntermediateTable[T](name: String)(implicit m: Manifest[T]) extends Table[T](name)

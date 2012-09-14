@@ -61,7 +61,7 @@ trait IO extends Validatable { this: ProductModel =>
             Option(name -> keys.map(key => converter.deserialize(data(key))).toList)
           } else {
             data.get(name).collect {
-              case v if !(info.isOption && v.isEmpty) => 
+              case v if !(info.isOption && v.isEmpty) =>
                 name -> converter.deserialize(v)
             }
           }

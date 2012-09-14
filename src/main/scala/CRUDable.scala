@@ -76,7 +76,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of before create and update.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
@@ -84,7 +84,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of after create and update.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    * This is not called if failed to save.
@@ -93,7 +93,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of before create.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
@@ -101,7 +101,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of after create.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    * This is not called if failed to create.
@@ -110,7 +110,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of before update.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
@@ -118,7 +118,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of after update.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    * This is not called if failed to update.
@@ -127,7 +127,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of before delete.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
@@ -135,7 +135,7 @@ trait CRUDable extends Saveable {
 
   /**
    * Callback method of after delete.
-   * 
+   *
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    * This is not called if failed to delete.
