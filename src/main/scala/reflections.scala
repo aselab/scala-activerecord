@@ -204,9 +204,10 @@ trait ReflectionUtil {
 
   def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
   def getGenericTypes(field: Field): List[Class[_]] =
-    field.getGenericType.asInstanceOf[ParameterizedType].getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
+    field.getGenericType.asInstanceOf[ParameterizedType]
+    .getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
 
-  def isSeq(clazz: Class[_]): Boolean = clazz.isAssignableFrom(Nil.getClass)
+  def isSeq(clazz: Class[_]): Boolean = classOf[Seq[_]].isAssignableFrom(clazz)
   def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
 }
 

@@ -1,15 +1,14 @@
 package com.github.aselab.activerecord
 
+import org.specs2.mock._
 import com.github.aselab.activerecord._
 import models._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-object IOSpec extends TimeZoneSpec {
+object IOSpec extends TimeZoneSpec with Mockito {
 
-  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord {
-    def this() = this(List(""), List(0))
-  }
+  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord
   object ListModel extends ActiveRecordCompanion[ListModel]
 
   case class NestModel(
@@ -29,40 +28,9 @@ object IOSpec extends TimeZoneSpec {
   }
   object ComplexModel extends ActiveRecordCompanion[ComplexModel]
 
-  case class FormSupportModel(
-    string: String,
-    boolean: Boolean,
-    int: Int,
-    long: Long,
-    float: Float,
-    double: Double,
-    bigDecimal: BigDecimal,
-    timestamp: Timestamp,
-    date: Date,
-    uuid: UUID,
-    ostring: Option[String],
-    oboolean: Option[Boolean],
-    oint: Option[Int],
-    olong: Option[Long],
-    ofloat: Option[Float],
-    odouble: Option[Double],
-    obigDecimal: Option[BigDecimal],
-    otimestamp: Option[Timestamp],
-    odate: Option[Date],
-    ouuid: Option[UUID]
-  ) extends ActiveRecord {
-    def this() = this("", false, 0, 0, 0.toFloat, 0.0, BigDecimal(0),
-      new Timestamp(0), new Date(0), new UUID(0, 0),
-      Some(""), Some(false), Some(0), Some(0L), Some(0.toFloat), Some(0.0),
-      Some(BigDecimal(0)), Some(new Timestamp(0)), Some(new Date(0)), Some(new UUID(0, 0))
-    )
-  }
-
-  object FormSupportModel extends ActiveRecordCompanion[FormSupportModel]
-
   "IO" should {
-    "toFormValues" >> {
-      "primitive and options" >> {
+    "toFormValues" in {
+      "primitive and options" in {
         val m = PrimitiveModel.newModel(5)
         m.toFormValues mustEqual Map(
           "boolean" -> "true",
@@ -88,7 +56,7 @@ object IOSpec extends TimeZoneSpec {
         )
       }
 
-      "primitive list" >> {
+      "primitive list" in {
         val m = ListModel(List("aa", "bb", "cc"), List(11, 22, 33))
         m.toFormValues mustEqual Map(
           "l1[0]" -> "aa",
@@ -100,7 +68,7 @@ object IOSpec extends TimeZoneSpec {
         )
       }
 
-      "nest model" >> {
+      "nest model" in {
         val m = new NestModel
         m.toFormValues mustEqual Map(
           "int" -> "1",
@@ -111,7 +79,7 @@ object IOSpec extends TimeZoneSpec {
         )
       }
 
-      "complex model" >> {
+      "complex model" in {
         val m = new ComplexModel
         m.toFormValues mustEqual Map(
           "int" -> "1",
@@ -134,8 +102,8 @@ object IOSpec extends TimeZoneSpec {
       }
     }
 
-    "assgin" >> {
-      val m = PrimitiveModel.newModel(0)
+    "assgin" in {
+      val m = PrimitiveModel.newInstance
       m.assign(Map(
         "boolean" -> true,
         "oboolean" -> true,
@@ -161,47 +129,61 @@ object IOSpec extends TimeZoneSpec {
       m must equalTo(PrimitiveModel.newModel(5))
     }
 
-    "assignFormValues" >> {
-      val m = PrimitiveModel.newModel(0)
-      m.assignFormValues(Map(
-        "boolean" -> "true",
-        "oboolean" -> "true",
-        "timestamp" -> "1970-01-01T09:00:00.005+09:00",
-        "otimestamp" -> "1970-01-01T09:00:00.005+09:00",
-        "float" -> "5.0",
-        "ofloat" -> "5.0",
-        "long" -> "5",
-        "olong" -> "5",
-        "string" -> "string5",
-        "ostring" -> "string5",
-        "bigDecimal" -> "5",
-        "obigDecimal" -> "5",
-        "double" -> "5.0",
-        "odouble" -> "5.0",
-        "date" -> "1970-01-06T09:00:00.000+09:00",
-        "odate" -> "1970-01-06T09:00:00.000+09:00",
-        "int" -> "5",
-        "oint" -> "5",
-        "uuid" -> "00000000-0000-0005-0000-000000000005",
-        "ouuid" -> "00000000-0000-0005-0000-000000000005"
-      ))
-      m must equalTo(PrimitiveModel.newModel(5))
+    "assignFormValues" in {
+      "primitive types" in {
+        val m = PrimitiveModel.newInstance
+        m.assignFormValues(Map(
+          "boolean" -> "true",
+          "oboolean" -> "true",
+          "timestamp" -> "1970-01-01T09:00:00.005+09:00",
+          "otimestamp" -> "1970-01-01T09:00:00.005+09:00",
+          "float" -> "5.0",
+          "ofloat" -> "5.0",
+          "long" -> "5",
+          "olong" -> "5",
+          "string" -> "string5",
+          "ostring" -> "string5",
+          "bigDecimal" -> "5",
+          "obigDecimal" -> "5",
+          "double" -> "5.0",
+          "odouble" -> "5.0",
+          "date" -> "1970-01-06T09:00:00.000+09:00",
+          "odate" -> "1970-01-06T09:00:00.000+09:00",
+          "int" -> "5",
+          "oint" -> "5",
+          "uuid" -> "00000000-0000-0005-0000-000000000005",
+          "ouuid" -> "00000000-0000-0005-0000-000000000005"
+        ))
+        m must equalTo(PrimitiveModel.newModel(5))
+      }
+
+      "list types" in {
+        val m = ListModel.newInstance
+        m.assignFormValues(Map(
+          "l1[0]" -> "aa",
+          "l1[1]" -> "bb",
+          "l1[2]" -> "cc",
+          "l2[0]" -> "11",
+          "l2[1]" -> "22",
+          "l2[2]" -> "33"
+        ))
+        m must equalTo(ListModel(List("aa", "bb", "cc"), List(11, 22, 33)))
+      }
+
+      "Validation error is added when form value is invalid" in {
+        val m = ListModel.newInstance
+        m.assignFormValues(Map(
+          "l1[0]" -> "aaa",
+          "l1[1]" -> "bbb",
+          "l2[0]" -> "aaa",
+          "l2[1]" -> "bbb"
+        ))
+        m must equalTo(ListModel(List("aaa", "bbb"), Nil))
+        m.errors must contain(ValidationError(classOf[ListModel], "l2", "activerecord.errors.invalid")).only
+      }
     }
 
-    "assignFormValues(list)" >> {
-      val m = ListModel.newInstance
-      m.assignFormValues(Map(
-        "l1[0]" -> "aa",
-        "l1[1]" -> "bb",
-        "l1[2]" -> "cc",
-        "l2[0]" -> "11",
-        "l2[1]" -> "22",
-        "l2[2]" -> "33"
-      ))
-      m must equalTo(ListModel(List("aa", "bb", "cc"), List(11, 22, 33)))
-    }
-
-    "toMap" >> {
+    "toMap" in {
       val m = PrimitiveModel.newModel(5)
       m.ofloat = None
       m.otimestamp = None
@@ -228,7 +210,7 @@ object IOSpec extends TimeZoneSpec {
       ))
     }
  
-    "toMap (relation)" >> {
+    "toMap (relation)" in {
       val g = Group("group1")
       val p = Project("project1")
       g.save
@@ -256,9 +238,29 @@ object IOSpec extends TimeZoneSpec {
   }
 
   "FormSupport" should {
-    "bind" >> {
-      FormSupportModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100")) mustEqual
-        new FormSupportModel().copy(string = "string", ostring = Some(""), int = 100)
+    "bind" in {
+      "with no source" in {
+        PrimitiveModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100")) mustEqual
+          PrimitiveModel.newInstance.copy(string = "string", int = 100)
+      }
+
+      "with source" in {
+        val source = mock[PrimitiveModel]
+        val data = Map("string" -> "string", "ostring" -> "", "int" -> "100")
+
+        PrimitiveModel.bind(data)(source) mustEqual source
+
+        there was one(source).clearErrors then
+          one(source).assignFormValues(data) then
+          one(source).validate(false)
+      }
+    }
+
+    "unbind" in {
+      val m = mock[PrimitiveModel]
+      val data = Map("aaa" -> "aaa", "bbb" -> "bbb")
+      m.toFormValues returns data
+      PrimitiveModel.unbind(m) mustEqual data
     }
   }
 }

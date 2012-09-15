@@ -68,7 +68,11 @@ trait Validatable extends Saveable {
     errors.isEmpty
   }
 
-  def hasErrors: Boolean = !errors.isEmpty
+  def isValid: Boolean = errors.isEmpty
+
+  def hasErrors: Boolean = !isValid
+
+  def clearErrors(): Unit = errors.clear
 
   protected def doValidate(): Unit = {}
 

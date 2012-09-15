@@ -78,7 +78,7 @@ trait FormSupport[T <: ProductModel with IO] {self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
-    source.errors.clear
+    source.clearErrors
     source.assignFormValues(data)
     source.validate(false)
     source
