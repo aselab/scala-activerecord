@@ -4,8 +4,32 @@ import org.squeryl._
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import java.sql.Connection
+import java.util.TimeZone
 import com.jolbox.bonecp._
 import com.typesafe.config._
+
+object Config {
+  private var _conf: ActiveRecordConfig = _
+  private var _timeZone: TimeZone = _
+
+  def confOption: Option[ActiveRecordConfig] = Option(_conf)
+  def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def conf_=(value: ActiveRecordConfig): Unit = _conf = value
+
+  lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
+    .asInstanceOf[ActiveRecordTables]
+
+  def connection: java.sql.Connection = conf.connection
+  def adapter: internals.DatabaseAdapter = conf.adapter
+
+  def cleanup: Unit = conf.cleanup
+
+  def translator: i18n.Translator =
+    confOption.map(_.translator).getOrElse(i18n.DefaultTranslator)
+
+  def timeZone: TimeZone = Option(_timeZone).getOrElse(conf.timeZone)
+  def timeZone_=(value: TimeZone): Unit = _timeZone = value
+}
 
 trait ActiveRecordConfig {
   def schemaClass: String
@@ -23,6 +47,7 @@ trait ActiveRecordConfig {
     Session.cleanupResources
   }
   def translator: i18n.Translator
+  def timeZone: TimeZone
 }
 
 class DefaultConfig(
@@ -70,9 +95,10 @@ class DefaultConfig(
 
   override def cleanup: Unit = {
     super.cleanup
-    //pool.shutdown
   }
 
   def connection: Connection = pool.getConnection
   val translator: i18n.Translator = i18n.DefaultTranslator
+  lazy val timeZone = getString("timeZone").map(TimeZone.getTimeZone(_))
+    .getOrElse(TimeZone.getDefault)
 }

@@ -45,7 +45,7 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
 
   val timestampHandler = new FormConverter[Timestamp] {
     override def serialize(v: Any): String = {
-      val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
+      val timezone = DateTimeZone.forTimeZone(Config.timeZone)
       new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
     }
 
@@ -59,7 +59,7 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
 
   val dateHandler = new FormConverter[Date] {
     override def serialize(v: Any): String = {
-      val timezone = DateTimeZone.forTimeZone(TimeZone.getDefault)
+      val timezone = DateTimeZone.forTimeZone(Config.timeZone)
       new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
     }
 

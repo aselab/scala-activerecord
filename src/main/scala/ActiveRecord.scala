@@ -449,22 +449,3 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
 }
 
-object Config {
-  private var _conf: ActiveRecordConfig = _
-
-  def confOption: Option[ActiveRecordConfig] = Option(_conf)
-  def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
-  def conf_=(value: ActiveRecordConfig): Unit = _conf = value
-
-  lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
-    .asInstanceOf[ActiveRecordTables]
-
-  def connection: java.sql.Connection = conf.connection
-  def adapter: internals.DatabaseAdapter = conf.adapter
-
-  def cleanup: Unit = conf.cleanup
-
-  def translator: i18n.Translator =
-    confOption.map(_.translator).getOrElse(i18n.DefaultTranslator)
-}
-

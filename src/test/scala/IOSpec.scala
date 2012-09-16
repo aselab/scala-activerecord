@@ -6,7 +6,7 @@ import models._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-object IOSpec extends TimeZoneSpec with Mockito {
+object IOSpec extends ActiveRecordSpecification with Mockito {
 
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord
   object ListModel extends ActiveRecordCompanion[ListModel]

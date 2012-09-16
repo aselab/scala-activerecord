@@ -181,16 +181,3 @@ trait ActiveRecordSpecification extends Specification {
   }
 }
 
-trait TimeZoneSpec extends ActiveRecordSpecification {
-  val defaultZone = TimeZone.getDefault
-
-  override def before = {
-    super.before
-    TimeZone.setDefault(TimeZone.getTimeZone("GMT"))
-  }
-
-  override def after = {
-    super.after
-    TimeZone.setDefault(defaultZone)
-  }
-}

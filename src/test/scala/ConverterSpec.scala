@@ -3,8 +3,10 @@ package com.github.aselab.activerecord
 import com.github.aselab.activerecord._
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
+import org.scala_tools.time.Imports._
+import org.joda.time.format.ISODateTimeFormat
 
-object ConverterSpec extends TimeZoneSpec {
+object ConverterSpec extends ActiveRecordSpecification {
   "FormConverter" should {
     "String" in {
       val converter = FormConverter.get(classOf[String]).get
@@ -14,18 +16,48 @@ object ConverterSpec extends TimeZoneSpec {
 
     "Date" in {
       val converter = FormConverter.get(classOf[Date]).get
-      val serialized = "1970-01-06T00:00:00.000Z"
-      val deserialized = new Date(5L * 1000 * 60 * 60 * 24)
-      converter.serialize(deserialized) mustEqual serialized
-      converter.deserialize(serialized) mustEqual deserialized
+
+      "convert with the timezone setting when Config.timeZone is null" in {
+        val string = "2012-05-06T08:02:11.530Z"
+        val date = ISODateTimeFormat.dateTime.parseDateTime(string).toDate
+        converter.serialize(date) mustEqual string
+        converter.deserialize(string) mustEqual date
+      }
+
+      "convert with Config.timeZone" in {
+        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
+        val string = "2012-06-16T18:23:51.133+09:00"
+        val date = ISODateTimeFormat.dateTime.parseDateTime(string).toDate
+        val serialized = converter.serialize(date)
+        val deserialized = converter.deserialize(string)
+        Config.timeZone = null
+
+        serialized mustEqual string
+        deserialized mustEqual date
+      }
     }
 
     "Timestamp" in {
       val converter = FormConverter.get(classOf[Timestamp]).get
-      val serialized = "1970-01-01T00:00:00.005Z"
-      val deserialized = new Timestamp(5L)
-      converter.serialize(deserialized) mustEqual serialized
-      converter.deserialize(serialized) mustEqual deserialized
+
+      "convert with the timezone setting when Config.timeZone is null" in {
+        val string = "2012-05-06T08:02:11.530Z"
+        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        converter.serialize(t) mustEqual string
+        converter.deserialize(string) mustEqual t
+      }
+
+      "convert with Config.timeZone" in {
+        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
+        val string = "2012-06-16T18:23:51.133+09:00"
+        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        val serialized = converter.serialize(t)
+        val deserialized = converter.deserialize(string)
+        Config.timeZone = null
+
+        serialized mustEqual string
+        deserialized mustEqual t
+      }
     }
 
     "UUID" in {
