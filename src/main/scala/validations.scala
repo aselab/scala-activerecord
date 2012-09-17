@@ -183,10 +183,8 @@ object Validator {
   }
 
   val lengthValidator = new Validator[annotations.Length] {
-    def validate(value: Any): Unit = {
-      val l = if (value == null) 0 else value.toString.length
-      if (l == 0) return
-
+    def validate(value: Any): Unit = if (!isBlank(value)) {
+      val l = value.toString.length
       val min = annotation.min
       val max = annotation.max
       if (annotation.message.isEmpty) {
@@ -228,22 +226,26 @@ object Validator {
   }
 
   val emailValidator = new Validator[annotations.Email] {
-    def validate(value: Any): Unit = if (!isBlank(value) && !isEmail(value.toString))
-      errors.add(fieldName, message("invalid"))
+    def validate(value: Any): Unit =
+      if (!isBlank(value) && !isEmail(value.toString)) {
+        errors.add(fieldName, message("invalid"))
+      }
   }
 
   val formatValidator = new Validator[annotations.Format] {
     def validate(value: Any): Unit = {
       val pattern = annotation.value
-      if (!isBlank(value) && !isBlank(pattern) && pattern.r.findFirstIn(value.toString).isEmpty) errors.add(fieldName, message("format"))
+      if (!isBlank(value) && !isBlank(pattern) &&
+        pattern.r.findFirstIn(value.toString).isEmpty) {
+          errors.add(fieldName, message("format"))
+      }
     }
   }
 
   val confirmationValidator = new Validator[annotations.Confirmation] {
-    def validate(value: Any) :Unit = {
-      if (isBlank(value)) return
+    import ReflectionUtil._
 
-      import ReflectionUtil._
+    def validate(value: Any) :Unit = if (!isBlank(value)) {
       val confirmationFieldName = Option(annotation.value).filter(!_.isEmpty)
         .getOrElse(fieldName + "Confirmation")
       val confirmationValue = try {
@@ -252,8 +254,9 @@ object Validator {
         case e => throw ActiveRecordException.notfoundConfirmationField(
           confirmationFieldName)
       }
-      if (value != confirmationValue)
+      if (value != confirmationValue) {
         errors.add(confirmationFieldName, message("confirmation"), fieldName)
+      }
     }
   }
 

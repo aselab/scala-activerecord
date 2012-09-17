@@ -47,10 +47,12 @@ trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
   lazy val recordCompanion = _companion.asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
 
   override def equals(obj: Any): Boolean = obj match {
-    case p: Product => productIterator.toList == p.productIterator.toList
-    case ar: AnyRef => super.equals(obj)
+    case p: Product => hashCode == p.hashCode
+    case ar: AnyRef => super.equals(ar)
     case _ => false
   }
+
+  override def hashCode(): Int = runtime.ScalaRunTime._hashCode(this)
 
   override def isNewInstance: Boolean = !isPersisted
 
@@ -257,16 +259,16 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * unique validation.
    */
-  def isUnique(name: String, m: T): Boolean = inTransaction {
-    val newValue = m.getValue[Any](name)
-
-    if (newValue == null || newValue == None) return true
-
-    val result = findBy(name, newValue)
-    find(m.id) match {
-      case Some(old) if old.getValue[Any](name) != newValue => result.isEmpty
-      case Some(_) => true
-      case None => result.isEmpty
+  def isUnique(name: String, m: T): Boolean = m.getValue[Any](name) match {
+    case value if value == null || value == None =>
+      true
+    case value => inTransaction {
+      find(m.id) match {
+        case Some(old) if old.getValue[Any](name) != value =>
+          findBy(name, value).isEmpty
+        case Some(_) => true
+        case None => findBy(name, value).isEmpty
+      }
     }
   }
 
@@ -388,13 +390,13 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
   /** load configuration and then setup database and session */
   def initialize(implicit config: Map[String, Any] = Map()) {
-    if (_initialized) return
+    if (!_initialized) {
+      Config.conf = loadConfig(config)
 
-    Config.conf = loadConfig(config)
+      SessionFactory.concreteFactory = Some(() => session)
 
-    SessionFactory.concreteFactory = Some(() => session)
-
-    createTables
+      createTables
+    }
 
     _initialized = true
   }
@@ -423,8 +425,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
     newSession.bindToCurrentThread
     val c = newSession.connection
     try {
-      if (c.getAutoCommit)
-        c.setAutoCommit(false)
+      if (c.getAutoCommit) c.setAutoCommit(false)
     } catch { case e => }
     _session = (oldSession, Option(newSession))
   }
@@ -444,8 +445,10 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
     super.table[T]
 
   override protected def table[T](name: String)(implicit m: Manifest[T]) =
-    if (m <:< manifest[IntermediateRecord]) new IntermediateTable[T](name)
-    else super.table[T](name)
-
+    if (m <:< manifest[IntermediateRecord]) {
+      new IntermediateTable[T](name)
+    } else {
+      super.table[T](name)
+    }
 }
 

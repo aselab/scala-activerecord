@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord.i18n
 
 import java.util._
+import java.io.InputStreamReader
 import java.text.MessageFormat
 import mojolly.inflector.InflectorImports._
 
@@ -31,25 +32,30 @@ object DefaultTranslator extends Translator {
   }
 }
 
-class CharsetResourceBundleControl(charset: String = "UTF8") extends ResourceBundle.Control {
-  override def newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle = {
+class CharsetResourceBundleControl(charset: String = "UTF8")
+  extends ResourceBundle.Control
+{
+  override def newBundle(
+    baseName: String, locale: Locale, format: String,
+    loader: ClassLoader, reload: Boolean
+  ): ResourceBundle = {
     val bundleName = toBundleName(baseName, locale)
     val resourceName = toResourceName(bundleName, "properties")
 
-    (if (reload) {
-      Option(loader.getResource(resourceName)) map {_.openConnection} map {conn =>
+    val stream = if (reload) {
+      Option(loader.getResource(resourceName)) map { url =>
+        val conn = url.openConnection
         conn.setUseCaches(false)
         conn.getInputStream
       }
     } else {
       Option(loader.getResourceAsStream(resourceName))
-    }) map { stream =>
-      val bundle = new PropertyResourceBundle(new java.io.InputStreamReader(stream, charset))
-      stream.close
-      bundle
-    } match {
-      case Some(bundle) => bundle
-      case None => null
     }
+
+    stream.map { s =>
+      val bundle = new PropertyResourceBundle(new InputStreamReader(s, charset))
+      s.close
+      bundle
+    }.orNull
   }
 }

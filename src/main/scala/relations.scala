@@ -170,10 +170,11 @@ trait TableRelationSupport extends Schema {
       }
     }
 
-    if (isOption)
+    if (isOption) {
       relation.foreignKeyDeclaration.constrainReference(onDelete setNull)
-    else
+    } else {
       relation.foreignKeyDeclaration.constrainReference(onDelete cascade)
+    }
 
     relation
   }

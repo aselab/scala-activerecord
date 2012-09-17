@@ -36,8 +36,7 @@ trait Versionable extends ActiveRecord with Serializable {
     newValues.foreach {
       case (name, newValue) =>
         val oldValue = this.getValue[Any](name)
-        if (oldValue != newValue)
-          n.changed += ((name, (oldValue, newValue)))
+        if (oldValue != newValue) n.changed += ((name, (oldValue, newValue)))
     }
     n
   }
