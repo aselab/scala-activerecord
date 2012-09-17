@@ -4,7 +4,7 @@ import org.squeryl.annotations.Transient
 
 trait Saveable {
   def save(): Boolean = false
-  def isNewInstance: Boolean
+  def isNewRecord: Boolean
 }
 
 /**
@@ -12,29 +12,29 @@ trait Saveable {
  */
 trait CRUDable extends Saveable {
   @Transient
-  protected var _isNewInstance = true
+  protected var _isNewRecord = true
 
-  def isNewInstance: Boolean = _isNewInstance
+  def isNewRecord: Boolean = _isNewRecord
 
   /**
    * Save model.
    *
-   * If isNewInstance flag is true, it calls doCreate method.
+   * If isNewRecord flag is true, it calls doCreate method.
    * If not, it calls doUpdate method.
    * before and after callbacks are available.
    */
   override def save(): Boolean = {
-    val onCreate = isNewInstance
+    val onCreate = isNewRecord
 
     if (onCreate) beforeCreate() else beforeUpdate()
     beforeSave()
 
-    val result = if (isNewInstance) doCreate() else doUpdate()
+    val result = if (isNewRecord) doCreate() else doUpdate()
 
     if (result) {
       if (onCreate) afterCreate() else afterUpdate()
       afterSave()
-      _isNewInstance = false
+      _isNewRecord = false
     }
     result
   }
@@ -44,14 +44,14 @@ trait CRUDable extends Saveable {
    *
    * before and after callbacks are available.
    */
-  def delete(): Boolean = !isNewInstance && {
+  def delete(): Boolean = !isNewRecord && {
     beforeDelete()
 
     val result = doDelete()
 
     if (result) {
       afterDelete()
-      _isNewInstance = true
+      _isNewRecord = true
     }
     result
   }

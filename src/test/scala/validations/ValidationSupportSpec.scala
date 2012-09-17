@@ -46,7 +46,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
   case class ValidationSupportModel(
     @Email email: String = ""
   ) extends ProductModel with ValidationSupport {
-    val isNewInstance = true
+    val isNewRecord = true
   }
 
   case class AnnotationOptionModel(
@@ -56,7 +56,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
     @Required(on="update") onUpdate: String = "a",
     persisted: Boolean = false
   ) extends ActiveRecord {
-    override def isNewInstance =  !persisted
+    override def isNewRecord =  !persisted
   }
 
   object CustomAnnotationModel extends ActiveRecordCompanion[CustomAnnotationModel]

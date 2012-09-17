@@ -118,8 +118,8 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
         _fieldName.withValue(name) {
           val skip = (annotation.on match {
             case "save" => false
-            case "create" if model.isNewInstance => false
-            case "update" if !model.isNewInstance => false
+            case "create" if model.isNewRecord => false
+            case "update" if !model.isNewRecord => false
             case _ => true
           })
           if (!skip) validate(v)

@@ -54,7 +54,7 @@ trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
 
   override def hashCode(): Int = runtime.ScalaRunTime._hashCode(this)
 
-  override def isNewInstance: Boolean = !isPersisted
+  override def isNewRecord: Boolean = !isPersisted
 
   protected def doCreate = {
     recordCompanion.create(this)
@@ -83,7 +83,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   /** primary key */
   val id: Long = 0L
 
-  override def isNewInstance: Boolean = id == 0
+  override def isNewRecord: Boolean = id == 0
 }
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with FormSupport[T] {

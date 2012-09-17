@@ -10,7 +10,7 @@ object ValidatableSpec extends ActiveRecordSpecification {
       calledMethods :+= "save"
       true
     }
-    val isNewInstance = true
+    val isNewRecord = true
   }
 
   case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable {

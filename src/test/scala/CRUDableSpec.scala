@@ -9,7 +9,7 @@ object CRUDableSpec extends Specification {
     updateResult: Boolean = true,
     deleteResult: Boolean = true
   ) = new CRUDable {
-    _isNewInstance = isNew
+    _isNewRecord = isNew
     var calledMethods = List[String]()
 
     override def beforeSave() {
@@ -69,8 +69,8 @@ object CRUDableSpec extends Specification {
         result must beTrue
       }
 
-      "isNewInstance is false" in {
-        m.isNewInstance must beFalse
+      "isNewRecord is false" in {
+        m.isNewRecord must beFalse
       }
 
       "should call beforeCreate, beforeSave, doCreate, afterCreate, afterSave" in {
@@ -86,8 +86,8 @@ object CRUDableSpec extends Specification {
         result must beFalse
       }
 
-      "isNewInstance is true" in {
-        m.isNewInstance must beTrue
+      "isNewRecord is true" in {
+        m.isNewRecord must beTrue
       }
 
       "should call beforeCreate, beforeSave, doCreate and should not call afterSave" in {
@@ -148,8 +148,8 @@ object CRUDableSpec extends Specification {
         m.calledMethods must equalTo(List("beforeDelete", "doDelete", "afterDelete"))
       }
 
-      "isNewInstance is true" in {
-        m.isNewInstance must beTrue
+      "isNewRecord is true" in {
+        m.isNewRecord must beTrue
       }
     }
 
@@ -165,8 +165,8 @@ object CRUDableSpec extends Specification {
         m.calledMethods must equalTo(List("beforeDelete", "doDelete"))
       }
 
-      "isNewInstance is false" in {
-        m.isNewInstance must beFalse
+      "isNewRecord is false" in {
+        m.isNewRecord must beFalse
       }
     }
 
