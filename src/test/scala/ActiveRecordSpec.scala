@@ -45,8 +45,12 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
     }
 
-    "#findBy" >> {
+    "#findBy(name, value)" >> {
       PrimitiveModel.findBy("string", "string33").map(_.string) must beSome("string33")
+    }
+
+    "#findBy(tuples)" >> {
+      PrimitiveModel.findBy("string" -> "string33", "int" -> 33).map(_.string) must beSome("string33")
     }
 
     "#findAllBy" >> {
@@ -172,6 +176,12 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
         val result = PrimitiveModel.findAllBy("ouuid", u)
         result must have size 1
         result.head.ouuid mustEqual u
+      }
+
+      "other type" >> {
+        val o = new Object
+        PrimitiveModel.findAllBy("int", o) must throwA(ActiveRecordException.unsupportedType("int by " + o.toString))
+        PrimitiveModel.findAllBy("string", null) must throwA(ActiveRecordException.unsupportedType("string by null"))
       }
 
       "multiple values" >> {
@@ -300,6 +310,21 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
   }
 
   "ActiveRecord" should {
+    "equals" >> {
+      val m = PrimitiveModel.newModel(3)
+      "with Product" >> {
+        m.equals(PrimitiveModel.newModel(3)) must beTrue
+      }
+
+      "with AnyRef" >> {
+        m.equals(new Object) must beFalse
+      }
+
+      "with null" >> {
+        m.equals(null) must beFalse
+      }
+    }
+
     "#_companion returns companion object" >> {
       val m = PrimitiveModel.newModel(3)
       m._companion mustEqual PrimitiveModel

@@ -222,7 +222,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
       case v: UUID => {m: T => m.getValue[UUID](name) === v}
       case Some(v: UUID) => {m: T => m.getValue[Option[UUID]](name) === Some(v)}
       case _ => throw ActiveRecordException.unsupportedType(
-        "%s by %s".format(name, value.toString))
+        "%s by %s".format(name, Option(value).map(_.toString).orNull))
     })(query)
   }
 

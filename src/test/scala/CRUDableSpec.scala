@@ -2,6 +2,15 @@ package com.github.aselab.activerecord
 
 import org.specs2.mutable._
 
+object SaveableSpec extends Specification {
+  "Saveable" should {
+    "save" in {
+      val m = new Saveable {def isNewRecord = true}
+      m.save() must beFalse
+    }
+  }
+}
+
 object CRUDableSpec extends Specification {
   def testModel(
     isNew: Boolean = true,
