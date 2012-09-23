@@ -4,6 +4,12 @@ import org.specs2.mutable._
 import org.squeryl.adapters._
 
 object ActiveRecordConfigSpec extends Specification {
+  "Config" should {
+    "throws exception when tables are not initialized" in {
+      Config.conf must throwA(ActiveRecordException.notInitialized)
+    }
+  }
+
   "DefaultConfig" should {
     "supported database" in {
       def config(driverName: String) = new DefaultConfig(
@@ -33,6 +39,12 @@ object ActiveRecordConfigSpec extends Specification {
       "unsupported driver" in {
         config("not.supported.Driver").adapter must throwA(
           ActiveRecordException.unsupportedDriver("not.supported.Driver"))
+      }
+
+      "unresolved driver" in {
+        config("oracle.jdbc.OracleDriver").pool must throwA(
+          ActiveRecordException.missingDriver("oracle.jdbc.OracleDriver")
+        )
       }
     }
   }

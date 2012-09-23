@@ -51,6 +51,12 @@ object ReflectionSpec extends Specification {
     list: List[Int]
   )
 
+  class NotSupportedModel(func: (Int) => String)
+
+  class ExceptionModel {
+    throw new Exception
+  }
+
   "ClassInfo" should {
     "factory of PrimitiveModel" in {
       val factory = ClassInfo(classOf[PrimitiveModel]).factory
@@ -86,6 +92,22 @@ object ReflectionSpec extends Specification {
         val factory = ClassInfo(classOf[ComplexModel]).factory
         ClassInfo.factories.get(classOf[ComplexModel]).isDefined must beTrue
       }
+    }
+
+    "factory of NotSupportedModel" in {
+      val c = classOf[NotSupportedModel]
+      ClassInfo(c).factory must throwA(
+        ActiveRecordException.cannotCreateInstance(c.getName, "No usable constructor is found. It is recommended to implement default constructor.")
+      )
+      success
+    }
+
+    "exception in constructor" in {
+      val c = classOf[ExceptionModel]
+      val factory = ClassInfo(c).factory
+      factory.apply must throwA(
+        ActiveRecordException.cannotCreateInstance(c.getName, null)
+      )
     }
   }
 
