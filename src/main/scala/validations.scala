@@ -251,7 +251,7 @@ object Validator {
       val confirmationValue = try {
         model.getValue[Any](confirmationFieldName)
       } catch {
-        case e => throw ActiveRecordException.notfoundConfirmationField(
+        case e => throw ActiveRecordException.notFoundConfirmationField(
           confirmationFieldName)
       }
       if (value != confirmationValue) {

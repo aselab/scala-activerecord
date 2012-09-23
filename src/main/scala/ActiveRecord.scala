@@ -200,30 +200,47 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param query table or subquery in from clause. default is table
    */
   def findAllBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
-    where(value match {
-      case v: String => {m: T => m.getValue[String](name) === v}
-      case Some(v: String) => {m: T => m.getValue[Option[String]](name) === Some(v)}
-      case v: Boolean => {m: T => m.getValue[Boolean](name) === v}
-      case Some(v: Boolean) => {m: T => m.getValue[Option[Boolean]](name) === Some(v)}
-      case v: Int => {m: T => m.getValue[Int](name) === v}
-      case Some(v: Int) => {m: T => m.getValue[Option[Int]](name) === Some(v)}
-      case v: Long => {m: T => m.getValue[Long](name) === v}
-      case Some(v: Long) => {m: T => m.getValue[Option[Long]](name) === Some(v)}
-      case v: Float => {m: T => m.getValue[Float](name) === v}
-      case Some(v: Float) => {m: T => m.getValue[Option[Float]](name) === Some(v)}
-      case v: Double => {m: T => m.getValue[Double](name) === v}
-      case Some(v: Double) => {m: T => m.getValue[Option[Double]](name) === Some(v)}
-      case v: BigDecimal => {m: T => m.getValue[BigDecimal](name) === v}
-      case Some(v: BigDecimal) => {m: T => m.getValue[Option[BigDecimal]](name) === Some(v)}
-      case v: Timestamp => {m: T => m.getValue[Timestamp](name) === v}
-      case Some(v: Timestamp) => {m: T => m.getValue[Option[Timestamp]](name) === Some(v)}
-      case v: Date => {m: T => m.getValue[Date](name) === v}
-      case Some(v: Date) => {m: T => m.getValue[Option[Date]](name) === Some(v)}
-      case v: UUID => {m: T => m.getValue[UUID](name) === v}
-      case Some(v: UUID) => {m: T => m.getValue[Option[UUID]](name) === Some(v)}
-      case _ => throw ActiveRecordException.unsupportedType(
-        "%s by %s".format(name, Option(value).map(_.toString).orNull))
-    })(query)
+    val info = fieldInfo.getOrElse(name,
+      throw ActiveRecordException.notFoundField(name)
+    )
+
+    val clause = {m: T =>
+      val v1 = m.getValue[Any](name) match {
+        case o: Option[_] => o
+        case v => Option(v)
+      }
+      val v2 = value match {
+        case o: Option[_] => o
+        case v => Option(v)
+      }
+
+      if (v2 == None && !info.isOption) {
+        throw ActiveRecordException.unsupportedType(name + " by null")
+      } else if (info.fieldType == classOf[String]) {
+        v1.asInstanceOf[Option[String]] === v2.asInstanceOf[Option[String]]
+      } else if (info.fieldType == classOf[Boolean]) {
+        v1.asInstanceOf[Option[Boolean]] === v2.asInstanceOf[Option[Boolean]]
+      } else if (info.fieldType == classOf[Int]) {
+        v1.asInstanceOf[Option[Int]] === v2.asInstanceOf[Option[Int]]
+      } else if (info.fieldType == classOf[Long]) {
+        v1.asInstanceOf[Option[Long]] === v2.asInstanceOf[Option[Long]]
+      } else if (info.fieldType == classOf[Float]) {
+        v1.asInstanceOf[Option[Float]] === v2.asInstanceOf[Option[Float]]
+      } else if (info.fieldType == classOf[Double]) {
+        v1.asInstanceOf[Option[Double]] === v2.asInstanceOf[Option[Double]]
+      } else if (info.fieldType == classOf[BigDecimal]) {
+        v1.asInstanceOf[Option[BigDecimal]] === v2.asInstanceOf[Option[BigDecimal]]
+      } else if (info.fieldType == classOf[Timestamp]) {
+        v1.asInstanceOf[Option[Timestamp]] === v2.asInstanceOf[Option[Timestamp]]
+      } else if (info.fieldType == classOf[Date]) {
+        v1.asInstanceOf[Option[Date]] === v2.asInstanceOf[Option[Date]]
+      } else if (info.fieldType == classOf[UUID]) {
+        v1.asInstanceOf[Option[UUID]] === v2.asInstanceOf[Option[UUID]]
+      } else {
+        throw ActiveRecordException.unsupportedType(name + " by " + v2.toString)
+      }
+    }
+    where(clause)(query)
   }
 
   /**

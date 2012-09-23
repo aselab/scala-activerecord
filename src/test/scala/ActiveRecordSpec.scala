@@ -61,7 +61,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[String]" >> {
-        val result = PrimitiveModel.findAllBy("ostring", Some("string33"))
+        val result = PrimitiveModel.findAllBy("ostring", "string33")
         result must have size 1
         result.head.ostring must beSome("string33")
       }
@@ -72,7 +72,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Boolean]" >> {
-        val result = PrimitiveModel.findAllBy("oboolean", Some(true))
+        val result = PrimitiveModel.findAllBy("oboolean", true)
         result must have size 25
       }
 
@@ -83,7 +83,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Int]" >> {
-        val result = PrimitiveModel.findAllBy("oint", Some(35))
+        val result = PrimitiveModel.findAllBy("oint", 35)
         result must have size 1
         result.head.oint must beSome(35)
       }
@@ -95,7 +95,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Long]" >> {
-        val result = PrimitiveModel.findAllBy("olong", Some(35L))
+        val result = PrimitiveModel.findAllBy("olong", 35L)
         result must have size 1
         result.head.olong must beSome(35L)
       }
@@ -107,7 +107,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Float]" >> {
-        val result = PrimitiveModel.findAllBy("ofloat", Some(23.toFloat))
+        val result = PrimitiveModel.findAllBy("ofloat", 23.toFloat)
         result must have size 1
         result.head.ofloat must beSome(23.toFloat)
       }
@@ -119,7 +119,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Double]" >> {
-        val result = PrimitiveModel.findAllBy("odouble", Some(45.0))
+        val result = PrimitiveModel.findAllBy("odouble", 45.0)
         result must have size 1
         result.head.odouble must beSome(45.0)
       }
@@ -131,7 +131,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[BigDecimal]" >> {
-        val result = PrimitiveModel.findAllBy("obigDecimal", Some(BigDecimal(45)))
+        val result = PrimitiveModel.findAllBy("obigDecimal", BigDecimal(45))
         result must have size 1
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
@@ -144,10 +144,10 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Timestamp]" >> {
-        val t = Some(new Timestamp(44L))
+        val t = new Timestamp(44L)
         val result = PrimitiveModel.findAllBy("otimestamp", t)
         result must have size 1
-        result.head.otimestamp mustEqual t
+        result.head.otimestamp must beSome(t)
       }
 
       "Date" >> {
@@ -158,7 +158,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[Date]" >> {
-        val t = Some(new Date(22L * 1000 * 60 * 60 * 24))
+        val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = PrimitiveModel.findAllBy("odate", t)
         result must have size 1
         result.head.odate must beSome.which {_.toString == "1970-01-23"}
@@ -172,16 +172,20 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "Option[UUID]" >> {
-        val u = Some(new UUID(11L, 11L))
+        val u = new UUID(11L, 11L)
         val result = PrimitiveModel.findAllBy("ouuid", u)
         result must have size 1
-        result.head.ouuid mustEqual u
+        result.head.ouuid must beSome(u)
       }
 
-      "other type" >> {
-        val o = new Object
-        PrimitiveModel.findAllBy("int", o) must throwA(ActiveRecordException.unsupportedType("int by " + o.toString))
-        PrimitiveModel.findAllBy("string", null) must throwA(ActiveRecordException.unsupportedType("string by null"))
+      "invalid field name" >> {
+        PrimitiveModel.findAllBy("aaa", 1) must throwA(ActiveRecordException.notFoundField("aaa"))
+      }
+
+      "null, None" >> {
+        PrimitiveModel.findAllBy("int", null) must throwA(ActiveRecordException.unsupportedType("int by null"))
+        PrimitiveModel.findAllBy("oboolean", null) must have size 50
+        PrimitiveModel.findAllBy("oboolean", None) must have size 50
       }
 
       "multiple values" >> {

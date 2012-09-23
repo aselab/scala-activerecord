@@ -367,7 +367,7 @@ object ValidatorSpec extends Specification with Mockito {
         val ac = a
         ac.value returns "notExists"
         val m = Model("aaa")
-        validate(validator, ac, m) must throwA(ActiveRecordException.notfoundConfirmationField("notExists"))
+        validate(validator, ac, m) must throwA(ActiveRecordException.notFoundConfirmationField("notExists"))
       }
 
       "annotation message" in {
