@@ -4,12 +4,6 @@ import org.specs2.mutable._
 import org.squeryl.adapters._
 
 object ActiveRecordConfigSpec extends Specification {
-  "Config" should {
-    "throws exception when tables are not initialized" in {
-      Config.conf must throwA(ActiveRecordException.notInitialized)
-    }
-  }
-
   "DefaultConfig" should {
     "supported database" in {
       def config(driverName: String) = new DefaultConfig(
