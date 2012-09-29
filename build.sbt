@@ -29,6 +29,11 @@ resolvers ++= Seq(
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
 
+scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
+  "-sourcepath", base.getAbsolutePath, "-doc-source-url",
+  "https://github.com/aselab/scala-activerecord/tree/master€{FILE_PATH}.scala"
+)}
+
 testOptions in ScctTest += Tests.Argument("junitxml", "console")
 
 crossPaths := false
