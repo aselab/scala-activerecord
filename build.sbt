@@ -1,5 +1,3 @@
-import com.github.aselab.scalastyle._
-
 name := "scala-activerecord"
 
 version := "0.2-SNAPSHOT"
@@ -54,7 +52,7 @@ ScctPlugin.instrumentSettings
 
 parallelExecution in ScctTest := false
 
-ScalaStylePlugin.Settings
+org.scalastyle.sbt.ScalastylePlugin.Settings
 
 lsSettings
 
