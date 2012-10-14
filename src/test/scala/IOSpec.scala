@@ -51,8 +51,7 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
           "odate" -> "1970-01-06T00:00:00.000Z",
           "int" -> "5",
           "oint" -> "5",
-          "uuid" -> "00000000-0000-0005-0000-000000000005",
-          "ouuid" -> "00000000-0000-0005-0000-000000000005"
+          "uuid" -> "00000000-0000-0005-0000-000000000005"
         )
       }
 
@@ -123,8 +122,7 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
         "odate" -> new Date(5L * 1000 * 60 * 60 * 24),
         "int" -> 5,
         "oint" -> 5,
-        "uuid" -> new UUID(5L, 5L),
-        "ouuid" -> new UUID(5L, 5L)
+        "uuid" -> new UUID(5L, 5L)
       ))
       m must equalTo(PrimitiveModel.newModel(5))
     }
@@ -151,8 +149,7 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
           "odate" -> "1970-01-06T09:00:00.000+09:00",
           "int" -> "5",
           "oint" -> "5",
-          "uuid" -> "00000000-0000-0005-0000-000000000005",
-          "ouuid" -> "00000000-0000-0005-0000-000000000005"
+          "uuid" -> "00000000-0000-0005-0000-000000000005"
         ))
         m must equalTo(PrimitiveModel.newModel(5))
       }
@@ -188,7 +185,6 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
       m.ofloat = None
       m.otimestamp = None
       m.odate = None
-      m.ouuid = None
 
       m.toMap must equalTo(Map(
         "boolean" -> true,

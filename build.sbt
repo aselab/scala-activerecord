@@ -7,7 +7,7 @@ organization := "com.github.aselab"
 scalaVersion := "2.9.2"
 
 libraryDependencies ++= Seq(
-  "com.github.aselab" % "squeryl" % "0.9.5",
+  "com.github.aselab" % "squeryl" % "0.9.6-M1",
   "com.typesafe" % "config" % "0.5.0",
   "org.specs2" %% "specs2" % "1.12.1" % "test",
   "junit" % "junit" % "4.10" % "test",

@@ -1,6 +1,14 @@
 package com.github.aselab.activerecord
 
-object dsl extends org.squeryl.PrimitiveTypeMode with Annotations
+import org.squeryl._
+
+object dsl extends PrimitiveTypeMode with Annotations {
+  implicit def keyedEntityDef[T <: ActiveRecordBase[_]](implicit m: Manifest[T]) = {
+    ReflectionUtil.classToCompanion(m.erasure.getName)
+      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+      .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
+  }
+}
 
 package object support {
   import ReflectionUtil._

@@ -108,8 +108,7 @@ package models {
     var odouble: Option[Double],
     var obigDecimal: Option[BigDecimal],
     var otimestamp: Option[Timestamp],
-    var odate: Option[Date],
-    var ouuid: Option[UUID]
+    var odate: Option[Date]
   ) extends ActiveRecord
 
   object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
@@ -132,8 +131,7 @@ package models {
       Some(i.toDouble).filterNot(_ => none),
       Some(BigDecimal(i)).filterNot(_ => none),
       Some(new Timestamp(i.toLong)).filterNot(_ => none),
-      Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none),
-      Some(new UUID(i.toLong, i.toLong)).filterNot(_ => none)
+      Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none)
     )
   }
 

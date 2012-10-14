@@ -40,19 +40,14 @@ trait ProductModelCompanion[T <: ProductModel] {
   }.toMap
 }
 
-trait ActiveRecordBase[T] extends ProductModel with KeyedEntity[T]
-  with CRUDable with ActiveRecordBaseRelationSupport with ValidationSupport with IO
+trait ActiveRecordBase[T] extends ProductModel with CRUDable
+  with ActiveRecordBaseRelationSupport with ValidationSupport with IO
 {
+  def id: T
+  def isPersisted: Boolean
+
   /** corresponding ActiveRecordCompanion object */
   lazy val recordCompanion = _companion.asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
-
-  override def equals(obj: Any): Boolean = obj match {
-    case p: Product => hashCode == p.hashCode
-    case ar: AnyRef => super.equals(ar)
-    case _ => false
-  }
-
-  override def hashCode(): Int = runtime.ScalaRunTime._hashCode(this)
 
   override def isNewRecord: Boolean = !isPersisted
 
@@ -83,11 +78,17 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   /** primary key */
   val id: Long = 0L
 
-  override def isNewRecord: Boolean = id == 0
+  def isPersisted: Boolean = id > 0
 }
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with FormSupport[T] {
   import ReflectionUtil._
+
+  implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
+    def getId(m: T) = m.id
+    def isPersisted(m: T) = m.isPersisted
+    def idPropertyName = "id"
+  }
 
   /** self reference */
   protected def self: this.type = this
@@ -100,7 +101,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    */
   implicit lazy val table: Table[T] = {
     val name = getClass.getName.dropRight(1)
-    schema.tables(name).asInstanceOf[Table[T]]
+    schema.tableMap(name).asInstanceOf[Table[T]]
   }
 
   /**
@@ -115,7 +116,6 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   implicit def toRichQuery(r: ActiveRecordOneToMany[T])
     (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
 
-  implicit def toModelList(query: Query[T]): List[T] = query.toList
   implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
 
   implicit def toQueryable(t: this.type): Queryable[T] = t.table
@@ -304,11 +304,11 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
  * This class provides database table mapping and query logic.
  */
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
-  implicit def toRichQueryA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A])
+  implicit def toRichQueryA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A])
     (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
 
   implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
-  implicit def toModelListA[A <: KeyedEntity[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
+  implicit def toModelListA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
 }
 
 case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: Manifest[T]) {
@@ -376,16 +376,17 @@ case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: 
 trait ActiveRecordTables extends Schema with TableRelationSupport {
   import ReflectionUtil._
 
-  lazy val tables = this.getFields[Table[ActiveRecordBase[_]]].collect {
+  lazy val tableMap = this.getFields[Table[ActiveRecordBase[_]]].collect {
     case f if !classOf[IntermediateTable[_]].isAssignableFrom(f.getType) =>
       val name = getGenericTypes(f).last.getName
       (name, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
   }.toMap
 
   /** All tables */
-  lazy val all = tables.values
+  lazy val all = tableMap.values
 
-  override def tableNameFromClass(c: Class[_]): String = super.tableNameFromClass(c).pluralize
+  override def tableNameFromClass(c: Class[_]): String =
+    super.tableNameFromClass(c).underscore.pluralize
 
   private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
@@ -458,14 +459,16 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
       throw ActiveRecordException.cannotCleanSession
   }
 
-  override protected def table[T]()(implicit m: Manifest[T]) =
-    super.table[T]
+  def table[T <: ActiveRecordBase[_]]()(implicit m: Manifest[T]): Table[T] = {
+    table(m.erasure.getSimpleName.underscore.pluralize)(m)
+  }
 
-  override protected def table[T](name: String)(implicit m: Manifest[T]) =
+  def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
     if (m <:< manifest[IntermediateRecord]) {
       new IntermediateTable[T](name)
     } else {
-      super.table[T](name)
+      super.table[T](name)(m, dsl.keyedEntityDef(m))
     }
-}
+  }
 
+}

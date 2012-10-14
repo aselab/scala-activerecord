@@ -150,8 +150,7 @@ object ReflectionSpec extends Specification {
         "odouble" -> classOf[Double],
         "obigDecimal" -> classOf[BigDecimal],
         "otimestamp" -> classOf[java.sql.Timestamp],
-        "odate" -> classOf[java.util.Date],
-        "ouuid" -> classOf[java.util.UUID]
+        "odate" -> classOf[java.util.Date]
       )
     }
 

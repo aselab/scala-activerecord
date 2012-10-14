@@ -20,7 +20,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
     }
 
     "#all returns all records" >> {
-      PrimitiveModel.all must have size 100
+      PrimitiveModel.all.toList must have size 100
     }
 
     "#apply calls find method" >> {
@@ -35,13 +35,13 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       "complex query" >> {
         PrimitiveModel.where {m: PrimitiveModel =>
           (m.int lte 30) and (m.string like "string%0")
-        } must have size 3
+        }.toList must have size 3
       }
 
       "null value" >> {
         PrimitiveModel.where {m: PrimitiveModel =>
           m.oint isNull
-        } must have size 50
+        }.toList must have size 50
       }
     }
 
@@ -56,126 +56,119 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
     "#findAllBy" >> {
       "String" >> {
         val result = PrimitiveModel.findAllBy("string", "string33")
-        result must have size 1
+        result.toList must have size 1
         result.head.string mustEqual "string33"
       }
 
       "Option[String]" >> {
         val result = PrimitiveModel.findAllBy("ostring", "string33")
-        result must have size 1
+        result.toList must have size 1
         result.head.ostring must beSome("string33")
       }
 
       "Boolean" >> {
         val result = PrimitiveModel.findAllBy("boolean", true)
-        result must have size 50
+        result.toList must have size 50
       }
 
       "Option[Boolean]" >> {
         val result = PrimitiveModel.findAllBy("oboolean", true)
-        result must have size 25
+        result.toList must have size 25
       }
 
       "Int" >> {
         val result = PrimitiveModel.findAllBy("int", 55)
-        result must have size 1
+        result.toList must have size 1
         result.head.int mustEqual 55
       }
 
       "Option[Int]" >> {
         val result = PrimitiveModel.findAllBy("oint", 35)
-        result must have size 1
+        result.toList must have size 1
         result.head.oint must beSome(35)
       }
 
       "Long" >> {
         val result = PrimitiveModel.findAllBy("long", 55L)
-        result must have size 1
+        result.toList must have size 1
         result.head.long mustEqual 55L
       }
 
       "Option[Long]" >> {
         val result = PrimitiveModel.findAllBy("olong", 35L)
-        result must have size 1
+        result.toList must have size 1
         result.head.olong must beSome(35L)
       }
 
       "Float" >> {
         val result = PrimitiveModel.findAllBy("float", 23.toFloat)
-        result must have size 1
+        result.toList must have size 1
         result.head.float mustEqual 23.toFloat
       }
 
       "Option[Float]" >> {
         val result = PrimitiveModel.findAllBy("ofloat", 23.toFloat)
-        result must have size 1
+        result.toList must have size 1
         result.head.ofloat must beSome(23.toFloat)
       }
 
       "Double" >> {
         val result = PrimitiveModel.findAllBy("double", 45.0)
-        result must have size 1
+        result.toList must have size 1
         result.head.double mustEqual 45.0
       }
 
       "Option[Double]" >> {
         val result = PrimitiveModel.findAllBy("odouble", 45.0)
-        result must have size 1
+        result.toList must have size 1
         result.head.odouble must beSome(45.0)
       }
 
       "BigDecimal" >> {
         val result = PrimitiveModel.findAllBy("bigDecimal", BigDecimal(55))
-        result must have size 1
+        result.toList must have size 1
         result.head.bigDecimal mustEqual BigDecimal(55)
       }
 
       "Option[BigDecimal]" >> {
         val result = PrimitiveModel.findAllBy("obigDecimal", BigDecimal(45))
-        result must have size 1
+        result.toList must have size 1
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
 
       "Timestamp" >> {
         val t = new Timestamp(44L)
         val result = PrimitiveModel.findAllBy("timestamp", t)
-        result must have size 1
+        result.toList must have size 1
         result.head.timestamp mustEqual t
       }
 
       "Option[Timestamp]" >> {
         val t = new Timestamp(44L)
         val result = PrimitiveModel.findAllBy("otimestamp", t)
-        result must have size 1
+        result.toList must have size 1
         result.head.otimestamp must beSome(t)
       }
 
       "Date" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = PrimitiveModel.findAllBy("date", t)
-        result must have size 1
+        result.toList must have size 1
         result.head.date.toString mustEqual "1970-01-23"
       }
 
       "Option[Date]" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = PrimitiveModel.findAllBy("odate", t)
-        result must have size 1
+        result.toList must have size 1
         result.head.odate must beSome.which {_.toString == "1970-01-23"}
       }
 
       "UUID" >> {
         val u = new UUID(11L, 11L)
         val result = PrimitiveModel.findAllBy("uuid", u)
-        result must have size 1
+        result.toList must have size 1
         result.head.uuid mustEqual u
-      }
-
-      "Option[UUID]" >> {
-        val u = new UUID(11L, 11L)
-        val result = PrimitiveModel.findAllBy("ouuid", u)
-        result must have size 1
-        result.head.ouuid must beSome(u)
       }
 
       "invalid field name" >> {
@@ -184,13 +177,13 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
       "null, None" >> {
         PrimitiveModel.findAllBy("int", null) must throwA(ActiveRecordException.unsupportedType("int by null"))
-        PrimitiveModel.findAllBy("oboolean", null) must have size 50
-        PrimitiveModel.findAllBy("oboolean", None) must have size 50
+        PrimitiveModel.findAllBy("oboolean", null).toList must have size 50
+        PrimitiveModel.findAllBy("oboolean", None).toList must have size 50
       }
 
       "multiple values" >> {
         val result = PrimitiveModel.findAllBy("string" -> "string22", "int" -> 22)
-        result must have size 1
+        result.toList must have size 1
         result.head.int mustEqual 22
         PrimitiveModel.findAllBy("string" -> "string22", "int" -> 23) must beEmpty
       }
@@ -233,11 +226,6 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
     "implicit conversions" >> {
       "query should be able to chain" >> {
         PrimitiveModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
-      }
-
-      "Query to List" >> {
-        val all: List[PrimitiveModel] = PrimitiveModel.all
-        success
       }
 
       "ActiveRecordCompanion to RichQuery" >> {
