@@ -1,8 +1,9 @@
 package org.squeryl
 
-class DummyTable[T](name: String)(
+import mojolly.inflector.InflectorImports._
+
+class DummyTable[T](name: String, schema: Schema)(
   implicit m: Manifest[T], ked: KeyedEntityDef[T, _]
 ) extends Table[T](
-  name, m.erasure.asInstanceOf[Class[T]],
-  new Schema()(PrimitiveTypeMode), None, Option(ked)
+  name, m.erasure.asInstanceOf[Class[T]], schema, None, Option(ked)
 )

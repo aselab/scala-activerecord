@@ -385,8 +385,11 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   /** All tables */
   lazy val all = tableMap.values
 
+  override def columnNameFromPropertyName(propertyName: String): String  =
+    propertyName.underscore
+    
   override def tableNameFromClass(c: Class[_]): String =
-    super.tableNameFromClass(c).underscore.pluralize
+    c.getSimpleName.underscore.pluralize
 
   private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
@@ -465,7 +468,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
 
   def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
     if (m <:< manifest[IntermediateRecord]) {
-      new IntermediateTable[T](name)
+      new IntermediateTable[T](name, this)
     } else {
       super.table[T](name)(m, dsl.keyedEntityDef(m))
     }

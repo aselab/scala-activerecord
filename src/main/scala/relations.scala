@@ -203,8 +203,7 @@ trait TableRelationSupport extends Schema {
     (implicit lm: Manifest[L], rm: Manifest[R]): Relation[L, R] =
   {
     val middleName =
-      lm.erasure.getSimpleName.underscore.pluralize + "_" +
-      rm.erasure.getSimpleName.underscore.pluralize
+      tableNameFromClass(lm.erasure) + "_" + tableNameFromClass(rm.erasure)
 
     implicit val ked = DefaultIntermediateRecord.keyedEntityDef
     val relation = manyToManyRelation(lt, rt, middleName)
@@ -245,5 +244,6 @@ object DefaultIntermediateRecord {
   }
 }
 
-class IntermediateTable[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T])
-  extends DummyTable[T](name)(m, keyedEntityDef(m))
+class IntermediateTable[T <: ActiveRecordBase[_]]
+  (name: String, schema: Schema)(implicit m: Manifest[T])
+  extends DummyTable[T](name, schema)(m, keyedEntityDef(m))
