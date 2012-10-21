@@ -428,7 +428,11 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
     new DefaultConfig(overrideSettings = config)
 
-  def session: Session = Session.create(Config.connection, Config.adapter)
+  def session: Session = {
+    val s = Session.create(Config.connection, Config.adapter)
+    s.setLogger(Config.logger.debug)
+    s
+  }
 
   /** drop and create table */
   def reset: Unit = inTransaction {

@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
   "junit" % "junit" % "4.10" % "test",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
-  "org.slf4j" % "slf4j-nop" % "1.7.0" % "test",
+  "ch.qos.logback" % "logback-classic" % "1.0.6" % "test",
   "com.h2database" % "h2" % "1.3.168" % "test",
   "io.backchat.inflector" %% "scala-inflector" % "1.3.3",
   "org.scala-tools.time" % "time_2.9.1" % "0.5",

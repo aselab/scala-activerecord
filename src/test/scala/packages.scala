@@ -8,6 +8,8 @@ import experimental._
 import dsl._
 import java.sql.Timestamp
 import java.util.{Date, UUID, TimeZone}
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic._
 
 package models {
   import com.github.aselab.activerecord.annotations._
@@ -148,7 +150,13 @@ package models {
 trait ActiveRecordSpecification extends Specification {
   sequential
 
+  def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
+
   def before = {
+    logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
+    if (System.getProperty("debug") == "true")
+      logger("activerecord").setLevel(Level.DEBUG)
+
     schema.initialize(config)
     schema.reset
   }

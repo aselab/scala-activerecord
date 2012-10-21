@@ -7,6 +7,7 @@ import java.sql.Connection
 import java.util.TimeZone
 import com.jolbox.bonecp._
 import com.typesafe.config._
+import org.slf4j.{Logger, LoggerFactory}
 
 object Config {
   private var _conf: ActiveRecordConfig = _
@@ -29,6 +30,7 @@ object Config {
 
   def timeZone: TimeZone = Option(_timeZone).getOrElse(conf.timeZone)
   def timeZone_=(value: TimeZone): Unit = _timeZone = value
+  def logger: Logger = conf.logger
 }
 
 trait ActiveRecordConfig {
@@ -50,6 +52,8 @@ trait ActiveRecordConfig {
   }
   def translator: i18n.Translator
   def timeZone: TimeZone
+
+  val logger = LoggerFactory.getLogger("activerecord")
 }
 
 class DefaultConfig(
