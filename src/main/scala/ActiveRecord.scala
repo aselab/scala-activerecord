@@ -467,7 +467,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   }
 
   def table[T <: ActiveRecordBase[_]]()(implicit m: Manifest[T]): Table[T] = {
-    table(m.erasure.getSimpleName.underscore.pluralize)(m)
+    table(tableNameFromClass(m.erasure))(m)
   }
 
   def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
