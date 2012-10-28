@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory
 import ch.qos.logback.classic._
 
 package models {
-  import com.github.aselab.activerecord.annotations._
   object TestTables extends ActiveRecordTables with VersionTable {
     val primitiveModels = table[PrimitiveModel]
     val versionModels = table[VersionModel]
@@ -91,7 +90,7 @@ package models {
   case class SeqModel(list: List[Int], seq: Seq[Double])
 
   case class PrimitiveModel(
-    @Unique var string: String,
+    var string: String,
     var boolean: Boolean,
     var int: Int,
     var long: Long,

@@ -95,6 +95,8 @@ case class FieldInfo(
   lazy val required = annotationMap.isDefinedAt("Required")
   lazy val ignored = annotationMap.isDefinedAt("Ignore")
   lazy val unique = annotationMap.isDefinedAt("Unique")
+
+  def is[T](implicit m: Manifest[T]): Boolean = fieldType == m.erasure
 }
 
 object FieldInfo {

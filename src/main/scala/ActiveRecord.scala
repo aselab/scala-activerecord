@@ -7,6 +7,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import java.lang.annotation.Annotation
 import mojolly.inflector.InflectorImports._
+import squeryl.Implicits._
 
 trait ProductModel extends Product with Saveable {
   @dsl.Ignore
@@ -200,44 +201,30 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param query table or subquery in from clause. default is table
    */
   def findAllBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
-    val info = fieldInfo.getOrElse(name,
+    val field = fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)
     )
 
     val clause = {m: T =>
-      val v1 = m.getValue[Any](name) match {
-        case o: Option[_] => o
-        case v => Option(v)
-      }
-      val v2 = value match {
-        case o: Option[_] => o
-        case v => Option(v)
-      }
+      val v1 = m.getValue[Any](name)
+      val v2 = value
 
-      if (v2 == None && !info.isOption) {
-        throw ActiveRecordException.unsupportedType(name + " by null")
-      } else if (info.fieldType == classOf[String]) {
-        v1.asInstanceOf[Option[String]] === v2.asInstanceOf[Option[String]]
-      } else if (info.fieldType == classOf[Boolean]) {
-        v1.asInstanceOf[Option[Boolean]] === v2.asInstanceOf[Option[Boolean]]
-      } else if (info.fieldType == classOf[Int]) {
-        v1.asInstanceOf[Option[Int]] === v2.asInstanceOf[Option[Int]]
-      } else if (info.fieldType == classOf[Long]) {
-        v1.asInstanceOf[Option[Long]] === v2.asInstanceOf[Option[Long]]
-      } else if (info.fieldType == classOf[Float]) {
-        v1.asInstanceOf[Option[Float]] === v2.asInstanceOf[Option[Float]]
-      } else if (info.fieldType == classOf[Double]) {
-        v1.asInstanceOf[Option[Double]] === v2.asInstanceOf[Option[Double]]
-      } else if (info.fieldType == classOf[BigDecimal]) {
-        v1.asInstanceOf[Option[BigDecimal]] === v2.asInstanceOf[Option[BigDecimal]]
-      } else if (info.fieldType == classOf[Timestamp]) {
-        v1.asInstanceOf[Option[Timestamp]] === v2.asInstanceOf[Option[Timestamp]]
-      } else if (info.fieldType == classOf[Date]) {
-        v1.asInstanceOf[Option[Date]] === v2.asInstanceOf[Option[Date]]
-      } else if (info.fieldType == classOf[UUID]) {
-        v1.asInstanceOf[Option[UUID]] === v2.asInstanceOf[Option[UUID]]
-      } else {
-        throw ActiveRecordException.unsupportedType(name + " by " + v2.toString)
+      try { field match {
+        case f if !f.isOption && (v2 == null || v2 == None) => throw new Exception
+        case f if f.is[String] => v1.toOption[String] === v2.toOption[String]
+        case f if f.is[Boolean] => v1.toOption[Boolean] === v2.toOption[Boolean]
+        case f if f.is[Int] => v1.toOption[Int] === v2.toOption[Int]
+        case f if f.is[Long] => v1.toOption[Long] === v2.toOption[Long]
+        case f if f.is[Float] => v1.toOption[Float] === v2.toOption[Float]
+        case f if f.is[Double] => v1.toOption[Double] === v2.toOption[Double]
+        case f if f.is[BigDecimal] => v1.toOption[BigDecimal] === v2.toOption[BigDecimal]
+        case f if f.is[Timestamp] => v1.toOption[Timestamp] === v2.toOption[Timestamp]
+        case f if f.is[Date] => v1.toOption[Date] === v2.toOption[Date]
+        case f if f.is[UUID] => v1.toOption[UUID] === v2.toOption[UUID]
+      }} catch {
+        case e => throw ActiveRecordException.unsupportedType(
+          name + " by " + Option(v2).map(_.toString).getOrElse("null")
+        )
       }
     }
     where(clause)(query)
