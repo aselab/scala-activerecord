@@ -12,4 +12,7 @@ object Implicits {
       case o => Some(o.asInstanceOf[T])
     }
   }
+
+  implicit def fieldToExpression(field: FieldInfo) =
+    new ExpressionConversion(field)
 }
