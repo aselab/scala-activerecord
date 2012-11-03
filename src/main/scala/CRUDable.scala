@@ -26,8 +26,8 @@ trait CRUDable extends Saveable {
   override def save(): Boolean = {
     val onCreate = isNewRecord
 
-    if (onCreate) beforeCreate() else beforeUpdate()
     beforeSave()
+    if (onCreate) beforeCreate() else beforeUpdate()
 
     val result = if (isNewRecord) doCreate() else doUpdate()
 

@@ -82,8 +82,8 @@ object CRUDableSpec extends Specification {
         m.isNewRecord must beFalse
       }
 
-      "should call beforeCreate, beforeSave, doCreate, afterCreate, afterSave" in {
-        m.calledMethods must equalTo(List("beforeCreate", "beforeSave", "doCreate", "afterCreate", "afterSave"))
+      "should call beforeSave, beforeCreate, doCreate, afterCreate, afterSave" in {
+        m.calledMethods must equalTo(List("beforeSave", "beforeCreate", "doCreate", "afterCreate", "afterSave"))
       }
     }
 
@@ -99,8 +99,8 @@ object CRUDableSpec extends Specification {
         m.isNewRecord must beTrue
       }
 
-      "should call beforeCreate, beforeSave, doCreate and should not call afterSave" in {
-        m.calledMethods must equalTo(List("beforeCreate", "beforeSave", "doCreate"))
+      "should call beforeSave, beforeCreate, doCreate and should not call afterSave" in {
+        m.calledMethods must equalTo(List("beforeSave", "beforeCreate", "doCreate"))
       }
     }
 
@@ -112,8 +112,8 @@ object CRUDableSpec extends Specification {
         result must beTrue
       }
 
-      "should call beforeUpdate, beforeSave, doUpdate, afterUpdate, afterSave" in {
-        m.calledMethods must equalTo(List("beforeUpdate", "beforeSave", "doUpdate", "afterUpdate", "afterSave"))
+      "should call beforeSave, beforeUpdate, doUpdate, afterUpdate, afterSave" in {
+        m.calledMethods must equalTo(List("beforeSave", "beforeUpdate", "doUpdate", "afterUpdate", "afterSave"))
       }
     }
 
@@ -125,8 +125,8 @@ object CRUDableSpec extends Specification {
         result must beFalse
       }
 
-      "should call beforeUpdate, beforeSave, doUpdate and should not call afterSave" in {
-        m.calledMethods must equalTo(List("beforeUpdate", "beforeSave", "doUpdate"))
+      "should call beforeSave, beforeUpdate, doUpdate and should not call afterSave" in {
+        m.calledMethods must equalTo(List("beforeSave", "beforeUpdate", "doUpdate"))
       }
     }
   }
