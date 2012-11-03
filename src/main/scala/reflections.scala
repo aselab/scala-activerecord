@@ -89,12 +89,18 @@ case class FieldInfo(
   annotations: Seq[Annotation] = Nil
 ) {
   private lazy val annotationMap = annotations.map {
-    a => (a.annotationType.getSimpleName, a)
-  }.toMap
+    a => (a.annotationType, a)
+  }.toMap[Class[_], Annotation]
 
-  lazy val required = annotationMap.isDefinedAt("Required")
-  lazy val ignored = annotationMap.isDefinedAt("Ignore")
-  lazy val unique = annotationMap.isDefinedAt("Unique")
+  lazy val isRequired = hasAnnotation[Required]
+  lazy val isIgnored = hasAnnotation[Ignore]
+  lazy val isUnique = hasAnnotation[Unique]
+
+  def getAnnotation[T](implicit m: Manifest[T]): T =
+    annotationMap(m.erasure).asInstanceOf[T]
+
+  def hasAnnotation[T](implicit m: Manifest[T]): Boolean =
+    annotationMap.isDefinedAt(m.erasure)
 
   def is[T](implicit m: Manifest[T]): Boolean = fieldType == m.erasure
 }

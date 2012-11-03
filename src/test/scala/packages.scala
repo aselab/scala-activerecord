@@ -15,6 +15,7 @@ package models {
   object TestTables extends ActiveRecordTables with VersionTable {
     val primitiveModels = table[PrimitiveModel]
     val versionModels = table[VersionModel]
+    val annotationModels = table[AnnotationModel]
 
     val users = table[User]
     val groups = table[Group]
@@ -144,6 +145,18 @@ package models {
   ) extends ActiveRecord with Versionable
 
   object VersionModel extends ActiveRecordCompanion[VersionModel]
+
+  case class AnnotationModel(
+    @Transient transientField: String,
+    @Column("columnName") columnField: String,
+    @Unique uniqueField: String,
+    @Confirmation confirmationField: String,
+    @Confirmation("confirmationName") confirmationField2: String,
+    confirmationFieldConfirmation: String,
+    confirmationName: String
+  ) extends ActiveRecord
+
+  object AnnotationModel extends ActiveRecordCompanion[AnnotationModel]
 }
 
 trait ActiveRecordSpecification extends Specification {

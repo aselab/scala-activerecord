@@ -177,6 +177,9 @@ object Validator {
 
   def isBlank(value: Any): Boolean = value == null || value.toString.isEmpty
 
+  def confirmationFieldName(fieldName: String, a: annotations.Confirmation): String =
+    Option(a.value).filter(!_.isEmpty).getOrElse(fieldName + "Confirmation")
+    
   val requiredValidator = new Validator[annotations.Required] {
     def validate(value: Any): Unit =
       if (isBlank(value)) errors.add(fieldName, message("required"))
@@ -246,16 +249,14 @@ object Validator {
     import ReflectionUtil._
 
     def validate(value: Any) :Unit = if (!isBlank(value)) {
-      val confirmationFieldName = Option(annotation.value).filter(!_.isEmpty)
-        .getOrElse(fieldName + "Confirmation")
+      val name = confirmationFieldName(fieldName, annotation)
       val confirmationValue = try {
-        model.getValue[Any](confirmationFieldName)
+        model.getValue[Any](name)
       } catch {
-        case e => throw ActiveRecordException.notFoundConfirmationField(
-          confirmationFieldName)
+        case e => throw ActiveRecordException.notFoundConfirmationField(name)
       }
       if (value != confirmationValue) {
-        errors.add(confirmationFieldName, message("confirmation"), fieldName)
+        errors.add(name, message("confirmation"), fieldName)
       }
     }
   }

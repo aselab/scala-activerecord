@@ -439,11 +439,26 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   }
 
   def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
-    if (m <:< manifest[IntermediateRecord]) {
+    val t = if (m <:< manifest[IntermediateRecord]) {
       new IntermediateTable[T](name, this)
     } else {
       super.table[T](name)(m, dsl.keyedEntityDef(m))
     }
+
+    val c = classToCompanion(m.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+    val fields = c.fieldInfo.values.toSeq
+    import annotations._
+
+    // schema declarations
+    on(t)(r => declare(fields.collect {
+      case f if f.hasAnnotation[Unique] =>
+        f.toExpression(r.getValue[Any](f.name)).is(unique)
+        
+      case f if f.hasAnnotation[Confirmation] =>
+        val name = Validator.confirmationFieldName(f.name, f.getAnnotation[Confirmation])
+        f.toExpression(r.getValue[Any](name)).is(transient)
+    }:_*))
+    t
   }
 
 }

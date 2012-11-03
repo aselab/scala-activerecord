@@ -7,7 +7,7 @@ trait Annotations {
 
   type OptionType = org.squeryl.annotations.OptionType
 
-  type Transient = org.squeryl.annotations.Transient
+  type Transient = org.squeryl.annotations.Transient @field
 
   /**
    * ignore field annotation.

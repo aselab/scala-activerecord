@@ -358,4 +358,34 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
   }
 
+  "database schema" should {
+    def ddl = {
+      var lines = List.empty[String]
+      transaction { TestTables.printDdl(lines +:= _) }
+      lines.mkString("\n")
+    }
+
+    "except @Transient column" >> {
+      ddl must not matching("""(?ms).* transient_field .*""".r)
+    }
+
+    "be able to change column name by @Column" >> {
+      ddl must not matching("""(?ms).* column_field .*""".r)
+      ddl must matching("""(?ms).* columnName .*""".r)
+    }
+
+    "create unique index by @Unique" >> {
+      ddl must matching("""(?ms).*create unique index \w+ on annotation_models \(unique_field\);.*""".r)
+    }
+
+    "except confirmation column" >> {
+      ddl must not matching("""(?ms).* confirmation_field_confirmation .*""".r)
+    }
+
+    "except renamed confirmation column" >> {
+      ddl must not matching("""(?ms).* confirmation_name .*""".r)
+    }
+
+  }
+
 }
