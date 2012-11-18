@@ -176,7 +176,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "null, None" >> {
-        PrimitiveModel.findAllBy("int", null) must throwA(ActiveRecordException.unsupportedType("int by null"))
+        PrimitiveModel.findAllBy("int", null).toList must throwA(ActiveRecordException.unsupportedType("int by null"))
         PrimitiveModel.findAllBy("oboolean", null).toList must have size 50
         PrimitiveModel.findAllBy("oboolean", None).toList must have size 50
       }
@@ -189,16 +189,16 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
     }
 
-    "RichQuery" >> {
-      def query = RichQuery(PrimitiveModel.all)
+    "ActiveRecord.Relation" >> {
+      def relation = PrimitiveModel.all
 
       "#orderBy" >> {
         "single field" >> {
-          query.orderBy(m => m.int desc).toList mustEqual PrimitiveModel.all.toList.reverse
+          relation.orderBy(m => m.int desc).toList mustEqual PrimitiveModel.all.toList.reverse
         }
 
         "multiple fields" >> {
-          query.orderBy(m => m.oint asc, m => m.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
+          relation.orderBy(m => m.oint asc, m => m.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
             (m1, m2) => (m1.oint, m2.oint) match {
               case (a, b) if a == b => m1.int > m2.int
               case (Some(a), Some(b)) => a < b
@@ -211,24 +211,24 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "#limit returns only specified count" >> {
-        query.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
+        relation.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
       }
 
       "#page" >> {
-        query.page(30, 10).toList mustEqual PrimitiveModel.all.toList.slice(30, 40)
+        relation.page(30, 10).toList mustEqual PrimitiveModel.all.toList.slice(30, 40)
       }
 
       "#count" >> {
-        query.count mustEqual(100)
+        relation.count mustEqual(100)
       }
     }
 
     "implicit conversions" >> {
-      "query should be able to chain" >> {
+      "relation should be able to chain" >> {
         PrimitiveModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
       }
 
-      "ActiveRecordCompanion to RichQuery" >> {
+      "ActiveRecordCompanion to Relation" >> {
         PrimitiveModel.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
         PrimitiveModel.count mustEqual 100
       }

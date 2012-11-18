@@ -7,7 +7,7 @@ organization := "com.github.aselab"
 scalaVersion := "2.9.2"
 
 libraryDependencies ++= Seq(
-  "com.github.aselab" % "squeryl" % "0.9.6-M1",
+  "com.github.aselab" % "squeryl" % "0.9.6-SNAPSHOT",
   "com.typesafe" % "config" % "0.5.0",
   "org.specs2" %% "specs2" % "1.12.1" % "test",
   "junit" % "junit" % "4.10" % "test",
@@ -65,3 +65,10 @@ lsSettings
 
 (description in LsKeys.lsync) :=
   "A Scala ORM library like ActiveRecord of Rails."
+
+initialCommands in console in Test := """
+import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
+import models._
+TestTables.initialize(Map("schema" -> "com.github.aselab.activerecord.models.TestTables"))
+"""

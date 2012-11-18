@@ -2,6 +2,7 @@ package com.github.aselab.activerecord
 
 import org.squeryl._
 import org.squeryl.dsl._
+import org.squeryl.dsl.ast._
 import org.squeryl.PrimitiveTypeMode._
 import java.lang.annotation.Annotation
 import mojolly.inflector.InflectorImports._
@@ -80,14 +81,95 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   def isPersisted: Boolean = id > 0
 }
 
+object ActiveRecord {
+  case class Relation[T <: ActiveRecordBase[_]](
+    conditions: Seq[T => LogicalBoolean] = Nil,
+    orders: Seq[T => OrderByExpression] = Nil,
+    pages: Option[(Int, Int)] = None
+  )(implicit companion: ActiveRecordBaseCompanion[_, T], queryable: Queryable[T]) {
+
+    private def whereState(m: T) =
+      PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
+
+    private def ordersExpression(m: T) = orders.toList.map(_.apply(m))
+
+    private def toQuery[R](selector: T => QueryYield[R]): Query[R] = {
+      val query = from(queryable)(selector)
+      pages.map {
+        case (offset, count) => query.page(offset, count)
+      }.getOrElse(query)
+    }
+
+    def where(condition: T => LogicalBoolean): Relation[T] =
+      copy(conditions = conditions :+ condition)
+
+    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[T] =
+      companion.findBy(condition, conditions:_*)(this)
+
+    def findAllBy(condition: (String, Any), conditions: (String, Any)*): Relation[T] =
+      companion.findAllBy(condition, conditions:_*)(this)
+
+    def findBy(name: String, value: Any): Option[T] =
+      companion.findBy(name, value)(this)
+
+    def findAllBy(name: String, value: Any): Relation[T] =
+      companion.findAllBy(name, value)(this)
+
+    /**
+     * sort results.
+     *
+     * {{{
+     * Person.findAllBy("country", "Japan").orderBy(p => p.age asc)
+     * Person.all.orderBy(p => p.age asc, p => p.name asc)
+     * }}}
+     * @param conditions sort conditions
+     */
+    def orderBy(conditions: (T => OrderByExpression)*): Relation[T] =
+      copy(orders = orders ++ conditions.toList)
+
+    /**
+     * returns limited results.
+     * {{{
+     * Post.all.orderBy(p => p.updatedAt desc).limit(10)
+     * }}}
+     * @param count max count
+     */
+    def limit(count: Int): Relation[T] =
+      copy(pages = pages.map(_._1 -> count).orElse(Some(0 -> count)))
+
+    /**
+     * returns page results.
+     * {{{
+     * Post.all.orderBy(p => p.updatedAt desc).page(10 * (pageNumber - 1), 10)
+     * }}}
+     * @param offset offset count
+     * @param count max count
+     */
+    def page(offset: Int, count: Int): Relation[T] =
+      copy(pages = Some((offset, count)))
+
+    def count: Long = toQuery(m =>
+      whereState(m).compute(PrimitiveTypeMode.count)
+    )
+
+    def toQuery: Query[T] = toQuery[T](m =>
+      whereState(m).select(m).orderBy(ordersExpression(m))
+    )
+  }
+}
+
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with FormSupport[T] {
   import ReflectionUtil._
+  import ActiveRecord._
 
   implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
     def getId(m: T) = m.id
     def isPersisted(m: T) = m.isPersisted
     def idPropertyName = "id"
   }
+
+  implicit def relationToIterable(relation: Relation[T]): Iterable[T] =
+    inTransaction { relation.toQuery.toList }
 
   /** self reference */
   protected def self: this.type = this
@@ -106,14 +188,13 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRichQuery(query: Queryable[T])(implicit m: Manifest[T]): RichQuery[T] =
-    RichQuery(query)
+  implicit def toRelation(query: Queryable[T]): Relation[T] =
+    Relation[T]()(this, query)
 
-  implicit def toRichQuery(t: this.type)(implicit m: Manifest[T]): RichQuery[T] =
-    RichQuery(t.table)
+  implicit def toRelation(r: ActiveRecordOneToMany[T]): Relation[T] =
+    toRelation(r.relation)
 
-  implicit def toRichQuery(r: ActiveRecordOneToMany[T])
-    (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
+  implicit def toRelation(t: this.type): Relation[T] = all
 
   implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
 
@@ -122,7 +203,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * all search.
    */
-  def all: Query[T] = from(table)(m => select(m))
+  implicit def all: Relation[T] = toRelation(table)
 
   /**
    * same as find method.
@@ -144,9 +225,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param condition search condition
    * @param query table or subquery in from clause. default is table
    */
-  def where(condition: (T) => org.squeryl.dsl.ast.LogicalBoolean)(implicit query: Queryable[T]): Query[T] = {
-    from(query)(m => PrimitiveTypeMode.where(condition(m)) select(m))
-  }
+  def where(condition: (T) => LogicalBoolean)(implicit relation: Relation[T]) =
+    relation.where(condition)
 
   /**
    * Search by multiple fieldnames and values and return first record.
@@ -159,7 +239,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param query table or subquery in from clause. default is table
    */
   def findBy(condition: (String, Any), conditions: (String, Any)*)
-    (implicit query: Queryable[T]): Option[T] = findAllBy(condition, conditions:_*).headOption
+    (implicit relation: Relation[T]): Option[T] = inTransaction {
+    findAllBy(condition, conditions:_*)(relation).limit(1).headOption
+  }
 
   /**
    * Search by multiple fieldnames and values.
@@ -171,9 +253,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param conditions multiple fieldname-value tuples(optional)
    * @param query table or subquery in from clause. default is table
    */
-  def findAllBy(condition: (String, Any), conditions: (String, Any)*)(implicit query: Queryable[T]): Query[T] = {
-    conditions.foldLeft(findAllBy(condition._1, condition._2)(query)) {
-      case (subquery, cond) => findAllBy(cond._1, cond._2)(subquery)
+  def findAllBy(condition: (String, Any), conditions: (String, Any)*)
+    (implicit relation: Relation[T]): Relation[T] = {
+    conditions.foldLeft(findAllBy(condition._1, condition._2)(relation)) {
+      case (r, cond) => findAllBy(cond._1, cond._2)(r)
     }
   }
 
@@ -186,8 +269,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param value field value
    * @param query table or subquery in from clause. default is table
    */
-  def findBy(name: String, value: Any)(implicit query: Queryable[T]):Option[T] =
-    findAllBy(name, value).headOption
+  def findBy(name: String, value: Any)
+    (implicit relation: Relation[T]): Option[T] = inTransaction {
+    findAllBy(name, value)(relation).limit(1).headOption
+  }
 
   /**
    * Search by fieldname and value.
@@ -198,7 +283,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * @param value field value
    * @param query table or subquery in from clause. default is table
    */
-  def findAllBy(name: String, value: Any)(implicit query: Queryable[T]): Query[T] = {
+  def findAllBy(name: String, value: Any)(implicit relation: Relation[T]): Relation[T] = {
     val field = fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)
     )
@@ -208,7 +293,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
       val v2 = value
       field.toEqualityExpression(v1, v2)
     }
-    where(clause)(query)
+    where(clause)(relation)
   }
 
   /**
@@ -272,70 +357,12 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
  * This class provides database table mapping and query logic.
  */
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
-  implicit def toRichQueryA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A])
-    (implicit m: Manifest[T]): RichQuery[T] = RichQuery(r.relation)
+  import ActiveRecord._
+
+  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[T] = toRelation(r.relation)
 
   implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
   implicit def toModelListA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
-}
-
-case class RichQuery[T <: ActiveRecordBase[_]](query: Queryable[T])(implicit m: Manifest[T]) {
-  import org.squeryl.dsl.ast._
-
-  val companion = ReflectionUtil.classToCompanion(m.erasure)
-    .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
-
-  def where(condition: (T) => LogicalBoolean): Query[T] =
-    companion.where(condition)(query)
-
-  def findBy(condition: (String, Any), conditions: (String, Any)*): Option[T] =
-    findAllBy(condition, conditions:_*).headOption
-
-  def findAllBy(condition: (String, Any), conditions: (String, Any)*):Query[T] =
-    companion.findAllBy(condition, conditions:_*)(query)
-
-  def findBy(name: String, value: Any): Option[T] =
-    findAllBy(name, value).headOption
-
-  def findAllBy(name: String, value: Any): Query[T] =
-    companion.findAllBy(name, value)(query)
-
-  /**
-   * sort results.
-   *
-   * {{{
-   * Person.findAllBy("country", "Japan").orderBy(p => p.age asc)
-   * Person.all.orderBy(p => p.age asc, p => p.name asc)
-   * }}}
-   * @param condition sort condition
-   * @param conditions multiple sort conditions(optional)
-   */
-  def orderBy(condition: (T) => OrderByExpression, conditions: (T => OrderByExpression)*): Query[T] =
-    from(query)(m => select(m).orderBy((condition :: conditions.toList).map(_.apply(m))))
-
-  /**
-   * returns limited results.
-   * {{{
-   * Post.all.orderBy(p => p.updatedAt desc).limit(10)
-   * }}}
-   * @param count max count
-   */
-  def limit(count: Int): Query[T] = page(0, count)
-
-  /**
-   * returns page results.
-   * {{{
-   * Post.all.orderBy(p => p.updatedAt desc).page(10 * (pageNumber - 1), 10)
-   * }}}
-   * @param offset offset count
-   * @param count max count
-   */
-  def page(offset: Int, count: Int): Query[T] = query match {
-    case _: Query[_] => query.asInstanceOf[Query[T]].page(offset, count)
-    case _ => from(query)(m => select(m)).page(offset, count)
-  }
-
-  def count: Long = from(query)(m => compute(PrimitiveTypeMode.count))
 }
 
 /**
