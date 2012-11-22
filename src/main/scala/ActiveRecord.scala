@@ -168,7 +168,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     def idPropertyName = "id"
   }
 
-  implicit def relationToIterable(relation: Relation[T]): Iterable[T] =
+  implicit def relationToIterable[A <% Relation[T]](relation: A): Iterable[T] =
     inTransaction { relation.toQuery.toList }
 
   /** self reference */
