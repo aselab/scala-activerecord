@@ -4,7 +4,7 @@ import org.specs2.mutable._
 import org.specs2.specification._
 import annotations._
 
-object ReflectionSpec extends Specification {
+object reflectionsSpec extends Specification {
   class Dummy {
     val s: String = "test"
   }

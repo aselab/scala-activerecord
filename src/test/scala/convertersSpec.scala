@@ -6,7 +6,7 @@ import java.sql.Timestamp
 import org.scala_tools.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 
-object ConverterSpec extends ActiveRecordSpecification {
+object convertersSpec extends ActiveRecordSpecification {
   "FormConverter" should {
     "String" in {
       val converter = FormConverter.get(classOf[String]).get
