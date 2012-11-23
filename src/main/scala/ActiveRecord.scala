@@ -121,6 +121,8 @@ object ActiveRecord {
     def toQuery: Query[T] = toQuery[T](m =>
       whereState(m).select(m).orderBy(ordersExpression(m))
     )
+
+    def toSql: String = inTransaction { toQuery.statement }
   }
 }
 

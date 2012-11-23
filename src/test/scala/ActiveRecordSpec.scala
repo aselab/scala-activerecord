@@ -339,5 +339,11 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       PrimitiveModel.find(m.id) must beNone
     }
 
+    "toSql" >> {
+      PrimitiveModel.all.toSql mustEqual
+        inTransaction { PrimitiveModel.all.toQuery.statement }
+      PrimitiveModel.where(m => m.id === 1).toSql mustEqual
+        inTransaction { PrimitiveModel.where(m => m.id === 1).toQuery.statement }
+    }
   }
 }
