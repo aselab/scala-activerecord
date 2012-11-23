@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.specification._
 
 object ValidatableSpec extends ActiveRecordSpecification {
   class SaveableImpl extends Saveable {
@@ -15,7 +14,7 @@ object ValidatableSpec extends ActiveRecordSpecification {
 
   case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable {
     override def doValidate {
-      e.foreach(errors.add(_))
+      e.foreach(errors.add)
       calledMethods :+= "doValidate"
     }
 

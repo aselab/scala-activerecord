@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.specification._
 
 import java.util.{Date, UUID}
 import java.sql.Timestamp

@@ -1,4 +1,4 @@
-package sample;
+package com.github.aselab.activerecord.sample;
 
 import java.lang.annotation.*;
 

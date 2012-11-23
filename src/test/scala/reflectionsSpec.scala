@@ -1,8 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.specification._
-import annotations._
 
 object reflectionsSpec extends Specification {
   class Dummy {
@@ -60,7 +58,7 @@ object reflectionsSpec extends Specification {
   "ClassInfo" should {
     "factory of PrimitiveModel" in {
       val factory = ClassInfo(classOf[PrimitiveModel]).factory
-      
+
       "can construct new instance" in {
         val m = factory.apply
         m.isInstanceOf[PrimitiveModel] must beTrue
@@ -138,7 +136,7 @@ object reflectionsSpec extends Specification {
       }
     }
   }
-  
+
   "ScalaSigInfo#genericTypes" should {
     "detect generic primitive types of Option field" in {
       ScalaSigInfo(classOf[models.PrimitiveModel]).genericTypes must contain(

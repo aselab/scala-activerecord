@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.specification._
 import models._
 import dsl._
 
@@ -21,7 +20,7 @@ object RelationSpec extends ActiveRecordSpecification {
       u1.group.one must beSome(g)
       u2.group.one must beSome(g)
     }
-    
+
     "manyToMany(hasManyThrough) relation" >> {
       val p1 = Project("project1")
       val p2 = Project("project2")

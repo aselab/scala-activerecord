@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mock._
-import com.github.aselab.activerecord._
 import models._
 import java.util.{Date, UUID}
 import java.sql.Timestamp

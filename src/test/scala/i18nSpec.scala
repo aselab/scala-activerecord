@@ -61,7 +61,6 @@ object i18nSpec extends Specification with Mockito {
 
       "minValue validation error message" in {
         DefaultTranslator.apply("activerecord.errors.minValue", 3)(Locale.JAPANESE) mustEqual "は3以上でなければなりません"
-        
       }
     }
   }

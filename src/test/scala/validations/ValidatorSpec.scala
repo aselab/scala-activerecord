@@ -59,7 +59,7 @@ object ValidatorSpec extends Specification with Mockito {
         validate(customValidator, a, onUpdate)
         onUpdate.errors must not beEmpty
       }
-      
+
       "on create" in {
         val a = mockAnnotation[sample.CustomAnnotation](on="create")
         a.value returns "match"
@@ -72,7 +72,7 @@ object ValidatorSpec extends Specification with Mockito {
         validate(customValidator, a, onUpdate)
         onUpdate.errors must beEmpty
       }
-      
+
       "on update" in {
         val a = mockAnnotation[sample.CustomAnnotation](on="update")
         a.value returns "match"
@@ -90,7 +90,7 @@ object ValidatorSpec extends Specification with Mockito {
     "requiredValidator" in {
       val validator = Validator.requiredValidator
       def a = mockAnnotation[annotations.Required]()
-        
+
       "invalid if value is null" in {
         val m = Model(null)
         validate(validator, a, m)
@@ -126,7 +126,7 @@ object ValidatorSpec extends Specification with Mockito {
         a.max returns 4
         a
       }
-        
+
       "skip if value is null or empty string" in {
         val m1 = Model(null)
         val m2 = Model("")
@@ -174,7 +174,7 @@ object ValidatorSpec extends Specification with Mockito {
         a.max returns 2
         a
       }
-       
+
       "skip if value is not number" in {
         val m1 = Model(null)
         val m2 = Model("test")
@@ -220,7 +220,7 @@ object ValidatorSpec extends Specification with Mockito {
     "acceptedValidator" in {
       val validator = Validator.acceptedValidator
       def a = mockAnnotation[annotations.Accepted]()
-        
+
       "skip if value is not Boolean" in {
         val m1 = Model(null)
         val m2 = Model("aaa")
@@ -257,7 +257,7 @@ object ValidatorSpec extends Specification with Mockito {
     "emailValidator" in {
       val validator = Validator.emailValidator
       def a = mockAnnotation[annotations.Email]()
-        
+
       "skip if value is null or empty string" in {
         val m1 = Model(null)
         val m2 = Model("")
@@ -295,7 +295,7 @@ object ValidatorSpec extends Specification with Mockito {
         a.value returns "^[a-z]+$"
         a
       }
-        
+
       "skip if value is null or empty string" in {
         val m1 = Model(null)
         val m2 = Model("")
@@ -329,7 +329,7 @@ object ValidatorSpec extends Specification with Mockito {
     "confirmationValidator" in {
       val validator = Validator.confirmationValidator
       def a = mockAnnotation[annotations.Confirmation]()
-      
+
       "skip if value is null or empty string" in {
         val m1 = Model(null)
         val m2 = Model("")
@@ -387,7 +387,7 @@ object ValidatorSpec extends Specification with Mockito {
         a.value returns Array("a", "b")
         a
       }
-        
+
       "valid if it is enumerated value" in {
         val m1 = Model("a")
         val m2 = Model("b")
@@ -422,7 +422,7 @@ object ValidatorSpec extends Specification with Mockito {
         a.value returns Array(2, 3)
         a
       }
-        
+
       "valid if it is enumerated value" in {
         val m1 = Model(2)
         val m2 = Model(3)
@@ -450,7 +450,7 @@ object ValidatorSpec extends Specification with Mockito {
     "uniqueValidator" in {
       val validator = Validator.uniqueValidator
       def a = mockAnnotation[annotations.Unique]()
-      
+
       "skip if model is not ActiveRecordBase" in {
         val m = Model(1)
         validate(validator, a, m)

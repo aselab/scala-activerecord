@@ -3,7 +3,6 @@ package com.github.aselab.activerecord
 import org.specs2.mutable._
 import org.specs2.specification._
 
-import org.squeryl._
 import experimental._
 import dsl._
 import java.sql.Timestamp

@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord
 
-import com.github.aselab.activerecord._
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 import org.scala_tools.time.Imports._
