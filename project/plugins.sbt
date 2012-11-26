@@ -10,5 +10,5 @@ addSbtPlugin("me.lessis" % "ls-sbt" % "0.1.2")
 
 addSbtPlugin("reaktor" % "sbt-scct" % "0.2-SNAPSHOT")
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.2.0-SNAPSHOT")
+addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.2.0")
 
