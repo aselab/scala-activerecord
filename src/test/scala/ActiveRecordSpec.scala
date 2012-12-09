@@ -221,6 +221,10 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       "#count" >> {
         relation.count mustEqual(100)
       }
+
+      "#select" >> {
+        relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
+      }
     }
 
     "implicit conversions" >> {

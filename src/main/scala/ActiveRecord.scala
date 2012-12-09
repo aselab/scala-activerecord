@@ -48,16 +48,26 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 }
 
 object ActiveRecord {
-  case class Relation[T <: ActiveRecordBase[_]](
-    conditions: Seq[T => LogicalBoolean] = Nil,
-    orders: Seq[T => OrderByExpression] = Nil,
-    pages: Option[(Int, Int)] = None
-  )(implicit companion: ActiveRecordBaseCompanion[_, T], queryable: Queryable[T]) {
+  import ReflectionUtil._
+
+  class Relation[T <: ActiveRecordBase[_], S](
+    val conditions: List[T => LogicalBoolean],
+    val orders: List[T => OrderByExpression],
+    val pages: Option[(Int, Int)],
+    queryable: Queryable[T],
+    companion: ActiveRecordBaseCompanion[_, T],
+    selector: T => S
+  ) {
+    def this(
+      queryable: Queryable[T],
+      companion: ActiveRecordBaseCompanion[_, T],
+      selector: T => S
+    ) = this(Nil, Nil, None, queryable, companion, selector)
 
     private def whereState(m: T) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
 
-    private def ordersExpression(m: T) = orders.toList.map(_.apply(m))
+    private def ordersExpression(m: T) = orders.map(_.apply(m))
 
     private def toQuery[R](selector: T => QueryYield[R]): Query[R] = {
       val query = from(queryable)(selector)
@@ -66,20 +76,26 @@ object ActiveRecord {
       }.getOrElse(query)
     }
 
-    def where(condition: T => LogicalBoolean): Relation[T] =
-      copy(conditions = conditions :+ condition)
+    def where(condition: T => LogicalBoolean): Relation[T, S] = {
+      new Relation(conditions :+ condition, orders, pages,
+        queryable, companion, selector)
+    }
 
-    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[T] =
+    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[S] =
       companion.findBy(condition, conditions:_*)(this)
 
-    def findAllBy(condition: (String, Any), conditions: (String, Any)*): Relation[T] =
+    def findAllBy(condition: (String, Any), conditions: (String, Any)*): Relation[T, S] =
       companion.findAllBy(condition, conditions:_*)(this)
 
-    def findBy(name: String, value: Any): Option[T] =
+    def findBy(name: String, value: Any): Option[S] =
       companion.findBy(name, value)(this)
 
-    def findAllBy(name: String, value: Any): Relation[T] =
+    def findAllBy(name: String, value: Any): Relation[T, S] =
       companion.findAllBy(name, value)(this)
+
+    def select[R](selector: T => R): Relation[T, R] = {
+      new Relation[T, R](conditions, orders, pages, queryable, companion, selector)
+    }
 
     /**
      * sort results.
@@ -90,8 +106,10 @@ object ActiveRecord {
      * }}}
      * @param conditions sort conditions
      */
-    def orderBy(conditions: (T => OrderByExpression)*): Relation[T] =
-      copy(orders = orders ++ conditions.toList)
+    def orderBy(conditions: (T => OrderByExpression)*): Relation[T, S] = {
+      new Relation(this.conditions, orders ++ conditions.toList, pages,
+        queryable, companion, selector)
+    }
 
     /**
      * returns limited results.
@@ -100,8 +118,9 @@ object ActiveRecord {
      * }}}
      * @param count max count
      */
-    def limit(count: Int): Relation[T] =
-      copy(pages = pages.map(_._1 -> count).orElse(Some(0 -> count)))
+    def limit(count: Int): Relation[T, S] = {
+      page(pages.map(_._1).getOrElse(0) , count)
+    }
 
     /**
      * returns page results.
@@ -111,16 +130,22 @@ object ActiveRecord {
      * @param offset offset count
      * @param count max count
      */
-    def page(offset: Int, count: Int): Relation[T] =
-      copy(pages = Some((offset, count)))
+    def page(offset: Int, count: Int): Relation[T, S] = {
+      new Relation(conditions, orders, Some(offset, count),
+        queryable, companion, selector)
+    }
 
     def count: Long = toQuery(m =>
       whereState(m).compute(PrimitiveTypeMode.count)
     )
 
-    def toQuery: Query[T] = toQuery[T](m =>
-      whereState(m).select(m).orderBy(ordersExpression(m))
-    )
+    def toQuery: Query[S] = toQuery[S] {m =>
+      if (conditions.isEmpty) {
+        PrimitiveTypeMode.select(selector(m)).orderBy(ordersExpression(m))
+      } else {
+        whereState(m).select(selector(m)).orderBy(ordersExpression(m))
+      }
+    }
 
     def toSql: String = inTransaction { toQuery.statement }
   }
@@ -136,8 +161,11 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     def idPropertyName = "id"
   }
 
-  implicit def relationToIterable[A <% Relation[T]](relation: A): Iterable[T] =
+  implicit def relationToIterable[S](relation: Relation[T, S]): Iterable[S] =
     inTransaction { relation.toQuery.toList }
+
+  implicit def relationableToIterable[A <% Relation[T, T]](relation: A): Iterable[T] =
+    relationToIterable(relation)
 
   /** self reference */
   protected def self: this.type = this
@@ -156,13 +184,14 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRelation(query: Queryable[T]): Relation[T] =
-    Relation[T]()(this, query)
+  implicit def toRelation(query: Queryable[T]): Relation[T, T] =
+    new Relation(query, this, identity)
 
-  implicit def toRelation(r: ActiveRecordOneToMany[T]): Relation[T] =
+  implicit def toRelation(r: ActiveRecordOneToMany[T]): Relation[T, T] =
     toRelation(r.relation)
 
-  implicit def toRelation(t: this.type): Relation[T] = all
+  implicit def toRelation(t: this.type): Relation[T, T] =
+    toRelation(t.table)
 
   implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
 
@@ -171,7 +200,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * all search.
    */
-  implicit def all: Relation[T] = toRelation(table)
+  implicit def all: Relation[T, T] = toRelation(table)
 
   /**
    * same as find method.
@@ -191,9 +220,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * }}}
    *
    * @param condition search condition
-   * @param query table or subquery in from clause. default is table
    */
-  def where(condition: (T) => LogicalBoolean)(implicit relation: Relation[T]) =
+  def where[S](condition: (T) => LogicalBoolean)(implicit relation: Relation[T, S]) =
     relation.where(condition)
 
   /**
@@ -204,11 +232,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * }}}
    * @param condition fieldname-value tuple
    * @param conditions multiple fieldname-value tuples(optional)
-   * @param query table or subquery in from clause. default is table
    */
-  def findBy(condition: (String, Any), conditions: (String, Any)*)
-    (implicit relation: Relation[T]): Option[T] = inTransaction {
-    findAllBy(condition, conditions:_*)(relation).limit(1).headOption
+  def findBy[S](condition: (String, Any), conditions: (String, Any)*)
+    (implicit relation: Relation[T, S]): Option[S] = inTransaction {
+    findAllBy(condition, conditions:_*)(relation).limit(1).toQuery.headOption
   }
 
   /**
@@ -219,10 +246,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * }}}
    * @param condition fieldname-value tuple
    * @param conditions multiple fieldname-value tuples(optional)
-   * @param query table or subquery in from clause. default is table
    */
-  def findAllBy(condition: (String, Any), conditions: (String, Any)*)
-    (implicit relation: Relation[T]): Relation[T] = {
+  def findAllBy[S](condition: (String, Any), conditions: (String, Any)*)
+    (implicit relation: Relation[T, S]): Relation[T, S] = {
     conditions.foldLeft(findAllBy(condition._1, condition._2)(relation)) {
       case (r, cond) => findAllBy(cond._1, cond._2)(r)
     }
@@ -235,11 +261,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * }}}
    * @param name field name
    * @param value field value
-   * @param query table or subquery in from clause. default is table
    */
-  def findBy(name: String, value: Any)
-    (implicit relation: Relation[T]): Option[T] = inTransaction {
-    findAllBy(name, value)(relation).limit(1).headOption
+  def findBy[S](name: String, value: Any)
+    (implicit relation: Relation[T, S]): Option[S] = inTransaction {
+    findAllBy(name, value)(relation).limit(1).toQuery.headOption
   }
 
   /**
@@ -249,9 +274,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * }}}
    * @param name field name
    * @param value field value
-   * @param query table or subquery in from clause. default is table
    */
-  def findAllBy(name: String, value: Any)(implicit relation: Relation[T]): Relation[T] = {
+  def findAllBy[S](name: String, value: Any)
+    (implicit relation: Relation[T, S]): Relation[T, S] = {
     val field = fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)
     )
@@ -327,7 +352,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
   import ActiveRecord._
 
-  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[T] = toRelation(r.relation)
+  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[T, T] = toRelation(r.relation)
 
   implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
   implicit def toModelListA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
