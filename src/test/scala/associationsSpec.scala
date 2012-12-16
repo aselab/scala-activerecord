@@ -6,18 +6,33 @@ import models._
 import dsl._
 
 object AssociationSpec extends ActiveRecordSpecification {
+  trait Data extends Scope {
+    val user = User("user1")
+    user.save
+    val group = Group("group1")
+    group.save
+  }
+
   "BelongsToAssociation" should {
-    trait Data extends Scope {
-      val user = User("user1")
-      user.save
-      val group = Group("group1")
-      group.save
+    trait assoc extends Data {
       val association = new BelongsToAssociation(user, classOf[Group])
     }
 
-    "assign persisted record" in new Data {
+    "assign persisted record" in new assoc {
       association.assign(group)
       association.get must beSome(group)
+      user.groupId must beSome(group.id)
+    }
+  }
+
+  "HasManyAssociation" should {
+    trait assoc extends Data {
+      val association = new HasManyAssociation(group, classOf[User])
+    }
+
+    "associate persisted record" in new assoc {
+      association.associate(user)
+      association.toList mustEqual List(user)
       user.groupId must beSome(group.id)
     }
   }

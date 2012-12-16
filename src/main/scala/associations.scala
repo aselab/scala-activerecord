@@ -64,6 +64,36 @@ class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
   def :=(m: T): T = assign(m)
 }
 
+class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+  val owner: O, val associationClass: Class[T], foreignKey: String
+) extends Association[O, T] {
+
+  def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
+    Config.schema.foreignKeyFromClass(owner.getClass))
+
+  lazy val fieldInfo = companion.fieldInfo(foreignKey)
+
+  def condition: T => ast.LogicalBoolean = {
+    m => fieldInfo.toEqualityExpression(m.getValue(foreignKey), owner.id)
+  }
+
+  def associate(m: T): T = inTransaction {
+    if (cached) reload
+    cache :+= m
+
+    val v = if (fieldInfo.isOption) {
+      Option(owner.id)
+    } else {
+      owner.id
+    }
+    m.setValue(foreignKey, v)
+    m.save
+    m
+  }
+
+  def <<(m: T): T = associate(m)
+}
+
 //--------------------------------------------------------------
 trait RecordRelation
 
