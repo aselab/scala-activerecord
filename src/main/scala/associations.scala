@@ -1,11 +1,70 @@
 package com.github.aselab.activerecord
 
+import squeryl.Implicits._
 import org.squeryl._
 import org.squeryl.dsl._
 import org.squeryl.PrimitiveTypeMode._
 import mojolly.inflector.InflectorImports._
 import dsl.keyedEntityDef
+import ReflectionUtil._
 
+trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
+  protected var cached = false
+  protected var cache: List[T] = Nil
+
+  val owner: O
+  val associationClass: Class[T]
+  def condition: T => ast.LogicalBoolean
+
+  protected lazy val companion = classToCompanion(associationClass)
+    .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+
+  def relation: ActiveRecord.Relation[T, T] = {
+    new ActiveRecord.Relation[T, T](companion.table, companion, identity)
+      .where(condition)
+  }
+
+  def toList: List[T] = if (cached) cache else reload.toList
+
+  def reload: this.type = {
+    inTransaction { cache = relation.toQuery.toList }
+    cached = true
+    this
+  }
+}
+
+class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+  val owner: O, val associationClass: Class[T], foreignKey: String
+) extends Association[O, T] {
+
+  def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
+    Config.schema.foreignKeyFromClass(associationClass))
+
+  lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
+  
+  def condition: T => ast.LogicalBoolean = {
+    m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
+  }
+
+  def get: Option[T] = toList.headOption
+
+  def assign(m: T): T = {
+    cache = List(m)
+    cached = true
+
+    val v = if (fieldInfo.isOption) {
+      Option(m.id)
+    } else {
+      m.id
+    }
+    owner.setValue(foreignKey, v)
+    m
+  }
+
+  def :=(m: T): T = assign(m)
+}
+
+//--------------------------------------------------------------
 trait RecordRelation
 
 case class ActiveRecordOneToMany[M <: ActiveRecordBase[_]]
@@ -136,7 +195,6 @@ trait ActiveRecordRelationSupport extends ActiveRecordBaseRelationSupport {
 }
 
 trait TableRelationSupport extends Schema {
-  import ReflectionUtil._
   type AR = com.github.aselab.activerecord.ActiveRecord
 
   lazy val relations = {

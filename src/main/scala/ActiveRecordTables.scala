@@ -26,6 +26,8 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   override def tableNameFromClass(c: Class[_]): String =
     c.getSimpleName.underscore.pluralize
 
+  def foreignKeyFromClass(c: Class[_]): String = c.getSimpleName.camelize + "Id"
+
   private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>
       val stat = Session.currentSession.connection.createStatement
