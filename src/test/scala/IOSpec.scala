@@ -206,10 +206,8 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
     }
  
     "toMap (relation)" in {
-      val g = Group("group1")
-      val p = Project("project1")
-      g.save
-      p.save
+      val g = Group("group1").create
+      val p = Project("project1").create
       val id = g.id
       val u1 = User("user1")
       val u2 = User("user2")

@@ -39,6 +39,11 @@ trait CRUDable extends Saveable {
     result
   }
 
+  def create(): this.type = {
+    save()
+    this
+  }
+
   /**
    * Delete model.
    *

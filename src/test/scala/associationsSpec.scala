@@ -7,10 +7,8 @@ import dsl._
 
 object AssociationSpec extends ActiveRecordSpecification {
   trait Data extends Scope {
-    val user = User("user1")
-    user.save
-    val group = Group("group1")
-    group.save
+    val user = User("user1").create
+    val group = Group("group1").create
   }
 
   "BelongsToAssociation" should {
@@ -41,8 +39,7 @@ object AssociationSpec extends ActiveRecordSpecification {
 object RelationSpec extends ActiveRecordSpecification {
   "ActiveRecord" should {
     "oneToMany relation" in {
-      val g = Group("group1")
-      g.save
+      val g = Group("group1").create
 
       val u1 = User("user1")
       val u2 = User("user2")
@@ -56,14 +53,10 @@ object RelationSpec extends ActiveRecordSpecification {
     }
 
     "manyToMany(hasManyThrough) relation" >> {
-      val p1 = Project("project1")
-      val p2 = Project("project2")
-      val r1 = Role("role1")
-      val r2 = Role("role2")
-      p1.save
-      p2.save
-      r1.save
-      r2.save
+      val p1 = Project("project1").create
+      val p2 = Project("project2").create
+      val r1 = Role("role1").create
+      val r2 = Role("role2").create
 
       val List(u1, u2, u3) = User.all.toList
 
@@ -82,16 +75,11 @@ object RelationSpec extends ActiveRecordSpecification {
     }
 
     "manyToMany(hasAndBelongsToMany) relation" in {
-      val foo1 = Foo("foo1")
-      val foo2 = Foo("foo2")
-      val bar1 = Bar("bar1")
-      val bar2 = Bar("bar2")
-      val bar3 = Bar("bar3")
-      foo1.save
-      foo2.save
-      bar1.save
-      bar2.save
-      bar3.save
+      val foo1 = Foo("foo1").create
+      val foo2 = Foo("foo2").create
+      val bar1 = Bar("bar1").create
+      val bar2 = Bar("bar2").create
+      val bar3 = Bar("bar3").create
 
       foo1.bars.associate(bar2)
       foo1.bars.associate(bar3)
