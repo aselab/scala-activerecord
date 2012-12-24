@@ -8,7 +8,7 @@ import mojolly.inflector.InflectorImports._
 import dsl.keyedEntityDef
 import ReflectionUtil._
 
-trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
+trait Association[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]] {
   protected var cached = false
   protected var cache: List[T] = Nil
 
@@ -17,10 +17,10 @@ trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
   def condition: T => ast.LogicalBoolean
 
   protected lazy val companion = classToCompanion(associationClass)
-    .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+    .asInstanceOf[ActiveRecordBaseCompanion[K2, T]]
 
-  def relation: ActiveRecord.Relation[T, T] = {
-    new ActiveRecord.Relation[T, T](companion.table, companion, identity)
+  def relation: ActiveRecord.Relation[K2, T, T] = {
+    ActiveRecord.Relation(companion.table, companion, {m: T => m})
       .where(condition)
   }
 
@@ -33,9 +33,9 @@ trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
   }
 }
 
-class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+class BelongsToAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
   val owner: O, val associationClass: Class[T], foreignKey: String
-) extends Association[O, T] {
+) extends Association[K1, K2, O, T] {
 
   def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
     Config.schema.foreignKeyFromClass(associationClass))
@@ -64,9 +64,9 @@ class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
   def :=(m: T): T = assign(m)
 }
 
-class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+class HasManyAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
   val owner: O, val associationClass: Class[T], foreignKey: String
-) extends Association[O, T] {
+) extends Association[K1, K2, O, T] {
 
   def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
     Config.schema.foreignKeyFromClass(owner.getClass))

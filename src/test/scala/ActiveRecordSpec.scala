@@ -225,6 +225,13 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       "#select" >> {
         relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
       }
+
+      "#joins" >> withRollback {
+        val u1 = User("string50").create
+        PrimitiveModel.joins[User]((p, u) => p.string === u.name)
+          .where((p, u) => u.name === u1.name).headOption mustEqual
+          PrimitiveModel.findBy("string", u1.name)
+      }
     }
 
     "implicit conversions" >> {
@@ -235,10 +242,6 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       "ActiveRecordCompanion to Relation" >> {
         PrimitiveModel.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
         PrimitiveModel.count mustEqual 100
-      }
-
-      "ActiveRecordCompanion to Queryable" >> {
-        from(PrimitiveModel)(m => select(m)).toList mustEqual PrimitiveModel.all.toList
       }
     }
 
