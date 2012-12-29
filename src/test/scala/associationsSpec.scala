@@ -1,40 +1,8 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.specification.Scope
 import models._
 import dsl._
-
-object AssociationSpec extends ActiveRecordSpecification {
-  trait Data extends Scope {
-    val user = User("user1").create
-    val group = Group("group1").create
-  }
-
-  "BelongsToAssociation" should {
-    trait assoc extends Data {
-      val association = new BelongsToAssociation[Long, Long, User, Group](user, classOf[Group])
-    }
-
-    "assign persisted record" in new assoc {
-      association.assign(group)
-      association.get must beSome(group)
-      user.groupId must beSome(group.id)
-    }
-  }
-
-  "HasManyAssociation" should {
-    trait assoc extends Data {
-      val association = new HasManyAssociation[Long, Long, Group, User](group, classOf[User])
-    }
-
-    "associate persisted record" in new assoc {
-      association.associate(user)
-      association.toList mustEqual List(user)
-      user.groupId must beSome(group.id)
-    }
-  }
-}
 
 object RelationSpec extends ActiveRecordSpecification {
   "ActiveRecord" should {
