@@ -185,7 +185,23 @@ trait Relations {
       new Relation2(
         conditions.map(wrap),
         orders.map(wrap), pages,
-        queryable, (c.table, on),
+        queryable, c.table, Function.tupled(on),
+        companion, wrap(selector)
+      )
+    }
+
+    def joins[J1 <: ActiveRecordBase[_], J2 <: ActiveRecordBase[_]](
+      on: (T, J1, J2) => (LogicalBoolean, LogicalBoolean)
+    )(implicit m1: Manifest[J1], m2: Manifest[J2]): Relation3[K, T, J1, J2, S] = {
+      val c1 = classToCompanion(m1.erasure)
+        .asInstanceOf[ActiveRecordBaseCompanion[_, J1]]
+      val c2 = classToCompanion(m2.erasure)
+        .asInstanceOf[ActiveRecordBaseCompanion[_, J2]]
+
+      new Relation3(
+        conditions.map(wrap),
+        orders.map(wrap), pages,
+        queryable, c1.table, c2.table, Function.tupled(on),
         companion, wrap(selector)
       )
     }
@@ -196,7 +212,8 @@ trait Relations {
     orders: List[((T, J1)) => OrderByExpression],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
-    join1: (Queryable[J1], (T, J1) => LogicalBoolean),
+    joinTable: Queryable[J1],
+    on: ((T, J1)) => LogicalBoolean,
     companion: ActiveRecordBaseCompanion[K, T],
     selector: ((T, J1)) => S
   ) extends Relation[K, T, S] {
@@ -218,17 +235,68 @@ trait Relations {
     def page(offset: Int, count: Int): this.type =
       copy(pages = Some(offset, count)).asInstanceOf[this.type]
 
-    def count: Long = paginate(join(queryable, join1._1)(
-      (m, j1) => whereState((m, j1)).compute(PrimitiveTypeMode.count)
-        .on(join1._2(m, j1))
-    ))
+    def count: Long = paginate(join(queryable, joinTable) {(m, j1) =>
+      val t = (m, j1)  
+      whereState(t).compute(PrimitiveTypeMode.count).on(on(t))
+    })
 
     def toQuery: Query[S] = paginate(
-      join(queryable, join1._1) {(m, j1) =>
+      join(queryable, joinTable) {(m, j1) =>
+        val t = (m, j1)  
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector((m, j1))).orderBy(ordersExpression((m, j1))).on(join1._2(m, j1))
+          PrimitiveTypeMode.select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
         } else {
-          whereState((m, j1)).select(selector((m, j1))).orderBy(ordersExpression((m, j1))).on(join1._2(m, j1))
+          whereState(t).select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
+        }
+      }
+    )
+  }
+
+  case class Relation3[K, T <: ActiveRecordBase[K], J1 <: ActiveRecordBase[_],
+    J2 <: ActiveRecordBase[_], S](
+    conditions: List[((T, J1, J2)) => LogicalBoolean],
+    orders: List[((T, J1, J2)) => OrderByExpression],
+    pages: Option[(Int, Int)],
+    queryable: Queryable[T],
+    joinTable1: Queryable[J1],
+    joinTable2: Queryable[J2],
+    on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean),
+    companion: ActiveRecordBaseCompanion[K, T],
+    selector: ((T, J1, J2)) => S
+  ) extends Relation[K, T, S] {
+    type JOINED_TYPE = (T, J1, J2)
+
+    def where(condition: T => LogicalBoolean): this.type = {
+      copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
+    }
+
+    def where(condition: (T, J1, J2) => LogicalBoolean): this.type =
+      copy(conditions = conditions :+ Function.tupled(condition)).asInstanceOf[this.type]
+
+    def select[R](selector: (T, J1, J2) => R): Relation[K, T, R] =
+      copy(selector = Function.tupled(selector))
+
+    def orderBy(conditions: ((T, J1, J2) => OrderByExpression)*): this.type =
+      copy(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
+
+    def page(offset: Int, count: Int): this.type =
+      copy(pages = Some(offset, count)).asInstanceOf[this.type]
+
+    def count: Long = paginate(join(queryable, joinTable1, joinTable2) {
+      (m, j1, j2) =>
+        val t = (m, j1, j2)
+        val (on1, on2) = on(t)
+        whereState(t).compute(PrimitiveTypeMode.count).on(on1, on2)
+    })
+
+    def toQuery: Query[S] = paginate(
+      join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
+        val t = (m, j1, j2)  
+        val (on1, on2) = on(t)
+        if (conditions.isEmpty) {
+          PrimitiveTypeMode.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
+        } else {
+          whereState(t).select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
         }
       }
     )
