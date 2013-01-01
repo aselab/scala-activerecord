@@ -3,11 +3,41 @@ package com.github.aselab.activerecord
 import org.squeryl._
 
 object dsl extends PrimitiveTypeMode with Annotations {
+  import ActiveRecord._
+
   implicit def keyedEntityDef[T <: ActiveRecordBase[_]](implicit m: Manifest[T]) = {
     ReflectionUtil.classToCompanion(m.erasure.getName)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
       .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
   }
+
+  implicit def relationToIterable[T](relation: Relation[_, _, T]): Iterable[T] =
+    inTransaction { queryToIterable(relation.toQuery).toList }
+
+  implicit def companionToRelation[K, T <: ActiveRecordBase[K]]
+    (c: ActiveRecordBaseCompanion[K, T]): Relation1[K, T, T] =
+    queryToRelation[K, T](c.table)(c)
+
+  implicit def companionToIterable[K, T <: ActiveRecordBase[K]]
+    (c: ActiveRecordBaseCompanion[K, T]): Iterable[T] =
+    relationToIterable(c)
+
+  implicit def queryToRelation[K, T <: ActiveRecordBase[K]](query: Queryable[T])
+    (implicit c: ActiveRecordBaseCompanion[K, T]): Relation1[K, T, T] =
+    Relation(query, c, identity)
+
+  implicit def associationToRelation1[T <: ActiveRecordBase[_]]
+    (association: BelongsToAssociation[_, _, _, T]) = association.relation
+
+  implicit def associationToRelation2[T <: ActiveRecordBase[_]]
+    (association: HasManyAssociation[_, _, _, T]) = association.relation
+
+  implicit def associationToIterable[T <: ActiveRecordBase[_]]
+    (association: Association[_, _, _, T]): Iterable[T] = association match {
+      case a: BelongsToAssociation[_, _, _, T] => relationToIterable(a.relation)
+      case a: HasManyAssociation[_, _, _, T] => relationToIterable(a.relation)
+    }
+
 }
 
 package object support {

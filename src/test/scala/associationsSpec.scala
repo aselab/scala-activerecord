@@ -34,7 +34,7 @@ object RelationSpec extends ActiveRecordSpecification {
       p1.users.associate(u2, ProjectMembership(r2.id))
       p2.users.associate(u2, ProjectMembership(r1.id))
 
-      ProjectMembership.count mustEqual 3
+      ProjectMembership.all.count mustEqual 3
       p1.users.toList must contain(u1, u2).only
       u2.projects.toList must contain(p1, p2).only 
       u2.memberships.toList mustEqual u2.projects.associations

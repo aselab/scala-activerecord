@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord
 
+import com.github.aselab.activerecord.dsl._
 import org.squeryl._
-import org.squeryl.PrimitiveTypeMode._
 
 trait ActiveRecordBase[T] extends ProductModel with CRUDable
   with ActiveRecordBaseRelationSupport with ValidationSupport with IO
@@ -56,12 +56,6 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     def idPropertyName = "id"
   }
 
-  implicit def relationToIterable[S](relation: Relation[K, T, S]): Iterable[S] =
-    inTransaction { relation.toQuery.toList }
-
-  implicit def relationableToIterable[A <% Relation[K, T, T]](relation: A): Iterable[T] =
-    relationToIterable(relation)
-
   /** self reference */
   protected def self: this.type = this
 
@@ -71,7 +65,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * corresponding database table
    */
-  implicit lazy val table: Table[T] = {
+  lazy val table: Table[T] = {
     val name = getClass.getName.dropRight(1)
     schema.tableMap(name).asInstanceOf[Table[T]]
   }
@@ -79,21 +73,15 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * implicit conversion for query chain.
    */
-  implicit def toRelation(query: Queryable[T]): Relation1[K, T, T] =
-    Relation(query, this, identity)
-
   implicit def toRelation(r: ActiveRecordOneToMany[T]): Relation1[K, T, T] =
-    toRelation(r.relation)
-
-  implicit def toRelation(t: this.type): Relation1[K, T, T] =
-    toRelation(t.table)
+    queryToRelation[K, T](r.relation)(this)
 
   implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
 
   /**
    * all search.
    */
-  implicit def all: Relation1[K, T, T] = toRelation(table)
+  implicit def all: Relation1[K, T, T] = companionToRelation(this)
 
   /**
    * same as find method.
@@ -168,7 +156,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
   import ActiveRecord._
 
-  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[Long, T, T] = toRelation(r.relation)
+  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[Long, T, T] = queryToRelation[Long, T](r.relation)(this)
 
   implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
   implicit def toModelListA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList

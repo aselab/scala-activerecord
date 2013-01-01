@@ -196,7 +196,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
 
       "ActiveRecordCompanion to Relation" >> {
         PrimitiveModel.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
-        PrimitiveModel.count mustEqual 100
+        PrimitiveModel.all.count mustEqual 100
       }
     }
 
