@@ -2,34 +2,20 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
-import org.squeryl.dsl.ast.LogicalBoolean
+import org.squeryl.dsl.ast.{LogicalBoolean, EqualityExpression}
 import squeryl.Implicits._
 import ReflectionUtil._
 
 trait Associations {
   trait Association[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]] {
-    protected var cached = false
-    protected var cache: List[T] = Nil
-
     val owner: O
     val associationClass: Class[T]
-    def condition: T => LogicalBoolean
 
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[K2, T]]
 
-    def relation: ActiveRecord.Relation[K2, T, T] = {
+    protected lazy val associationSource =
       ActiveRecord.Relation(companion.table, companion, {m: T => m})
-        .where(condition)
-    }
-
-    def toList: List[T] = if (cached) cache else reload.toList
-
-    def reload: this.type = {
-      inTransaction { cache = relation.toQuery.toList }
-      cached = true
-      this
-    }
   }
 
   class BelongsToAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
@@ -45,12 +31,11 @@ trait Associations {
       m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
     }
 
-    def get: Option[T] = toList.headOption
+    def relation = associationSource.where(condition).limit(1)
+
+    def get: Option[T] = relation.headOption
 
     def assign(m: T): T = {
-      cache = List(m)
-      cached = true
-
       val v = if (fieldInfo.isOption) {
         Option(m.id)
       } else {
@@ -76,10 +61,9 @@ trait Associations {
       m => fieldInfo.toEqualityExpression(m.getValue(foreignKey), owner.id)
     }
 
-    def associate(m: T): T = inTransaction {
-      if (cached) reload
-      cache :+= m
+    def relation = associationSource.where(condition)
 
+    def associate(m: T): T = inTransaction {
       val v = if (fieldInfo.isOption) {
         Option(owner.id)
       } else {
@@ -91,5 +75,28 @@ trait Associations {
     }
 
     def <<(m: T): T = associate(m)
+  }
+
+  class HasManyThroughAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2], I <: ActiveRecordBase[_]](
+    val owner: O, val associationClass: Class[T],
+    val through: HasManyAssociation[K1, _, O, I]
+  )(implicit m: Manifest[I]) extends Association[K1, K2, O, T] {
+    protected lazy val throughCompanion = classToCompanion(m.erasure)
+      .asInstanceOf[ActiveRecordBaseCompanion[_, I]]
+
+    val foreignKey = Config.schema.foreignKeyFromClass(owner.getClass)
+    val associationForeignKey = Config.schema.foreignKeyFromClass(associationClass)
+
+    lazy val sourceFieldInfo = throughCompanion.fieldInfo(foreignKey)
+    lazy val associationFieldInfo = throughCompanion.fieldInfo(associationForeignKey)
+
+    def relation = associationSource.joins[I]{
+      (m, inter) =>
+        val e1 = associationFieldInfo.toExpression(m.id)
+        val e2 = associationFieldInfo.toExpression(inter.getValue(associationForeignKey))
+        new EqualityExpression(e1, e2)
+    }.where(
+      (m, inter) => through.condition(inter)
+    )
   }
 }
