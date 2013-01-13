@@ -20,7 +20,7 @@ class ClassInfo[T <: AnyRef](clazz: Class[T]) {
     }
   }.asInstanceOf[() => T]
 
-  lazy val fields: List[java.lang.reflect.Field] = {
+  lazy val allFields: List[java.lang.reflect.Field] = {
     clazz.getDeclaredFields.filterNot {f =>
       f.isAnnotationPresent(classOf[annotations.Ignore]) ||
       classOf[RecordRelation].isAssignableFrom(f.getType) ||
@@ -29,7 +29,7 @@ class ClassInfo[T <: AnyRef](clazz: Class[T]) {
   }
 
   lazy val fieldInfo: Map[String, FieldInfo] = {
-    fields.map { f => (f.getName, FieldInfo(f, this)) }.toMap
+    allFields.map { f => (f.getName, FieldInfo(f, this)) }.toMap
   }
 
   lazy val scalaSigInfo = ScalaSigInfo(clazz)
@@ -194,7 +194,7 @@ trait ReflectionUtil {
   }
 
   implicit def toReflectable(o: Any) = new {
-    val c = o.getClass
+    def c = o.getClass
 
     def getValue[T](name: String): T =
       c.getMethod(name).invoke(o).asInstanceOf[T]
@@ -207,6 +207,12 @@ trait ReflectionUtil {
 
     def getFields[T](implicit m: Manifest[T]): Array[Field] = c.getDeclaredFields.filter {
       f => m.erasure.isAssignableFrom(f.getType)
+    }
+
+    def toOption[T]: Option[T] = o match {
+      case null | None => None
+      case Some(o) => Some(o.asInstanceOf[T])
+      case o => Some(o.asInstanceOf[T])
     }
   }
 

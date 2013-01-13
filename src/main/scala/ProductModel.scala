@@ -25,7 +25,7 @@ trait ProductModelCompanion[T <: ProductModel] {
   /** ProductModel fields information */
   lazy val fieldInfo: Map[String, FieldInfo] = classInfo.fieldInfo
 
-  lazy val formatFields: List[java.lang.reflect.Field] = classInfo.fields
+  lazy val fields: List[FieldInfo] = fieldInfo.values.toList
 
   lazy val validators: Map[String, Seq[(Annotation, Validator[_])]] = {
     fieldInfo.map {

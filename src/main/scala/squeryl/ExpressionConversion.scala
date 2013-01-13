@@ -7,7 +7,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 
 class ExpressionConversion(field: FieldInfo) {
-  import Implicits._
+  import ReflectionUtil._
 
   def toExpression(value: Any): TypedExpression[_, _] = field match {
     case f if f.is[String] => value.toOption[String]

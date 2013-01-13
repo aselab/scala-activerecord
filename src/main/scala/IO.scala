@@ -3,15 +3,9 @@ package com.github.aselab.activerecord
 trait IO extends Validatable { this: ProductModel =>
   import ReflectionUtil._
 
-  def toMap: Map[String, Any] = {
-    _companion.formatFields.flatMap { f =>
-      val name = f.getName
-      (this.getValue[Any](name) match {
-        case v: Option[_] => v
-        case v => Some(v)
-      }).map(name -> _)
-    }.toMap
-  }
+  def toMap: Map[String, Any] = _companion.fields.flatMap { f =>
+    this.getValue[Any](f.name).toOption[Any].map(f.name -> _)
+  }.toMap
 
   def toFormValues: Map[String, String] = toFormValues(None)
 

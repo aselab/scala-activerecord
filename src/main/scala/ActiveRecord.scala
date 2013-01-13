@@ -140,8 +140,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   }
 
   /** Unique annotated fields */
-  lazy val uniqueFields =
-    formatFields.filter(_.isAnnotationPresent(classOf[annotations.Unique]))
+  lazy val uniqueFields = fields.filter(_.isUnique)
 
   def fromMap(data: Map[String, Any]) {
     newInstance.assign(data)
