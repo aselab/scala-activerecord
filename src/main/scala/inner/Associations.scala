@@ -16,6 +16,9 @@ trait Associations {
 
     protected lazy val associationSource =
       ActiveRecord.Relation(companion.table, companion, {m: T => m})
+
+    protected def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
+      throw ActiveRecordException.notFoundField(name)) 
   }
 
   class BelongsToAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
@@ -36,12 +39,7 @@ trait Associations {
     def get: Option[T] = relation.headOption
 
     def assign(m: T): T = {
-      val v = if (fieldInfo.isOption) {
-        Option(m.id)
-      } else {
-        m.id
-      }
-      owner.setValue(foreignKey, v)
+      fieldInfo.setValue(owner, m.id)
       m
     }
 
@@ -49,54 +47,84 @@ trait Associations {
   }
 
   class HasManyAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
-    val owner: O, val associationClass: Class[T], foreignKey: String
+    val owner: O, val associationClass: Class[T],
+    additionalConditions: Map[String, Any], foreignKey: String
   ) extends Association[K1, K2, O, T] {
 
-    def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
-      Config.schema.foreignKeyFromClass(owner.getClass))
+    def this(owner: O, associationClass: Class[T],
+      additionalConditions: Map[String, Any]) = this(owner, associationClass,
+      additionalConditions, Config.schema.foreignKeyFromClass(owner.getClass))
 
-    lazy val fieldInfo = companion.fieldInfo(foreignKey)
+    private def conditions = additionalConditions + (foreignKey -> owner.id)
 
     def condition: T => LogicalBoolean = {
-      m => fieldInfo.toEqualityExpression(m.getValue(foreignKey), owner.id)
+      m => LogicalBoolean.and(conditions.map {
+        case (key, value) =>
+          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+      }.toSeq)
     }
 
     def relation = associationSource.where(condition)
 
-    def associate(m: T): T = inTransaction {
-      val v = if (fieldInfo.isOption) {
-        Option(owner.id)
-      } else {
-        owner.id
+    def build: T = assign(companion.newInstance)
+
+    def assign(m: T): T = {
+      conditions.foreach {
+        case (key, value) => fieldInfo(key).setValue(m, value)
       }
-      m.setValue(foreignKey, v)
-      m.save
       m
     }
 
-    def <<(m: T): T = associate(m)
+    def associate(m: T): Boolean = inTransaction {
+      assign(m).save
+    }
+
+    def <<(m: T): Boolean = associate(m)
   }
 
   class HasManyThroughAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2], I <: ActiveRecordBase[_]](
     val owner: O, val associationClass: Class[T],
-    val through: HasManyAssociation[K1, _, O, I]
+    val through: HasManyAssociation[K1, _, O, I],
+    additionalConditions: Map[String, Any]
   )(implicit m: Manifest[I]) extends Association[K1, K2, O, T] {
     protected lazy val throughCompanion = classToCompanion(m.erasure)
       .asInstanceOf[ActiveRecordBaseCompanion[_, I]]
 
+    protected def throughFieldInfo(name: String) =
+      throughCompanion.fieldInfo.getOrElse(name,
+        throw ActiveRecordException.notFoundField(name)) 
+
     val foreignKey = Config.schema.foreignKeyFromClass(owner.getClass)
     val associationForeignKey = Config.schema.foreignKeyFromClass(associationClass)
 
-    lazy val sourceFieldInfo = throughCompanion.fieldInfo(foreignKey)
-    lazy val associationFieldInfo = throughCompanion.fieldInfo(associationForeignKey)
-
     def relation = associationSource.joins[I]{
       (m, inter) =>
-        val e1 = associationFieldInfo.toExpression(m.id)
-        val e2 = associationFieldInfo.toExpression(inter.getValue(associationForeignKey))
+        val f = fieldInfo("id")
+        val e1 = f.toExpression(m.id)
+        val e2 = f.toExpression(inter.getValue(associationForeignKey))
         new EqualityExpression(e1, e2)
     }.where(
-      (m, inter) => through.condition(inter)
+      (m, inter) =>
+      LogicalBoolean.and(through.condition(inter) :: additionalConditions.map {
+        case (key, value) =>
+          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+      }.toList)
     )
+
+    def assign(m: T): I = {
+      additionalConditions.foreach {
+        case (key, value) => fieldInfo(key).setValue(m, value)
+      }
+      val inter = throughCompanion.newInstance
+      throughFieldInfo(foreignKey).setValue(inter, owner.id)
+      throughFieldInfo(associationForeignKey).setValue(inter, m.id)
+      inter
+    }
+
+    def associate(m: T): Boolean = inTransaction {
+      assign(m).save
+    }
+
+    def <<(m: T): Boolean = associate(m)
   }
 }

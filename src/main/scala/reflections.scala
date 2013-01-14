@@ -96,6 +96,8 @@ case class FieldInfo(
   isOption: Boolean, isSeq: Boolean,
   annotations: Seq[Annotation] = Nil
 ) {
+  import ReflectionUtil._
+
   private lazy val annotationMap = annotations.map {
     a => (a.annotationType, a)
   }.toMap[Class[_], Annotation]
@@ -111,6 +113,10 @@ case class FieldInfo(
     annotationMap.isDefinedAt(m.erasure)
 
   def is[T](implicit m: Manifest[T]): Boolean = fieldType == m.erasure
+
+  def setValue(model: Any, value: Any) {
+    model.setValue(name, if (isOption) value.toOption else value)
+  }
 }
 
 object FieldInfo {
