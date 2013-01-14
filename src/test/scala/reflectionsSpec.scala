@@ -55,6 +55,16 @@ object reflectionsSpec extends Specification {
     throw new Exception
   }
 
+  trait BaseModel {
+    var string = "string"
+    var int = 0
+  }
+
+  case class ExtendedModel(
+    estring: String,
+    eint: Int
+  ) extends BaseModel
+
   "ClassInfo" should {
     "factory of PrimitiveModel" in {
       val factory = ClassInfo(classOf[PrimitiveModel]).factory
@@ -134,6 +144,11 @@ object reflectionsSpec extends Specification {
          c.fieldInfo("seq") mustEqual
            FieldInfo("seq", classOf[Double], false, true)
       }
+    }
+
+    "includes superclass's fields" in {
+      val c = new ClassInfo(classOf[ExtendedModel])
+      c.fieldInfo.keys must contain("string", "int", "estring", "eint").only
     }
   }
 

@@ -28,6 +28,12 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
 
   protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] =
     recordCompanion.schema.relations
+
+  override def toMap: Map[String, Any] = if (isNewRecord) {
+    super.toMap - "id"
+  } else {
+    super.toMap
+  }
 }
 
 /**

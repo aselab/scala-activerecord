@@ -20,17 +20,25 @@ class ClassInfo[T <: AnyRef](clazz: Class[T]) {
     }
   }.asInstanceOf[() => T]
 
-  lazy val allFields: List[java.lang.reflect.Field] = {
-    clazz.getDeclaredFields.filterNot {f =>
-      f.isAnnotationPresent(classOf[annotations.Ignore]) ||
-      classOf[RecordRelation].isAssignableFrom(f.getType) ||
-      f.getName.contains("$")
-    }.toList
+  lazy val allFields: List[Field] = {
+    def getFields(c: Class[_]): List[Field] = {
+      c.getDeclaredFields.toList.filterNot {f =>
+        f.isAnnotationPresent(classOf[annotations.Ignore]) ||
+        f.getName.startsWith("_") ||
+        f.getName.contains("$")
+      } ++ Option(c.getSuperclass).map(getFields).getOrElse(Nil)
+    }
+
+    getFields(clazz)
   }
 
-  lazy val fieldInfo: Map[String, FieldInfo] = {
-    allFields.map { f => (f.getName, FieldInfo(f, this)) }.toMap
-  }
+  lazy val fieldInfo: Map[String, FieldInfo] = allFields.flatMap { f =>
+    try {
+      Some(f.getName -> FieldInfo(f, this))
+    } catch {
+      case e: ActiveRecordException => None
+    }
+  }.toMap
 
   lazy val scalaSigInfo = ScalaSigInfo(clazz)
 }
@@ -194,20 +202,26 @@ trait ReflectionUtil {
   }
 
   implicit def toReflectable(o: Any) = new {
-    def c = o.getClass
-
     def getValue[T](name: String): T =
-      c.getMethod(name).invoke(o).asInstanceOf[T]
+      o.getClass.getMethod(name).invoke(o).asInstanceOf[T]
 
     def setValue(name: String, value: Any): Unit = {
-      val f = c.getDeclaredField(name)
+      def getField(c: Class[_], n: String): Field = try {
+        c.getDeclaredField(n)
+      } catch {
+        case e: NoSuchFieldException =>
+          Option(c.getSuperclass).map(getField(_, n)).getOrElse(throw e)
+      }
+
+      val f = getField(o.getClass, name)
       f.setAccessible(true)
       f.set(o, value)
     }
 
-    def getFields[T](implicit m: Manifest[T]): Array[Field] = c.getDeclaredFields.filter {
-      f => m.erasure.isAssignableFrom(f.getType)
-    }
+    def getFields[T](implicit m: Manifest[T]): Array[Field] =
+      o.getClass.getDeclaredFields.filter {
+        f => m.erasure.isAssignableFrom(f.getType)
+      }
 
     def toOption[T]: Option[T] = o match {
       case null | None => None

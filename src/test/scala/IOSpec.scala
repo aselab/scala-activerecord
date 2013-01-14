@@ -204,6 +204,11 @@ object IOSpec extends ActiveRecordSpecification with Mockito {
         "uuid" -> new UUID(5L, 5L)
       ))
     }
+
+    "persisted.toMap should include id" in {
+      val m = PrimitiveModel.newModel(5).create
+      m.toMap must contain("id" -> m.id)
+    }
  
     "toMap (relation)" in {
       val g = Group("group1").create
