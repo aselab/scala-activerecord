@@ -10,12 +10,12 @@ libraryDependencies ++= Seq(
   "com.github.aselab" % "squeryl" % "0.9.6-SNAPSHOT",
   "com.typesafe" % "config" % "1.0.0",
   "org.specs2" %% "specs2" % "1.12.3" % "test",
-  "junit" % "junit" % "4.10" % "test",
-  "org.mockito" % "mockito-all" % "1.9.0" % "test",
+  "junit" % "junit" % "4.11" % "test",
+  "org.mockito" % "mockito-all" % "1.9.5" % "test",
   "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
-  "ch.qos.logback" % "logback-classic" % "1.0.7" % "test",
-  "com.h2database" % "h2" % "1.3.168" % "test",
-  "io.backchat.inflector" %% "scala-inflector" % "1.3.4",
+  "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
+  "com.h2database" % "h2" % "1.3.170" % "test",
+  "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
   "org.scalaj" %% "scalaj-time" % "0.6",
   "commons-validator" % "commons-validator" % "1.4.0"
 )
