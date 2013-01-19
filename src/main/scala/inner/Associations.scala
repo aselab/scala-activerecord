@@ -7,26 +7,27 @@ import squeryl.Implicits._
 import ReflectionUtil._
 
 trait Associations {
-  trait Association[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]] {
+  trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
     val owner: O
-    val associationClass: Class[T]
+    val manifest: Manifest[T]
+    val associationClass = manifest.erasure
 
     protected lazy val companion = classToCompanion(associationClass)
-      .asInstanceOf[ActiveRecordBaseCompanion[K2, T]]
+      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
     protected lazy val associationSource =
-      ActiveRecord.Relation(companion.table, companion, {m: T => m})
+      ActiveRecord.Relation(companion.table, {m: T => m})(manifest)
 
     protected def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)) 
   }
 
-  class BelongsToAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
-    val owner: O, val associationClass: Class[T], foreignKey: String
-  ) extends Association[K1, K2, O, T] {
+  class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+    val owner: O, foreignKey: String
+  )(implicit val manifest: Manifest[T]) extends Association[O, T] {
 
-    def this(owner: O, associationClass: Class[T]) = this(owner, associationClass,
-      Config.schema.foreignKeyFromClass(associationClass))
+    def this(owner: O)(implicit m: Manifest[T]) = this(owner,
+      Config.schema.foreignKeyFromClass(m.erasure))
 
     lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
     
@@ -46,14 +47,13 @@ trait Associations {
     def :=(m: T): T = assign(m)
   }
 
-  class HasManyAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2]](
-    val owner: O, val associationClass: Class[T],
-    additionalConditions: Map[String, Any], foreignKey: String
-  ) extends Association[K1, K2, O, T] {
+  class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+    val owner: O, additionalConditions: Map[String, Any], foreignKey: String
+  )(implicit val manifest: Manifest[T]) extends Association[O, T] {
 
-    def this(owner: O, associationClass: Class[T],
-      additionalConditions: Map[String, Any]) = this(owner, associationClass,
-      additionalConditions, Config.schema.foreignKeyFromClass(owner.getClass))
+    def this(owner: O, additionalConditions: Map[String, Any])
+      (implicit m: Manifest[T]) = this(owner, additionalConditions,
+        Config.schema.foreignKeyFromClass(owner.getClass))
 
     private def conditions = additionalConditions + (foreignKey -> owner.id)
 
@@ -82,11 +82,10 @@ trait Associations {
     def <<(m: T): Boolean = associate(m)
   }
 
-  class HasManyThroughAssociation[K1, K2, O <: ActiveRecordBase[K1], T <: ActiveRecordBase[K2], I <: ActiveRecordBase[_]](
-    val owner: O, val associationClass: Class[T],
-    val through: HasManyAssociation[K1, _, O, I],
+  class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
+    val owner: O, val through: HasManyAssociation[O, I],
     additionalConditions: Map[String, Any]
-  )(implicit m: Manifest[I]) extends Association[K1, K2, O, T] {
+  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends Association[O, T] {
     protected lazy val throughCompanion = classToCompanion(m.erasure)
       .asInstanceOf[ActiveRecordBaseCompanion[_, I]]
 

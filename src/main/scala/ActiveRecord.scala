@@ -56,6 +56,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   import ReflectionUtil._
   import ActiveRecord._
 
+  implicit val manifest: Manifest[T] = Manifest.classType(targetClass)
+
   implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
     def getId(m: T) = m.id
     def isPersisted(m: T) = m.isPersisted
@@ -77,17 +79,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   }
 
   /**
-   * implicit conversion for query chain.
-   */
-  implicit def toRelation(r: ActiveRecordOneToMany[T]): Relation1[K, T, T] =
-    queryToRelation[K, T](r.relation)(this)
-
-  implicit def toModel[A <: ActiveRecord](r: ActiveRecordManyToOne[A]): Option[A] = r.one
-
-  /**
    * all search.
    */
-  implicit def all: Relation1[K, T, T] = companionToRelation(this)
+  def all: Relation1[T, T] = companionToRelation(this)
 
   /**
    * same as find method.
@@ -159,11 +153,5 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
  * This class provides database table mapping and query logic.
  */
 trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
-  import ActiveRecord._
-
-  implicit def toRelationA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): Relation[Long, T, T] = queryToRelation[Long, T](r.relation)(this)
-
-  implicit def toModelList(r: ActiveRecordOneToMany[T]): List[T] = r.toList
-  implicit def toModelListA[A <: ActiveRecordBase[_]](r: ActiveRecordManyToMany[T, A]): List[T] = r.toList
 }
 

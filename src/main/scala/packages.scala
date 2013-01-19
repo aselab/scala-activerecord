@@ -11,31 +11,33 @@ object dsl extends PrimitiveTypeMode with Annotations {
       .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
   }
 
-  implicit def relationToIterable[T](relation: Relation[_, _, T]): Iterable[T] =
+  implicit def relationToIterable[T](relation: Relation[_, T])
+    (implicit m: Manifest[T]): Iterable[T] =
     inTransaction { queryToIterable(relation.toQuery).toList }
 
-  implicit def companionToRelation[K, T <: ActiveRecordBase[K]]
-    (c: ActiveRecordBaseCompanion[K, T]): Relation1[K, T, T] =
-    queryToRelation[K, T](c.table)(c)
+  implicit def companionToRelation[T <: ActiveRecordBase[_]]
+    (c: ActiveRecordBaseCompanion[_, T])(implicit m: Manifest[T]): Relation1[T, T] =
+    queryToRelation[T](c.table)
 
-  implicit def companionToIterable[K, T <: ActiveRecordBase[K]]
-    (c: ActiveRecordBaseCompanion[K, T]): Iterable[T] =
+  implicit def companionToIterable[T <: ActiveRecordBase[_]]
+    (c: ActiveRecordBaseCompanion[_, T])(implicit m: Manifest[T]): Iterable[T] =
     relationToIterable(c)
 
-  implicit def queryToRelation[K, T <: ActiveRecordBase[K]](query: Queryable[T])
-    (implicit c: ActiveRecordBaseCompanion[K, T]): Relation1[K, T, T] =
-    Relation(query, c, identity)
+  implicit def queryToRelation[T <: ActiveRecordBase[_]](query: Queryable[T])
+    (implicit m: Manifest[T]): Relation1[T, T] =
+    Relation(query, identity)
 
   implicit def associationToRelation1[T <: ActiveRecordBase[_]]
-    (association: BelongsToAssociation[_, _, _, T]) = association.relation
+    (association: BelongsToAssociation[_, T]) = association.relation
 
   implicit def associationToRelation2[T <: ActiveRecordBase[_]]
-    (association: HasManyAssociation[_, _, _, T]) = association.relation
+    (association: HasManyAssociation[_, T]) = association.relation
 
   implicit def associationToIterable[T <: ActiveRecordBase[_]]
-    (association: Association[_, _, _, T]): Iterable[T] = association match {
-      case a: BelongsToAssociation[_, _, _, T] => relationToIterable(a.relation)
-      case a: HasManyAssociation[_, _, _, T] => relationToIterable(a.relation)
+    (association: Association[_, T])(implicit m: Manifest[T]): Iterable[T] =
+    association match {
+      case a: BelongsToAssociation[_, T] => relationToIterable(a.relation)
+      case a: HasManyAssociation[_, T] => relationToIterable(a.relation)
     }
 
 }

@@ -15,7 +15,7 @@ object AssociationSpec extends ActiveRecordSpecification {
 
   "BelongsToAssociation" should {
     trait assoc extends Data {
-      val association = new BelongsToAssociation[Long, Long, User, Group](user, classOf[Group])
+      val association = new BelongsToAssociation[User, Group](user)
     }
 
     "assign persisted record" in new assoc {
@@ -27,7 +27,7 @@ object AssociationSpec extends ActiveRecordSpecification {
 
   "HasManyAssociation" should {
     trait assoc extends Data {
-      val association = new HasManyAssociation[Long, Long, Group, User](group, classOf[User], Map())
+      val association = new HasManyAssociation[Group, User](group, Map())
     }
 
     "associate persisted record" in new assoc {

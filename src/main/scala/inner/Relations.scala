@@ -10,31 +10,32 @@ import ReflectionUtil._
 
 trait Relations {
   object Relation {
-    def apply[K, T <: ActiveRecordBase[K], S](
+    def apply[T <: ActiveRecordBase[_], S](
       conditions: List[T => LogicalBoolean],
       orders: List[T => OrderByExpression],
       pages: Option[(Int, Int)],
       queryable: Queryable[T],
-      companion: ActiveRecordBaseCompanion[K, T],
       selector: T => S
-    ): Relation1[K, T, S] =
-      Relation1(conditions, orders, pages, queryable, companion, selector)
+    )(implicit m: Manifest[T]): Relation1[T, S] =
+      Relation1(conditions, orders, pages, queryable, selector)(m)
 
-    def apply[K, T <: ActiveRecordBase[K], S](
+    def apply[T <: ActiveRecordBase[_], S](
       queryable: Queryable[T],
-      companion: ActiveRecordBaseCompanion[K, T],
       selector: T => S
-    ): Relation1[K, T, S] = apply(Nil, Nil, None, queryable, companion, selector)
+    )(implicit m: Manifest[T]): Relation1[T, S] =
+      apply(Nil, Nil, None, queryable, selector)(m)
   }
 
-  trait Relation[K, T <: ActiveRecordBase[K], S] {
+  trait Relation[T <: ActiveRecordBase[_], S] {
     type JOINED_TYPE
     val conditions: List[JOINED_TYPE => LogicalBoolean]
     val orders: List[JOINED_TYPE => OrderByExpression]
     val pages: Option[(Int, Int)]
     val queryable: Queryable[T]
-    val companion: ActiveRecordBaseCompanion[K, T]
     val selector: JOINED_TYPE => S
+    val manifest: Manifest[T]
+    lazy val companion: ActiveRecordBaseCompanion[_, T] =
+      classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
     protected def whereState(m: JOINED_TYPE) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
@@ -137,21 +138,20 @@ trait Relations {
     def toSql: String = inTransaction { toQuery.statement }
   }
 
-  case class Relation1[K, T <: ActiveRecordBase[K], S](
+  case class Relation1[T <: ActiveRecordBase[_], S](
     conditions: List[T => LogicalBoolean],
     orders: List[T => OrderByExpression],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
-    companion: ActiveRecordBaseCompanion[K, T],
     selector: T => S
-  ) extends Relation[K, T, S] {
+  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
 
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ condition).asInstanceOf[this.type]
     }
 
-    def select[R](selector: T => R): Relation[K, T, R] = {
+    def select[R](selector: T => R): Relation[T, R] = {
       copy(selector = selector)
     }
 
@@ -178,7 +178,7 @@ trait Relations {
     )
 
     def joins[J <: ActiveRecordBase[_]](on: (T, J) => LogicalBoolean)
-      (implicit m: Manifest[J]): Relation2[K, T, J, S] = {
+      (implicit m: Manifest[J]): Relation2[T, J, S] = {
       val c = classToCompanion(m.erasure)
         .asInstanceOf[ActiveRecordBaseCompanion[_, J]]
 
@@ -186,13 +186,13 @@ trait Relations {
         conditions.map(wrap),
         orders.map(wrap), pages,
         queryable, c.table, Function.tupled(on),
-        companion, wrap(selector)
-      )
+        wrap[(T, J), S](selector)
+      )(manifest)
     }
 
     def joins[J1 <: ActiveRecordBase[_], J2 <: ActiveRecordBase[_]](
       on: (T, J1, J2) => (LogicalBoolean, LogicalBoolean)
-    )(implicit m1: Manifest[J1], m2: Manifest[J2]): Relation3[K, T, J1, J2, S] = {
+    )(implicit m1: Manifest[J1], m2: Manifest[J2]): Relation3[T, J1, J2, S] = {
       val c1 = classToCompanion(m1.erasure)
         .asInstanceOf[ActiveRecordBaseCompanion[_, J1]]
       val c2 = classToCompanion(m2.erasure)
@@ -202,21 +202,20 @@ trait Relations {
         conditions.map(wrap),
         orders.map(wrap), pages,
         queryable, c1.table, c2.table, Function.tupled(on),
-        companion, wrap(selector)
-      )
+        wrap[(T, J1, J2), S](selector)
+      )(manifest)
     }
   }
 
-  case class Relation2[K, T <: ActiveRecordBase[K], J1 <: ActiveRecordBase[_], S](
+  case class Relation2[T <: ActiveRecordBase[_], J1 <: ActiveRecordBase[_], S](
     conditions: List[((T, J1)) => LogicalBoolean],
     orders: List[((T, J1)) => OrderByExpression],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     joinTable: Queryable[J1],
     on: ((T, J1)) => LogicalBoolean,
-    companion: ActiveRecordBaseCompanion[K, T],
     selector: ((T, J1)) => S
-  ) extends Relation[K, T, S] {
+  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
 
     def where(condition: T => LogicalBoolean): this.type = {
@@ -226,7 +225,7 @@ trait Relations {
     def where(condition: (T, J1) => LogicalBoolean): this.type =
       copy(conditions = conditions :+ Function.tupled(condition)).asInstanceOf[this.type]
 
-    def select[R](selector: (T, J1) => R): Relation[K, T, R] =
+    def select[R](selector: (T, J1) => R): Relation[T, R] =
       copy(selector = Function.tupled(selector))
 
     def orderBy(conditions: ((T, J1) => OrderByExpression)*): this.type =
@@ -252,7 +251,7 @@ trait Relations {
     )
   }
 
-  case class Relation3[K, T <: ActiveRecordBase[K], J1 <: ActiveRecordBase[_],
+  case class Relation3[T <: ActiveRecordBase[_], J1 <: ActiveRecordBase[_],
     J2 <: ActiveRecordBase[_], S](
     conditions: List[((T, J1, J2)) => LogicalBoolean],
     orders: List[((T, J1, J2)) => OrderByExpression],
@@ -261,9 +260,8 @@ trait Relations {
     joinTable1: Queryable[J1],
     joinTable2: Queryable[J2],
     on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean),
-    companion: ActiveRecordBaseCompanion[K, T],
     selector: ((T, J1, J2)) => S
-  ) extends Relation[K, T, S] {
+  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
 
     def where(condition: T => LogicalBoolean): this.type = {
@@ -273,7 +271,7 @@ trait Relations {
     def where(condition: (T, J1, J2) => LogicalBoolean): this.type =
       copy(conditions = conditions :+ Function.tupled(condition)).asInstanceOf[this.type]
 
-    def select[R](selector: (T, J1, J2) => R): Relation[K, T, R] =
+    def select[R](selector: (T, J1, J2) => R): Relation[T, R] =
       copy(selector = Function.tupled(selector))
 
     def orderBy(conditions: ((T, J1, J2) => OrderByExpression)*): this.type =
