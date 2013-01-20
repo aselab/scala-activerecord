@@ -23,10 +23,6 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       PrimitiveModel.all.toList must have size 100
     }
 
-    "#apply calls find method" >> {
-      PrimitiveModel.apply(3) mustEqual PrimitiveModel.find(3)
-    }
-
     "#find searches by id and returns option result" >> {
       PrimitiveModel.find(13) must beSome.which {_.id == 13}
     }

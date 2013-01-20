@@ -22,20 +22,6 @@ package models {
     val roles = table[Role]
     val projectMemberships = table[ProjectMembership]
 
-    val foos = table[Foo]
-    val bars = table[Bar]
-
-    val groupToUsers = oneToMany(groups, users)
-
-    // hasManyThrough
-    val projectsToUsers = manyToMany(projects, projectMemberships, users)
-    val userToProjectMemberships = oneToMany(users, projectMemberships)
-    val projectToProjectMemberships = oneToMany(projects, projectMemberships)
-    val roleToProjectMemberships = oneToMany(roles, projectMemberships)
-
-    // hasAndBelongsToMany
-    val foosToBars = manyToMany(foos, bars)
-
     def createTestData = (1 to 100).foreach { i =>
       PrimitiveModel.newModel(i, i > 50).save
     }
@@ -44,8 +30,8 @@ package models {
   case class User(name: String) extends ActiveRecord {
     val groupId: Option[Long] = None
     lazy val group = belongsTo[Group]
-    lazy val projects = hasManyThrough[Project, ProjectMembership]
     lazy val memberships = hasMany[ProjectMembership]
+    lazy val projects = hasManyThrough[Project, ProjectMembership](memberships)
   }
 
   case class Group(name: String) extends ActiveRecord {
@@ -53,16 +39,15 @@ package models {
   }
 
   case class Project(name: String) extends ActiveRecord {
-    lazy val users = hasManyThrough[User, ProjectMembership]
     lazy val memberships = hasMany[ProjectMembership]
+    lazy val users = hasManyThrough[User, ProjectMembership](memberships)
   }
 
   case class Role(name: String) extends ActiveRecord {
     lazy val memberships = hasMany[ProjectMembership]
   }
 
-  case class ProjectMembership(roleId: Long) extends IntermediateRecord {
-    def id = compositeKey(projectId, userId)
+  case class ProjectMembership(roleId: Long) extends ActiveRecord {
     val projectId: Long = 0
     val userId: Long = 0
 
@@ -71,21 +56,11 @@ package models {
     lazy val role = belongsTo[Role]
   }
 
-  case class Foo(name: String) extends ActiveRecord {
-    lazy val bars = hasAndBelongsToMany[Bar]
-  }
-
-  case class Bar(name: String) extends ActiveRecord {
-    lazy val foos = hasAndBelongsToMany[Foo]
-  }
-
   object User extends ActiveRecordCompanion[User]
   object Group extends ActiveRecordCompanion[Group]
   object Project extends ActiveRecordCompanion[Project]
   object Role extends ActiveRecordCompanion[Role]
-  object ProjectMembership extends IntermediateRecordCompanion[ProjectMembership]
-  object Foo extends ActiveRecordCompanion[Foo]
-  object Bar extends ActiveRecordCompanion[Bar]
+  object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 
   case class SeqModel(list: List[Int], seq: Seq[Double])
 

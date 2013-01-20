@@ -38,6 +38,7 @@ object dsl extends PrimitiveTypeMode with Annotations {
     association match {
       case a: BelongsToAssociation[_, T] => relationToIterable(a.relation)
       case a: HasManyAssociation[_, T] => relationToIterable(a.relation)
+      case a: HasManyThroughAssociation[_, T, _] => relationToIterable(a.relation)
     }
 
 }

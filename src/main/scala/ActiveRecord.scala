@@ -4,7 +4,7 @@ import com.github.aselab.activerecord.dsl._
 import org.squeryl._
 
 trait ActiveRecordBase[T] extends ProductModel with CRUDable
-  with ActiveRecordBaseRelationSupport with ValidationSupport with IO
+  with ActiveRecord.AssociationSupport with ValidationSupport with IO
 {
   def id: T
   def isPersisted: Boolean
@@ -26,9 +26,6 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
 
   protected def doDelete = recordCompanion.delete(id)
 
-  protected lazy val relations: Map[(String, String), RelationWrapper[ActiveRecord, ActiveRecordBase[_]]] =
-    recordCompanion.schema.relations
-
   override def toMap: Map[String, Any] = if (isNewRecord) {
     super.toMap - "id"
   } else {
@@ -42,7 +39,6 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
  * This class provides object-relational mapping and CRUD logic and callback hooks.
  */
 abstract class ActiveRecord extends ActiveRecordBase[Long]
-  with ActiveRecordRelationSupport
 {
   /** primary key */
   val id: Long = 0L
@@ -82,11 +78,6 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
    * all search.
    */
   def all: Relation1[T, T] = companionToRelation(this)
-
-  /**
-   * same as find method.
-   */
-  def apply(id: K): Option[T] = find(id)
 
   /**
    * search by id.

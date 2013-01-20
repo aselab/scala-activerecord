@@ -134,7 +134,7 @@ trait Associations {
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(m.erasure))
+          Config.schema.foreignKeyFromClass(self.getClass))
         new HasManyAssociation[this.type, T](self, conditions, key)
       }
 
@@ -144,9 +144,9 @@ trait Associations {
         foreignKey: String = null, associationForeignKey: String = null
       )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
         val key1 = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(self.getClass))
-        val key2 = Option(associationForeignKey).getOrElse(
           Config.schema.foreignKeyFromClass(m1.erasure))
+        val key2 = Option(associationForeignKey).getOrElse(
+          Config.schema.foreignKeyFromClass(self.getClass))
 
         new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key1, key2)(m1, m2)
       }

@@ -8,13 +8,12 @@ import squeryl.Implicits._
 /**
  * Base class of database schema.
  */
-trait ActiveRecordTables extends Schema with TableRelationSupport {
+trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
 
-  lazy val tableMap = this.getFields[Table[ActiveRecordBase[_]]].collect {
-    case f if !classOf[IntermediateTable[_]].isAssignableFrom(f.getType) =>
-      val name = getGenericTypes(f).last.getName
-      (name, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
+  lazy val tableMap = this.getFields[Table[ActiveRecordBase[_]]].map {f =>
+    val name = getGenericTypes(f).last.getName
+    (name, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
   }.toMap
 
   /** All tables */
@@ -108,11 +107,7 @@ trait ActiveRecordTables extends Schema with TableRelationSupport {
   }
 
   def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
-    val t = if (m <:< manifest[IntermediateRecord]) {
-      new IntermediateTable[T](name, this)
-    } else {
-      super.table[T](name)(m, dsl.keyedEntityDef(m))
-    }
+    val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
 
     val c = classToCompanion(m.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
     val fields = c.fieldInfo.values.toSeq
