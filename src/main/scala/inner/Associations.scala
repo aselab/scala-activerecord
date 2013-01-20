@@ -25,10 +25,6 @@ trait Associations {
   class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
     val owner: O, foreignKey: String
   )(implicit val manifest: Manifest[T]) extends Association[O, T] {
-
-    def this(owner: O)(implicit m: Manifest[T]) = this(owner,
-      Config.schema.foreignKeyFromClass(m.erasure))
-
     lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
     
     def condition: T => LogicalBoolean = {
@@ -48,17 +44,12 @@ trait Associations {
   }
 
   class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
-    val owner: O, additionalConditions: Map[String, Any], foreignKey: String
+    val owner: O, conditions: Map[String, Any], foreignKey: String
   )(implicit val manifest: Manifest[T]) extends Association[O, T] {
-
-    def this(owner: O, additionalConditions: Map[String, Any])
-      (implicit m: Manifest[T]) = this(owner, additionalConditions,
-        Config.schema.foreignKeyFromClass(owner.getClass))
-
-    private def conditions = additionalConditions + (foreignKey -> owner.id)
+    private def allConditions = conditions + (foreignKey -> owner.id)
 
     def condition: T => LogicalBoolean = {
-      m => LogicalBoolean.and(conditions.map {
+      m => LogicalBoolean.and(allConditions.map {
         case (key, value) =>
           fieldInfo(key).toEqualityExpression(m.getValue(key), value)
       }.toSeq)
@@ -69,7 +60,7 @@ trait Associations {
     def build: T = assign(companion.newInstance)
 
     def assign(m: T): T = {
-      conditions.foreach {
+      allConditions.foreach {
         case (key, value) => fieldInfo(key).setValue(m, value)
       }
       m
@@ -84,7 +75,8 @@ trait Associations {
 
   class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
     val owner: O, val through: HasManyAssociation[O, I],
-    additionalConditions: Map[String, Any]
+    conditions: Map[String, Any],
+    foreignKey: String, associationForeignKey: String
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends Association[O, T] {
     protected lazy val throughCompanion = classToCompanion(m.erasure)
       .asInstanceOf[ActiveRecordBaseCompanion[_, I]]
@@ -92,9 +84,6 @@ trait Associations {
     protected def throughFieldInfo(name: String) =
       throughCompanion.fieldInfo.getOrElse(name,
         throw ActiveRecordException.notFoundField(name)) 
-
-    val foreignKey = Config.schema.foreignKeyFromClass(owner.getClass)
-    val associationForeignKey = Config.schema.foreignKeyFromClass(associationClass)
 
     def relation = associationSource.joins[I]{
       (m, inter) =>
@@ -104,14 +93,14 @@ trait Associations {
         new EqualityExpression(e1, e2)
     }.where(
       (m, inter) =>
-      LogicalBoolean.and(through.condition(inter) :: additionalConditions.map {
+      LogicalBoolean.and(through.condition(inter) :: conditions.map {
         case (key, value) =>
           fieldInfo(key).toEqualityExpression(m.getValue(key), value)
       }.toList)
     )
 
     def assign(m: T): I = {
-      additionalConditions.foreach {
+      conditions.foreach {
         case (key, value) => fieldInfo(key).setValue(m, value)
       }
       val inter = throughCompanion.newInstance
@@ -125,5 +114,41 @@ trait Associations {
     }
 
     def <<(m: T): Boolean = associate(m)
+  }
+
+  trait AssociationSupport { self: ActiveRecordBase[_] =>
+    protected def belongsTo[T <: ActiveRecordBase[_]]
+      (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
+        belongsTo[T](Config.schema.foreignKeyFromClass(m.erasure))
+          .asInstanceOf[BelongsToAssociation[this.type, T]]
+
+    protected def belongsTo[T <: ActiveRecordBase[_]](foreignKey: String)
+      (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
+        new BelongsToAssociation[this.type, T](self, foreignKey)
+
+    protected def hasMany[T <: ActiveRecordBase[_]]
+      (implicit m: Manifest[T]): HasManyAssociation[this.type, T] =
+        hasMany[T]().asInstanceOf[HasManyAssociation[this.type, T]]
+
+    protected def hasMany[T <: ActiveRecordBase[_]]
+      (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
+      (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
+        val key = Option(foreignKey).getOrElse(
+          Config.schema.foreignKeyFromClass(m.erasure))
+        new HasManyAssociation[this.type, T](self, conditions, key)
+      }
+
+    protected def hasManyThrough[T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
+        through: HasManyAssociation[this.type, I],
+        conditions: Map[String, Any] = Map.empty,
+        foreignKey: String = null, associationForeignKey: String = null
+      )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
+        val key1 = Option(foreignKey).getOrElse(
+          Config.schema.foreignKeyFromClass(self.getClass))
+        val key2 = Option(associationForeignKey).getOrElse(
+          Config.schema.foreignKeyFromClass(m1.erasure))
+
+        new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key1, key2)(m1, m2)
+      }
   }
 }
