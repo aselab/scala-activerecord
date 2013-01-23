@@ -12,6 +12,7 @@ trait Associations {
     val manifest: Manifest[T]
     val associationClass = manifest.erasure
 
+    def relation: ActiveRecord.Relation[T, T]
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 

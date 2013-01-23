@@ -35,11 +35,7 @@ object dsl extends PrimitiveTypeMode with Annotations {
 
   implicit def associationToIterable[T <: ActiveRecordBase[_]]
     (association: Association[_, T])(implicit m: Manifest[T]): Iterable[T] =
-    association match {
-      case a: BelongsToAssociation[_, T] => relationToIterable(a.relation)
-      case a: HasManyAssociation[_, T] => relationToIterable(a.relation)
-      case a: HasManyThroughAssociation[_, T, _] => relationToIterable(a.relation)
-    }
+      relationToIterable(association.relation)
 
 }
 
