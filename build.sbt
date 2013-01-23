@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
   "com.h2database" % "h2" % "1.3.170" % "test",
   "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-  "org.scalaj" %% "scalaj-time" % "0.6",
+  "com.github.nscala-time" %% "nscala-time" % "0.2.0",
   "commons-validator" % "commons-validator" % "1.4.0"
 )
 

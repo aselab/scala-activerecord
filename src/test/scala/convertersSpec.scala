@@ -2,7 +2,7 @@ package com.github.aselab.activerecord
 
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
-import org.scala_tools.time.Imports._
+import com.github.nscala_time.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 
 object convertersSpec extends ActiveRecordSpecification {
