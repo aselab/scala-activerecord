@@ -23,6 +23,13 @@ object AssociationSpec extends ActiveRecordSpecification {
       association.get must beSome(group)
       user.groupId must beSome(group.id)
     }
+
+    "implicit conversions" in new assoc {
+      association.assign(group)
+      association.count mustEqual 1
+      association.headOption must beSome(group)
+      association.where(_.name === "group1").toList mustEqual List(group)
+    }
   }
 
   "HasManyAssociation" should {
@@ -34,6 +41,12 @@ object AssociationSpec extends ActiveRecordSpecification {
       association.associate(user)
       association.toList mustEqual List(user)
       user.groupId must beSome(group.id)
+    }
+
+    "implicit conversions" in new assoc {
+      association.associate(user)
+      association.headOption must beSome(user)
+      association.where(_.name === "user1").headOption must beSome(user)
     }
   }
 }

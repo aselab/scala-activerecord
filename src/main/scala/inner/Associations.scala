@@ -9,10 +9,11 @@ import ReflectionUtil._
 trait Associations {
   trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
     val owner: O
-    val manifest: Manifest[T]
     val associationClass = manifest.erasure
+    val manifest: Manifest[T]
 
     def relation: ActiveRecord.Relation[T, T]
+
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
@@ -27,12 +28,14 @@ trait Associations {
     val owner: O, foreignKey: String
   )(implicit val manifest: Manifest[T]) extends Association[O, T] {
     lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
-    
+
     def condition: T => LogicalBoolean = {
       m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
     }
 
-    def relation = associationSource.where(condition).limit(1)
+    def relation1: ActiveRecord.Relation1[T, T] = associationSource.where(condition).limit(1)
+
+    def relation = relation1
 
     def get: Option[T] = relation.headOption
 
@@ -56,7 +59,9 @@ trait Associations {
       }.toSeq)
     }
 
-    def relation = associationSource.where(condition)
+    def relation1: ActiveRecord.Relation1[T, T] = associationSource.where(condition)
+
+    def relation = relation1
 
     def build: T = assign(companion.newInstance)
 
@@ -86,7 +91,7 @@ trait Associations {
       throughCompanion.fieldInfo.getOrElse(name,
         throw ActiveRecordException.notFoundField(name)) 
 
-    def relation = associationSource.joins[I]{
+    def relation2: ActiveRecord.Relation2[T, I, T] = associationSource.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
         val e1 = f.toExpression(m.id)
@@ -99,6 +104,8 @@ trait Associations {
           fieldInfo(key).toEqualityExpression(m.getValue(key), value)
       }.toList)
     )
+
+    def relation = relation2
 
     def assign(m: T): I = {
       conditions.foreach {

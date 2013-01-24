@@ -16,6 +16,14 @@ object RelationsSpec extends ActiveRecordSpecification {
   "Relations" should {
     def relation = PrimitiveModel.all
 
+    "#head" >> {
+      relation.head mustEqual PrimitiveModel.all.toList.head
+    }
+
+    "#headOption" >> {
+      relation.headOption mustEqual PrimitiveModel.all.toList.headOption
+    }
+
     "#orderBy" >> {
       "single field" >> {
         relation.orderBy(m => m.int desc).toList mustEqual PrimitiveModel.all.toList.reverse

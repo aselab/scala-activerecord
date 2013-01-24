@@ -48,7 +48,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 
 object ActiveRecord extends inner.Relations with inner.Associations
 
-trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with FormSupport[T] {
+trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with inner.CompanionConversion[T] with FormSupport[T] {
   import ReflectionUtil._
   import ActiveRecord._
 
@@ -77,7 +77,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
   /**
    * all search.
    */
-  def all: Relation1[T, T] = companionToRelation(this)
+  def all: Relation1[T, T] = queryToRelation[T](table)
 
   /**
    * search by id.
@@ -123,9 +123,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     case value => inTransaction {
       find(m.id) match {
         case Some(old) if old.getValue[Any](name) != value =>
-          this.findBy(name, value).isEmpty
+          all.findBy(name, value).isEmpty
         case Some(_) => true
-        case None => this.findBy(name, value).isEmpty
+        case None => all.findBy(name, value).isEmpty
       }
     }
   }

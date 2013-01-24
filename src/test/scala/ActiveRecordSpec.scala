@@ -190,9 +190,11 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
         PrimitiveModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
       }
 
-      "ActiveRecordCompanion to Relation" >> {
+      "ActiveRecordCompanion to Relation" in {
         PrimitiveModel.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
-        PrimitiveModel.all.count mustEqual 100
+        PrimitiveModel.count mustEqual 100
+        PrimitiveModel.head mustEqual PrimitiveModel.toList.head
+        PrimitiveModel.headOption mustEqual Option(PrimitiveModel.toList.head)
       }
     }
 

@@ -48,6 +48,12 @@ trait Relations {
 
     protected def wrap[A <: {def _1: T}, R](f: T => R): A => R = {m: A => f(m._1)}
 
+    def head = headOption.get
+
+    def headOption = inTransaction {
+      limit(1).toQuery.headOption
+    }
+
     def where(condition: T => LogicalBoolean): this.type
 
     /**
