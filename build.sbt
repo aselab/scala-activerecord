@@ -40,13 +40,45 @@ parallelExecution in Test := false
 
 compileOrder in Compile := CompileOrder.JavaThenScala
 
-publishTo := Some(Resolver.file("file", file("target/publish")))
-
-publish <<= (publish, name).map {(_, name) =>
-  val script = Path.userHome / ".sbt/publish"
-  if (script.exists)
-    "%s %s %s".format(script.getAbsolutePath, file("target/publish").getAbsolutePath, name) !
+publishTo <<= version { (v: String) =>
+  val nexus = "https://oss.sonatype.org/"
+  if (v.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
 }
+
+publishMavenStyle := true
+
+publishArtifact in Test := false
+
+pomIncludeRepository := { _ => false }
+
+pomExtra := (
+  <url>https://github.com/aselab/scala-activerecord</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>git@github.com:aselab/scala-activerecord.git</url>
+    <connection>scm:git:git@github.com:aselab/scala-activerecord.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>a-ono</id>
+      <name>Akihiro Ono</name>
+      <url>https://github.com/a-ono</url>
+    </developer>
+    <developer>
+      <id>y-yoshinoya</id>
+      <name>Yuki Yoshinoya</name>
+      <url>https://github.com/y-yoshinoya</url>
+    </developer>
+  </developers>)
 
 ScctPlugin.instrumentSettings
 
