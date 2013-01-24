@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 )
 
 resolvers ++= Seq(
-  "aselab" at "http://aselab.github.com/maven/",
+  Resolver.sonatypeRepo("snapshots"),
   Classpaths.typesafeResolver
 )
 
@@ -91,8 +91,8 @@ lsSettings
 (LsKeys.tags in LsKeys.lsync) := Seq("orm", "db", "database")
 
 (externalResolvers in LsKeys.lsync) := Seq(
-  "aselab" at "http://aselab.github.com/maven/",
-  "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
+  Resolver.sonatypeRepo("snapshots"),
+  Classpaths.typesafeResolver
 )
 
 (description in LsKeys.lsync) :=
