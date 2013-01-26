@@ -20,7 +20,7 @@ trait Associations {
     protected lazy val associationSource =
       ActiveRecord.Relation(companion.table, {m: T => m})(manifest)
 
-    protected def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
+    protected[inner] def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)) 
   }
 
@@ -81,21 +81,13 @@ trait Associations {
 
   class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
     val owner: O, val through: HasManyAssociation[O, I],
-    conditions: Map[String, Any],
-    foreignKey: String, associationForeignKey: String
+    conditions: Map[String, Any], foreignKey: String
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends Association[O, T] {
-    protected lazy val throughCompanion = classToCompanion(m.erasure)
-      .asInstanceOf[ActiveRecordBaseCompanion[_, I]]
-
-    protected def throughFieldInfo(name: String) =
-      throughCompanion.fieldInfo.getOrElse(name,
-        throw ActiveRecordException.notFoundField(name)) 
-
     def relation2: ActiveRecord.Relation2[T, I, T] = associationSource.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
         val e1 = f.toExpression(m.id)
-        val e2 = f.toExpression(inter.getValue(associationForeignKey))
+        val e2 = f.toExpression(inter.getValue(foreignKey))
         new EqualityExpression(e1, e2)
     }.where(
       (m, inter) =>
@@ -111,9 +103,8 @@ trait Associations {
       conditions.foreach {
         case (key, value) => fieldInfo(key).setValue(m, value)
       }
-      val inter = throughCompanion.newInstance
-      throughFieldInfo(foreignKey).setValue(inter, owner.id)
-      throughFieldInfo(associationForeignKey).setValue(inter, m.id)
+      val inter = through.build
+      through.fieldInfo(foreignKey).setValue(inter, m.id)
       inter
     }
 
@@ -149,14 +140,12 @@ trait Associations {
     protected def hasManyThrough[T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
         through: HasManyAssociation[this.type, I],
         conditions: Map[String, Any] = Map.empty,
-        foreignKey: String = null, associationForeignKey: String = null
+        foreignKey: String = null
       )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
-        val key1 = Option(foreignKey).getOrElse(
+        val key = Option(foreignKey).getOrElse(
           Config.schema.foreignKeyFromClass(m1.erasure))
-        val key2 = Option(associationForeignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(self.getClass))
 
-        new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key1, key2)(m1, m2)
+        new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
       }
   }
 }

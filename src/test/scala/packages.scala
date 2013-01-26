@@ -40,17 +40,25 @@ package models {
 
   case class Project(name: String) extends ActiveRecord {
     lazy val memberships = hasMany[ProjectMembership]
+    lazy val managerMemberships = hasMany[ProjectMembership](
+      conditions = Map("roleId" -> Role.manager.id)
+    )
+    lazy val developerMemberships = hasMany[ProjectMembership](
+      conditions = Map("roleId" -> Role.developer.id)
+    )
+
     lazy val users = hasManyThrough[User, ProjectMembership](memberships)
+    lazy val managers = hasManyThrough[User, ProjectMembership](managerMemberships)
+    lazy val developers = hasManyThrough[User, ProjectMembership](developerMemberships)
   }
 
   case class Role(name: String) extends ActiveRecord {
     lazy val memberships = hasMany[ProjectMembership]
   }
 
-  case class ProjectMembership(roleId: Long) extends ActiveRecord {
-    val projectId: Long = 0
-    val userId: Long = 0
-
+  case class ProjectMembership(
+    projectId: Long = 0, userId: Long = 0, roleId: Option[Long] = None
+  ) extends ActiveRecord {
     lazy val project = belongsTo[Project]
     lazy val user = belongsTo[User]
     lazy val role = belongsTo[Role]
@@ -59,7 +67,13 @@ package models {
   object User extends ActiveRecordCompanion[User]
   object Group extends ActiveRecordCompanion[Group]
   object Project extends ActiveRecordCompanion[Project]
-  object Role extends ActiveRecordCompanion[Role]
+  object Role extends ActiveRecordCompanion[Role] {
+    def findOrCreate(name: String) =
+      all.findBy("name", name).getOrElse(Role(name).create)
+
+    lazy val manager = findOrCreate("manager")
+    lazy val developer = findOrCreate("developer")
+  }
   object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 
   case class SeqModel(list: List[Int], seq: Seq[Double])
