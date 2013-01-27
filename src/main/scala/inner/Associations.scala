@@ -17,7 +17,7 @@ trait Associations {
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
-    protected lazy val associationSource =
+    protected lazy val source =
       ActiveRecord.Relation(companion.table, {m: T => m})(manifest)
 
     protected[inner] def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
@@ -33,7 +33,7 @@ trait Associations {
       m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
     }
 
-    def relation1: ActiveRecord.Relation1[T, T] = associationSource.where(condition).limit(1)
+    def relation1: ActiveRecord.Relation1[T, T] = source.where(condition).limit(1)
 
     def relation = relation1
 
@@ -42,6 +42,12 @@ trait Associations {
     def assign(m: T): T = {
       fieldInfo.setValue(owner, m.id)
       m
+    }
+
+    def associate(m: T): T = {
+      val t = assign(m)
+      t.save
+      t
     }
 
     def :=(m: T): T = assign(m)
@@ -59,7 +65,7 @@ trait Associations {
       }.toSeq)
     }
 
-    def relation1: ActiveRecord.Relation1[T, T] = associationSource.where(condition)
+    def relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
 
     def relation = relation1
 
@@ -72,18 +78,20 @@ trait Associations {
       m
     }
 
-    def associate(m: T): Boolean = inTransaction {
-      assign(m).save
+    def associate(m: T): T = inTransaction {
+      val t = assign(m)
+      t.save
+      t
     }
 
-    def <<(m: T): Boolean = associate(m)
+    def <<(m: T): T = associate(m)
   }
 
   class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
     val owner: O, val through: HasManyAssociation[O, I],
     conditions: Map[String, Any], foreignKey: String
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends Association[O, T] {
-    def relation2: ActiveRecord.Relation2[T, I, T] = associationSource.joins[I]{
+    def relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
         val e1 = f.toExpression(m.id)
@@ -108,11 +116,13 @@ trait Associations {
       inter
     }
 
-    def associate(m: T): Boolean = inTransaction {
-      assign(m).save
+    def associate(m: T): I = inTransaction {
+      val i = assign(m)
+      i.save
+      i
     }
 
-    def <<(m: T): Boolean = associate(m)
+    def <<(m: T): I = associate(m)
   }
 
   trait AssociationSupport { self: ActiveRecordBase[_] =>
