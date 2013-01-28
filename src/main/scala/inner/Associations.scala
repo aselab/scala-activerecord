@@ -85,6 +85,17 @@ trait Associations {
     }
 
     def <<(m: T): T = associate(m)
+
+    def :=(list: List[T]): List[T] = {
+      deleteAll
+      list.map(associate)
+    }
+
+    def deleteAll(): List[T] = inTransaction {
+      val result = relation.toList
+      result.foreach(_.delete)
+      result
+    }
   }
 
   class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
@@ -123,6 +134,18 @@ trait Associations {
     }
 
     def <<(m: T): I = associate(m)
+
+    def :=(list: List[T]): List[I] = {
+      deleteAll
+      list.map(associate)
+    }
+
+    def deleteAll(): List[T] = inTransaction {
+      through.deleteAll
+      val result = relation.toList
+      result.foreach(_.delete)
+      result
+    }
   }
 
   trait AssociationSupport { self: ActiveRecordBase[_] =>

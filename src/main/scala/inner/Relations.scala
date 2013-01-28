@@ -142,6 +142,10 @@ trait Relations {
      */
     def page(offset: Int, count: Int): this.type
 
+    def exists(condition: T => LogicalBoolean): Boolean = inTransaction {
+      where(condition).limit(1).count != 0
+    }
+
     def count: Long
 
     def toQuery: Query[S]

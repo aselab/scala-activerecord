@@ -53,6 +53,17 @@ object AssociationSpec extends ActiveRecordSpecification {
       hasMany.headOption must beSome(user)
       hasMany.where(_.name === "user1").headOption must beSome(user)
     }
+
+    "deleteAll" in new OneToManyAssociation {
+      val user2 = User("user2").create
+      val user3 = User("user3").create
+      hasMany := List(user, user2)
+      hasMany.deleteAll mustEqual List(user, user2)
+      hasMany must beEmpty
+      User.exists(_.id === user.id) must beFalse
+      User.exists(_.id === user2.id) must beFalse
+      User.exists(_.id === user3.id) must beTrue
+    }
   }
 
   "HasManyThroughAssociation" should {
