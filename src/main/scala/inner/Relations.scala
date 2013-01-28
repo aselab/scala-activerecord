@@ -69,6 +69,11 @@ trait Relations {
       findAllBy(condition, conditions:_*).limit(1).toQuery.headOption
     }
 
+    def findByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
+      findBy((field, m.getValue(field)),
+        fields.map(f => (f, m.getValue(f))).toSeq:_*).getOrElse(m.create)
+    }
+
     /**
      * Search by multiple fieldnames and values.
      *

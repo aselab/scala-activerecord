@@ -68,11 +68,8 @@ package models {
   object Group extends ActiveRecordCompanion[Group]
   object Project extends ActiveRecordCompanion[Project]
   object Role extends ActiveRecordCompanion[Role] {
-    def findOrCreate(name: String) =
-      all.findBy("name", name).getOrElse(Role(name).create)
-
-    lazy val manager = findOrCreate("manager")
-    lazy val developer = findOrCreate("developer")
+    lazy val manager = all.findByOrCreate(Role("manager"), "name")
+    lazy val developer = all.findByOrCreate(Role("developer"), "name")
   }
   object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 
