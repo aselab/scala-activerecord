@@ -55,7 +55,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
     @Required(on="update") onUpdate: String = "a",
     persisted: Boolean = false
   ) extends ActiveRecord {
-    override def isNewRecord =  !persisted
+    override def isNewRecord = !persisted
   }
 
   object CustomAnnotationModel extends ActiveRecordCompanion[CustomAnnotationModel]
@@ -90,7 +90,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
 
       "@Confirmation" in {
         val c = classOf[UserModel]
-        
+
         "not equals confirmation field" in {
           val m = UserModel("aaa", "bbb")
           m.validate must beFalse
@@ -316,7 +316,7 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
         m3.errors must beEmpty
         m4.errors must beEmpty
       }
-      
+
       "@StringEnum" in {
         val c = classOf[ValidationModel]
         val m1 = ValidationModel(stringEnum = "z")
@@ -373,17 +373,22 @@ object ValidationSupportSpec extends ActiveRecordSpecification {
       }
     }
 
-    "validate on save" in {
-      "not extends ActiveRecord" in {
+    "validate on save" >> {
+      "not extends ActiveRecord" >> {
         val v = ValidationSupportModel("aaa")
         v.save must beFalse
         v.errors must not beEmpty
       }
 
-      "extends ActiveRecord" in {
+      "extends ActiveRecord" >> {
         val m = UserModel("a", "b")
         m.save must beFalse
         m.errors must not beEmpty
+      }
+
+      "save(true) throws Exception" >> {
+        val m = UserModel("a", "b")
+        m.save(true) must throwA[ActiveRecordException].like{ case e => e mustEqual ActiveRecordException.saveFailed(m.errors)}
       }
     }
   }

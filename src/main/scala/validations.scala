@@ -307,5 +307,9 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
     }
     super.doValidate()
   }
+
+  def saveEither: Either[Errors, this.type] = {
+    if (save) Right[Errors, this.type](this) else Left(this.errors)
+  }
 }
 

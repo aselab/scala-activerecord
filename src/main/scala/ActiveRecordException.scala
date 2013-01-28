@@ -34,5 +34,8 @@ object ActiveRecordException {
 
   def scalaSig(c: Class[_]): ActiveRecordException =
     apply("Failed to extract ScalaSig from class " + c.getName)
+
+  def saveFailed(errors: Errors): ActiveRecordException =
+    apply(errors.messages.mkString("\n"))
 }
 

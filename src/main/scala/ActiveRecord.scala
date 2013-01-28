@@ -14,6 +14,11 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
 
   override def isNewRecord: Boolean = !isPersisted
 
+  override def save(): Boolean = save(false)
+
+  def save(throws: Boolean): Boolean =
+    super.save || (throws && (throw ActiveRecordException.saveFailed(errors)))
+
   protected def doCreate = {
     recordCompanion.create(this)
     true

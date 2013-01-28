@@ -80,7 +80,6 @@ object ValidatableSpec extends ActiveRecordSpecification {
         m.save must beFalse
         m.calledMethods must contain("beforeValidation", "doValidate").only
       }
-
     }
   }
 }
