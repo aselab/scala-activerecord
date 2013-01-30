@@ -10,7 +10,7 @@ trait Associations {
   trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
     val owner: O
     val associationClass = manifest.erasure
-    val manifest: Manifest[T]
+    implicit val manifest: Manifest[T]
 
     def relation: ActiveRecord.Relation[T, T]
 
@@ -22,6 +22,33 @@ trait Associations {
 
     protected[inner] def fieldInfo(name: String) = companion.fieldInfo.getOrElse(name,
       throw ActiveRecordException.notFoundField(name)) 
+  }
+
+  trait CollectionAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] extends Association[O, T] {
+    
+    val allConditions: Map[String, Any]
+
+    def condition: T => LogicalBoolean = {
+      m => LogicalBoolean.and(allConditions.map {
+        case (key, value) =>
+          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+      }.toSeq)
+    }
+
+    def build: T = assignConditions(companion.newInstance)
+
+    protected def assignConditions(m: T): T = {
+      allConditions.foreach {
+        case (key, value) => fieldInfo(key).setValue(m, value)
+      }
+      m
+    }
+
+    def deleteAll(): List[T] = inTransaction {
+      val result = relation.toList
+      result.foreach(_.delete)
+      result
+    }
   }
 
   class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
@@ -55,30 +82,16 @@ trait Associations {
 
   class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
     val owner: O, conditions: Map[String, Any], foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends Association[O, T] {
-    private def allConditions = conditions + (foreignKey -> owner.id)
-
-    def condition: T => LogicalBoolean = {
-      m => LogicalBoolean.and(allConditions.map {
-        case (key, value) =>
-          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
-      }.toSeq)
-    }
+  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
+    val allConditions = conditions + (foreignKey -> owner.id)
 
     def relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
 
     def relation = relation1
 
-    def build: T = assign(companion.newInstance)
+    def assign(m: T): T = assignConditions(m)
 
-    def assign(m: T): T = {
-      allConditions.foreach {
-        case (key, value) => fieldInfo(key).setValue(m, value)
-      }
-      m
-    }
-
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = {
       val t = assign(m)
       t.save
       t
@@ -86,22 +99,18 @@ trait Associations {
 
     def <<(m: T): T = associate(m)
 
-    def :=(list: List[T]): List[T] = {
+    def :=(list: List[T]): List[T] = inTransaction {
       deleteAll
       list.map(associate)
-    }
-
-    def deleteAll(): List[T] = inTransaction {
-      val result = relation.toList
-      result.foreach(_.delete)
-      result
     }
   }
 
   class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
-    val owner: O, val through: HasManyAssociation[O, I],
+    val owner: O, val through: CollectionAssociation[O, I],
     conditions: Map[String, Any], foreignKey: String
-  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends Association[O, T] {
+  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
+    val allConditions = conditions
+
     def relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
@@ -119,15 +128,13 @@ trait Associations {
     def relation = relation2
 
     def assign(m: T): I = {
-      conditions.foreach {
-        case (key, value) => fieldInfo(key).setValue(m, value)
-      }
+      assignConditions(m)
       val inter = through.build
       through.fieldInfo(foreignKey).setValue(inter, m.id)
       inter
     }
 
-    def associate(m: T): I = inTransaction {
+    def associate(m: T): I = {
       val i = assign(m)
       i.save
       i
@@ -135,16 +142,14 @@ trait Associations {
 
     def <<(m: T): I = associate(m)
 
-    def :=(list: List[T]): List[I] = {
+    def :=(list: List[T]): List[I] = inTransaction {
       deleteAll
       list.map(associate)
     }
 
-    def deleteAll(): List[T] = inTransaction {
+    override def deleteAll(): List[T] = inTransaction {
       through.deleteAll
-      val result = relation.toList
-      result.foreach(_.delete)
-      result
+      super.deleteAll
     }
   }
 
@@ -171,7 +176,7 @@ trait Associations {
       }
 
     protected def hasManyThrough[T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
-        through: HasManyAssociation[this.type, I],
+        through: CollectionAssociation[this.type, I],
         conditions: Map[String, Any] = Map.empty,
         foreignKey: String = null
       )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {

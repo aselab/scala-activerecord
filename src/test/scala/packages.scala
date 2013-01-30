@@ -50,6 +50,8 @@ package models {
     lazy val users = hasManyThrough[User, ProjectMembership](memberships)
     lazy val managers = hasManyThrough[User, ProjectMembership](managerMemberships)
     lazy val developers = hasManyThrough[User, ProjectMembership](developerMemberships)
+
+    lazy val groups = hasManyThrough[Group, User](users)
   }
 
   case class Role(name: String) extends ActiveRecord {
