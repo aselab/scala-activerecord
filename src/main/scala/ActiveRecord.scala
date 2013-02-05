@@ -44,6 +44,7 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
  * This class provides object-relational mapping and CRUD logic and callback hooks.
  */
 abstract class ActiveRecord extends ActiveRecordBase[Long]
+  with ActiveRecord.HabtmAssociationSupport
 {
   /** primary key */
   val id: Long = 0L

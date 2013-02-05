@@ -11,10 +11,24 @@ import squeryl.Implicits._
 trait ActiveRecordTables extends Schema {
   import ReflectionUtil._
 
-  lazy val tableMap = this.getFields[Table[ActiveRecordBase[_]]].map {f =>
-    val name = getGenericTypes(f).last.getName
-    (name, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
-  }.toMap
+  lazy val tableMap = {
+    val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[_, _]]
+    val map = collection.mutable.Map[String, Table[inner.IntermediateRecord]]()
+    this.getFields[Table[ActiveRecordBase[_]]].map {f =>
+      val clazz = getGenericTypes(f).last
+      clazz.getDeclaredFields.foreach {f =>
+        if (c.isAssignableFrom(f.getType)) {
+          val List(c1, c2) = getGenericTypes(f)
+          val tableName = tableNameFromClasses(c1, c2)
+          if (!map.isDefinedAt(tableName)) {
+            implicit val d = inner.IntermediateRecord.keyedEntityDef
+            map(tableName) = super.table[inner.IntermediateRecord](tableName)
+          }
+        }
+      }
+      (clazz.getName, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
+    }.toMap ++ map
+  }
 
   /** All tables */
   lazy val all = tableMap.values
@@ -24,6 +38,9 @@ trait ActiveRecordTables extends Schema {
     
   override def tableNameFromClass(c: Class[_]): String =
     c.getSimpleName.underscore.pluralize
+
+  def tableNameFromClasses(c1: Class[_], c2: Class[_]): String =
+    Seq(c1, c2).map(tableNameFromClass).sorted.mkString("_")
 
   def foreignKeyFromClass(c: Class[_]): String = c.getSimpleName.camelize + "Id"
 

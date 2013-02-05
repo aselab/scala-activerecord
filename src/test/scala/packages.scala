@@ -21,6 +21,8 @@ package models {
     val projects = table[Project]
     val roles = table[Role]
     val projectMemberships = table[ProjectMembership]
+    val foos = table[Foo]
+    val bars = table[Bar]
 
     def createTestData = (1 to 100).foreach { i =>
       PrimitiveModel.newModel(i, i > 50).save
@@ -66,6 +68,14 @@ package models {
     lazy val role = belongsTo[Role]
   }
 
+  case class Foo(name: String) extends ActiveRecord {
+    lazy val bars = hasAndBelongsToMany[Bar]
+  }
+
+  case class Bar(name: String) extends ActiveRecord {
+    lazy val foos = hasAndBelongsToMany[Foo]
+  }
+
   object User extends ActiveRecordCompanion[User]
   object Group extends ActiveRecordCompanion[Group]
   object Project extends ActiveRecordCompanion[Project]
@@ -74,6 +84,9 @@ package models {
     lazy val developer = all.findByOrCreate(Role("developer"), "name")
   }
   object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
+
+  object Foo extends ActiveRecordCompanion[Foo]
+  object Bar extends ActiveRecordCompanion[Bar]
 
   case class SeqModel(list: List[Int], seq: Seq[Double])
 

@@ -2,6 +2,8 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
+import com.github.aselab.activerecord.aliases._
+import org.squeryl._
 import org.squeryl.dsl.ast.{LogicalBoolean, EqualityExpression}
 import squeryl.Implicits._
 import ReflectionUtil._
@@ -153,6 +155,67 @@ trait Associations {
     }
   }
 
+  class HasAndBelongsToManyAssociation[O <: ActiveRecord, T <: ActiveRecord](
+    val owner: O, conditions: Map[String, Any],
+    interCompanion: IntermediateRecordCompanion
+  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
+
+    private val isLeftSide = List(owner.getClass, manifest.erasure)
+      .sortBy(_.getSimpleName).head == manifest.erasure
+
+    val allConditions = conditions
+
+    def relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
+      val on = {(m: T, inter: IntermediateRecord) =>
+        m.id === (if (isLeftSide) inter.leftId else inter.rightId)
+      }
+      val select = {(m: T, inter: IntermediateRecord) => m}
+
+      new ActiveRecord.Relation2(Nil, Nil, None, companion.table,
+        interCompanion.table, Function.tupled(on), Function.tupled(select)
+      ).where((m, inter) =>
+        LogicalBoolean.and(
+          (owner.id === (if (isLeftSide) inter.rightId else inter.leftId)) ::
+          conditions.map {
+            case (key, value) =>
+              fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+          }.toList
+        )
+      )
+    }
+
+    def relation = relation2
+
+    def associate(m: T): T = {
+      val t = assignConditions(m)
+      val inter = interCompanion.newInstance
+      if (isLeftSide) {
+        inter.setValue("leftId", m.id)
+        inter.setValue("rightId", owner.id)
+      } else {
+        inter.setValue("rightId", m.id)
+        inter.setValue("leftId", owner.id)
+      }
+      inter.save
+      t
+    }
+
+    def <<(m: T): T = associate(m)
+
+    def :=(list: List[T]): List[T] = inTransaction {
+      deleteAll
+      list.map(associate)
+    }
+
+    override def deleteAll(): List[T] = inTransaction {
+      val result = interCompanion.all.where(inter =>
+        owner.id === (if (isLeftSide) inter.leftId else inter.rightId)
+      ).foreach(_.delete)
+      relation.toList
+    }
+  }
+
+
   trait AssociationSupport { self: ActiveRecordBase[_] =>
     protected def belongsTo[T <: ActiveRecordBase[_]]
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
@@ -185,5 +248,55 @@ trait Associations {
 
         new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
       }
+  }
+
+  trait HabtmAssociationSupport { self: ActiveRecord =>
+    protected def hasAndBelongsToMany[T <: ActiveRecord]
+      (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
+      hasAndBelongsToMany[T](Map.empty[String, Any])(m)
+        .asInstanceOf[HasAndBelongsToManyAssociation[this.type, T]]
+
+    protected def hasAndBelongsToMany[T <: ActiveRecord]
+      (conditions: Map[String, Any])
+      (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
+    {
+      val name = Config.schema.tableNameFromClasses(self.getClass, m.erasure)
+      val companion = new IntermediateRecordCompanion {
+        val tableName = name
+      }
+      new HasAndBelongsToManyAssociation[this.type, T](self, conditions, companion)
+    }
+  }
+}
+
+case class IntermediateRecord() extends ActiveRecordBase[CKey] with KeyedEntity[CKey] {
+  val leftId: Long = 0
+  val rightId: Long = 0
+  def id: CKey = compositeKey(leftId, rightId)
+
+  private[inner] var interCompanion: IntermediateRecordCompanion = _
+  override lazy val _companion =
+    interCompanion.asInstanceOf[ProductModelCompanion[this.type]]
+}
+
+trait IntermediateRecordCompanion extends ActiveRecordBaseCompanion[CKey, IntermediateRecord] {
+  val tableName: String
+
+  override lazy val targetClass = classOf[IntermediateRecord]
+  override lazy val table =
+    schema.tableMap(tableName).asInstanceOf[Table[IntermediateRecord]]
+  
+  override def newInstance = {
+    val m = super.newInstance
+    m.interCompanion = this
+    m
+  }
+}
+
+object IntermediateRecord {
+  val keyedEntityDef = new KeyedEntityDef[IntermediateRecord, CKey] {
+    def getId(m: IntermediateRecord) = m.id
+    def isPersisted(m: IntermediateRecord) = m.isPersisted
+    def idPropertyName = "id"
   }
 }

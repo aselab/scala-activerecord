@@ -12,7 +12,7 @@ trait ProductModelCompanion[T <: ProductModel] {
   import ReflectionUtil._
 
   /** corresponding model class */
-  protected val targetClass = companionToClass(this).asInstanceOf[Class[T]]
+  protected lazy val targetClass = companionToClass(this).asInstanceOf[Class[T]]
 
   /**
    * Create a new model object.
