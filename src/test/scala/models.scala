@@ -18,6 +18,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val projectMemberships = table[ProjectMembership]
   val foos = table[Foo]
   val bars = table[Bar]
+  val bazs = table[Baz]
 
   def createTestData = (1 to 100).foreach { i =>
     PrimitiveModel.newModel(i, i > 50).save
@@ -65,9 +66,14 @@ case class ProjectMembership(
 
 case class Foo(name: String) extends ActiveRecord {
   lazy val bars = hasAndBelongsToMany[Bar]
+  lazy val bazs = hasAndBelongsToMany[Baz]
 }
 
 case class Bar(name: String) extends ActiveRecord {
+  lazy val foos = hasAndBelongsToMany[Foo]
+}
+
+case class Baz(name: String) extends ActiveRecord {
   lazy val foos = hasAndBelongsToMany[Foo]
 }
 
@@ -82,6 +88,7 @@ object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 
 object Foo extends ActiveRecordCompanion[Foo]
 object Bar extends ActiveRecordCompanion[Bar]
+object Baz extends ActiveRecordCompanion[Baz]
 
 case class SeqModel(list: List[Int], seq: Seq[Double])
 

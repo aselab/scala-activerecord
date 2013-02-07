@@ -80,5 +80,22 @@ object AssociationSpec extends ActiveRecordSpecification {
       projectUsers.where(_.name === "user1").headOption must beSome(user)
     }
   }
+
+  "HasAndBelongsToManyAssociation" should {
+    "associate persisted record" << {
+      val foo1 = Foo("foo1").create
+      val bar1 = Bar("bar1").create
+      val bar2 = Bar("bar2").create
+      val baz1 = Baz("baz1").create
+      foo1.bars := List(bar1, bar2)
+      foo1.bazs << baz1
+
+      foo1.bars.toList must contain(bar1, bar2).only
+      foo1.bazs.toList must contain(baz1).only
+      bar1.foos.toList must contain(foo1).only
+      bar2.foos.toList must contain(foo1).only
+      baz1.foos.toList must contain(foo1).only
+    }
+  }
 }
 
