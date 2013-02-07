@@ -7,6 +7,7 @@ import ActiveRecord._
 object dsl extends PrimitiveTypeMode with Annotations with inner.DSL
 
 package object aliases {
+  type AR = ActiveRecordBase[_]
   type CKey = CompositeKey2[Long, Long]
 }
 

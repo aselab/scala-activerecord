@@ -9,7 +9,7 @@ import squeryl.Implicits._
 import ReflectionUtil._
 
 trait Associations {
-  trait Association[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] {
+  trait Association[O <: AR, T <: AR] {
     val owner: O
     val associationClass = manifest.erasure
     implicit val manifest: Manifest[T]
@@ -26,7 +26,7 @@ trait Associations {
       throw ActiveRecordException.notFoundField(name)) 
   }
 
-  trait CollectionAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]] extends Association[O, T] {
+  trait CollectionAssociation[O <: AR, T <: AR] extends Association[O, T] {
     
     val allConditions: Map[String, Any]
 
@@ -53,7 +53,7 @@ trait Associations {
     }
   }
 
-  class BelongsToAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+  class BelongsToAssociation[O <: AR, T <: AR](
     val owner: O, foreignKey: String
   )(implicit val manifest: Manifest[T]) extends Association[O, T] {
     lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
@@ -82,7 +82,7 @@ trait Associations {
     def :=(m: T): T = assign(m)
   }
 
-  class HasManyAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_]](
+  class HasManyAssociation[O <: AR, T <: AR](
     val owner: O, conditions: Map[String, Any], foreignKey: String
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
@@ -107,7 +107,7 @@ trait Associations {
     }
   }
 
-  class HasManyThroughAssociation[O <: ActiveRecordBase[_], T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
+  class HasManyThroughAssociation[O <: AR, T <: AR, I <: AR](
     val owner: O, val through: CollectionAssociation[O, I],
     conditions: Map[String, Any], foreignKey: String
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
@@ -216,21 +216,21 @@ trait Associations {
   }
 
 
-  trait AssociationSupport { self: ActiveRecordBase[_] =>
-    protected def belongsTo[T <: ActiveRecordBase[_]]
+  trait AssociationSupport { self: AR =>
+    protected def belongsTo[T <: AR]
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
         belongsTo[T](Config.schema.foreignKeyFromClass(m.erasure))
           .asInstanceOf[BelongsToAssociation[this.type, T]]
 
-    protected def belongsTo[T <: ActiveRecordBase[_]](foreignKey: String)
+    protected def belongsTo[T <: AR](foreignKey: String)
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
         new BelongsToAssociation[this.type, T](self, foreignKey)
 
-    protected def hasMany[T <: ActiveRecordBase[_]]
+    protected def hasMany[T <: AR]
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] =
         hasMany[T]().asInstanceOf[HasManyAssociation[this.type, T]]
 
-    protected def hasMany[T <: ActiveRecordBase[_]]
+    protected def hasMany[T <: AR]
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
@@ -238,16 +238,16 @@ trait Associations {
         new HasManyAssociation[this.type, T](self, conditions, key)
       }
 
-    protected def hasManyThrough[T <: ActiveRecordBase[_], I <: ActiveRecordBase[_]](
-        through: CollectionAssociation[this.type, I],
-        conditions: Map[String, Any] = Map.empty,
-        foreignKey: String = null
-      )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
-        val key = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(m1.erasure))
+    protected def hasManyThrough[T <: AR, I <: AR](
+      through: CollectionAssociation[this.type, I],
+      conditions: Map[String, Any] = Map.empty,
+      foreignKey: String = null
+    )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
+      val key = Option(foreignKey).getOrElse(
+        Config.schema.foreignKeyFromClass(m1.erasure))
 
-        new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
-      }
+      new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
+    }
   }
 
   trait HabtmAssociationSupport { self: ActiveRecord =>

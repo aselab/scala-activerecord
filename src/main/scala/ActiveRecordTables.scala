@@ -1,5 +1,6 @@
 package com.github.aselab.activerecord
 
+import aliases._
 import org.squeryl._
 import org.squeryl.PrimitiveTypeMode._
 import mojolly.inflector.InflectorImports._
@@ -26,7 +27,7 @@ trait ActiveRecordTables extends Schema {
           }
         }
       }
-      (clazz.getName, this.getValue[Table[ActiveRecordBase[_]]](f.getName))
+      (clazz.getName, this.getValue[Table[AR]](f.getName))
     }.toMap ++ map
   }
 
@@ -119,11 +120,11 @@ trait ActiveRecordTables extends Schema {
       throw ActiveRecordException.cannotCleanSession
   }
 
-  def table[T <: ActiveRecordBase[_]]()(implicit m: Manifest[T]): Table[T] = {
+  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {
     table(tableNameFromClass(m.erasure))(m)
   }
 
-  def table[T <: ActiveRecordBase[_]](name: String)(implicit m: Manifest[T]): Table[T] = {
+  def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
     val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
 
     val c = classToCompanion(m.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]

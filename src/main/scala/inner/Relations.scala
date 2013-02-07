@@ -2,6 +2,7 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
+import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
 import org.squeryl._
 import org.squeryl.dsl._
@@ -10,7 +11,7 @@ import ReflectionUtil._
 
 trait Relations {
   object Relation {
-    def apply[T <: ActiveRecordBase[_], S](
+    def apply[T <: AR, S](
       conditions: List[T => LogicalBoolean],
       orders: List[T => OrderByExpression],
       pages: Option[(Int, Int)],
@@ -19,14 +20,14 @@ trait Relations {
     )(implicit m: Manifest[T]): Relation1[T, S] =
       Relation1(conditions, orders, pages, queryable, selector)(m)
 
-    def apply[T <: ActiveRecordBase[_], S](
+    def apply[T <: AR, S](
       queryable: Queryable[T],
       selector: T => S
     )(implicit m: Manifest[T]): Relation1[T, S] =
       apply(Nil, Nil, None, queryable, selector)(m)
   }
 
-  trait Relation[T <: ActiveRecordBase[_], S] {
+  trait Relation[T <: AR, S] {
     type JOINED_TYPE
     val conditions: List[JOINED_TYPE => LogicalBoolean]
     val orders: List[JOINED_TYPE => OrderByExpression]
@@ -153,7 +154,7 @@ trait Relations {
     def toSql: String = inTransaction { toQuery.statement }
   }
 
-  case class Relation1[T <: ActiveRecordBase[_], S](
+  case class Relation1[T <: AR, S](
     conditions: List[T => LogicalBoolean],
     orders: List[T => OrderByExpression],
     pages: Option[(Int, Int)],
@@ -192,7 +193,7 @@ trait Relations {
       )
     )
 
-    def joins[J <: ActiveRecordBase[_]](on: (T, J) => LogicalBoolean)
+    def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
       val c = classToCompanion(m.erasure)
         .asInstanceOf[ActiveRecordBaseCompanion[_, J]]
@@ -205,7 +206,7 @@ trait Relations {
       )(manifest)
     }
 
-    def joins[J1 <: ActiveRecordBase[_], J2 <: ActiveRecordBase[_]](
+    def joins[J1 <: AR, J2 <: AR](
       on: (T, J1, J2) => (LogicalBoolean, LogicalBoolean)
     )(implicit m1: Manifest[J1], m2: Manifest[J2]): Relation3[T, J1, J2, S] = {
       val c1 = classToCompanion(m1.erasure)
@@ -222,7 +223,7 @@ trait Relations {
     }
   }
 
-  case class Relation2[T <: ActiveRecordBase[_], J1 <: ActiveRecordBase[_], S](
+  case class Relation2[T <: AR, J1 <: AR, S](
     conditions: List[((T, J1)) => LogicalBoolean],
     orders: List[((T, J1)) => OrderByExpression],
     pages: Option[(Int, Int)],
@@ -266,8 +267,7 @@ trait Relations {
     )
   }
 
-  case class Relation3[T <: ActiveRecordBase[_], J1 <: ActiveRecordBase[_],
-    J2 <: ActiveRecordBase[_], S](
+  case class Relation3[T <: AR, J1 <: AR, J2 <: AR, S](
     conditions: List[((T, J1, J2)) => LogicalBoolean],
     orders: List[((T, J1, J2)) => OrderByExpression],
     pages: Option[(Int, Int)],
