@@ -66,7 +66,7 @@ trait Associations {
 
     def relation = relation1
 
-    def get: Option[T] = relation.headOption
+    def toOption: Option[T] = relation.headOption
 
     def assign(m: T): T = {
       fieldInfo.setValue(owner, m.id)

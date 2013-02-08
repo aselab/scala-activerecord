@@ -39,6 +39,9 @@ trait DSL extends IterableConversion { self: PrimitiveTypeMode =>
     (implicit m: Manifest[T]): Relation1[T, T] =
     Relation(query, identity)
 
+  implicit def belongsToAssociationToOption[T <: AR]
+    (association: BelongsToAssociation[_, T]): Option[T] = association.toOption
+
   implicit def associationToRelation1[T <: AR]
     (association: {def relation1: Relation1[T, T]}) = association.relation1
 

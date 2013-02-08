@@ -29,13 +29,15 @@ object AssociationSpec extends ActiveRecordSpecification {
   "BelongsToAssociation" should {
     "associate persisted record" in new OneToManyAssociation {
       belongsTo.associate(group)
-      belongsTo.get must beSome(group)
+      belongsTo.toOption must beSome(group)
       user.groupId must beSome(group.id)
     }
 
     "implicit conversions" in new OneToManyAssociation {
       belongsTo.associate(group)
       belongsTo.count mustEqual 1
+      belongsTo.getOrElse(null) mustEqual group
+      belongsTo.headOption must beSome(group)
       belongsTo.headOption must beSome(group)
       belongsTo.where(_.name === "group1").toList mustEqual List(group)
     }
