@@ -20,6 +20,9 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val bars = table[Bar]
   val bazs = table[Baz]
 
+  val timestamps = table[TimestampsModel]
+  val datestamps = table[DatestampsModel]
+
   def createTestData = (1 to 100).foreach { i =>
     PrimitiveModel.newModel(i, i > 50).save
   }
@@ -89,6 +92,11 @@ object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 object Foo extends ActiveRecordCompanion[Foo]
 object Bar extends ActiveRecordCompanion[Bar]
 object Baz extends ActiveRecordCompanion[Baz]
+
+case class TimestampsModel(name: String) extends ActiveRecord with Timestamps
+object TimestampsModel extends ActiveRecordCompanion[TimestampsModel]
+case class DatestampsModel(name: String) extends ActiveRecord with Datestamps
+object DatestampsModel extends ActiveRecordCompanion[DatestampsModel]
 
 case class SeqModel(list: List[Int], seq: Seq[Double])
 
