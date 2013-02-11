@@ -71,5 +71,16 @@ object RelationsSpec extends ActiveRecordSpecification {
       PrimitiveModel.where(m => m.id === 1).toSql mustEqual
         inTransaction { PrimitiveModel.where(m => m.id === 1).toQuery.statement }
     }
+
+    "cache controls" >> {
+      val user1 = User("user1").create
+      val user2 = User("user2").create
+      val users = User.where(_.name like "user%")
+      users.toList mustEqual List(user1, user2)
+
+      val user3 = User("user3").create
+      users.toList mustEqual List(user1, user2)
+      users.reload mustEqual List(user1, user2, user3)
+    }
   }
 }

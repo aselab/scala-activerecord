@@ -38,6 +38,23 @@ trait Relations {
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
+    private var _isLoaded = false
+    def isLoaded: Boolean = _isLoaded
+
+    private var _cache: List[S] = Nil
+    private[inner] def cache = _cache
+    private[inner] def cache_=(value: List[S]) = {
+      _cache = value
+      _isLoaded = true
+      value
+    }
+
+    def reload: List[S] = inTransaction {
+      cache = queryToIterable(toQuery).toList
+    }
+
+    def load: List[S] = if (isLoaded) cache else reload
+
     protected def whereState(m: JOINED_TYPE) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
 

@@ -20,8 +20,7 @@ trait CompanionConversion[T <: AR] extends CompanionIterable[T] {
 // low priority implicits
 trait IterableConversion { self: PrimitiveTypeMode =>
   implicit def relationToIterable[T](relation: Relation[_, T])
-    (implicit m: Manifest[T]): Iterable[T] =
-    inTransaction { queryToIterable(relation.toQuery).toList }
+    (implicit m: Manifest[T]): Iterable[T] = relation.load
 
   implicit def associationToIterable[T <: AR]
     (association: Association[_, T])(implicit m: Manifest[T]): Iterable[T] =
