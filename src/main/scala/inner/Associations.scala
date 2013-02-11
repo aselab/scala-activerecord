@@ -9,7 +9,7 @@ import squeryl.Implicits._
 import ReflectionUtil._
 
 trait Associations {
-  trait Association[O <: AR, T <: AR] {
+  trait Association[+O <: AR, T <: AR] {
     val owner: O
     val associationClass = manifest.erasure
     implicit val manifest: Manifest[T]

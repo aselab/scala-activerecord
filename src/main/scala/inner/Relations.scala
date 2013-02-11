@@ -3,6 +3,7 @@ package com.github.aselab.activerecord.inner
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
+import ActiveRecord._
 import squeryl.Implicits._
 import org.squeryl._
 import org.squeryl.dsl._
@@ -34,6 +35,7 @@ trait Relations {
     val pages: Option[(Int, Int)]
     val queryable: Queryable[T]
     val selector: JOINED_TYPE => S
+    val includeAssociations: List[T => Association[T, _]]
     val manifest: Manifest[T]
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
@@ -49,11 +51,22 @@ trait Relations {
       value
     }
 
-    def reload: List[S] = inTransaction {
+    def reload(implicit m: Manifest[S]): List[S] = inTransaction {
       cache = queryToIterable(toQuery).toList
+      /*
+      if (manifest.erasure == m.erasure) {
+        val records = cache.asInstanceOf[List[T]]
+        for (association <- includeAssociations; m <- records) {
+          //association(m).relation.cache = 
+        }
+      }
+      */
+      cache
     }
 
-    def load: List[S] = if (isLoaded) cache else reload
+    def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
+
+    def includes(association: T => Association[T, _]): this.type
 
     protected def whereState(m: JOINED_TYPE) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
@@ -176,7 +189,8 @@ trait Relations {
     orders: List[T => OrderByExpression],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
-    selector: T => S
+    selector: T => S,
+    includeAssociations: List[T => Association[T, _]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
 
@@ -209,6 +223,11 @@ trait Relations {
         }
       )
     )
+
+    def includes(association: T => Association[T, _]): this.type = {
+      copy(includeAssociations = includeAssociations :+ association)
+        .asInstanceOf[this.type]
+    }
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
@@ -247,7 +266,8 @@ trait Relations {
     queryable: Queryable[T],
     joinTable: Queryable[J1],
     on: ((T, J1)) => LogicalBoolean,
-    selector: ((T, J1)) => S
+    selector: ((T, J1)) => S,
+    includeAssociations: List[T => Association[T, _]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
 
@@ -272,6 +292,11 @@ trait Relations {
       whereState(t).compute(PrimitiveTypeMode.count).on(on(t))
     })
 
+    def includes(association: T => Association[T, _]): this.type = {
+      copy(includeAssociations = includeAssociations :+ association)
+        .asInstanceOf[this.type]
+    }
+
     def toQuery: Query[S] = paginate(
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)  
@@ -292,7 +317,8 @@ trait Relations {
     joinTable1: Queryable[J1],
     joinTable2: Queryable[J2],
     on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean),
-    selector: ((T, J1, J2)) => S
+    selector: ((T, J1, J2)) => S,
+    includeAssociations: List[T => Association[T, _]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
 
@@ -318,6 +344,10 @@ trait Relations {
         val (on1, on2) = on(t)
         whereState(t).compute(PrimitiveTypeMode.count).on(on1, on2)
     })
+
+    def includes(include: T => Association[T, _]): this.type = {
+      copy(includeAssociations = includeAssociations :+ include).asInstanceOf[this.type]
+    }
 
     def toQuery: Query[S] = paginate(
       join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
