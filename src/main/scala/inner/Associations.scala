@@ -49,6 +49,7 @@ trait Associations {
     def deleteAll(): List[T] = inTransaction {
       val result = relation.toList
       result.foreach(_.delete)
+      relation.cache = Nil
       result
     }
   }
@@ -62,7 +63,8 @@ trait Associations {
       m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
     }
 
-    def relation1: ActiveRecord.Relation1[T, T] = source.where(condition).limit(1)
+    lazy val relation1: ActiveRecord.Relation1[T, T] =
+      source.where(condition).limit(1)
 
     def relation = relation1
 
@@ -87,7 +89,7 @@ trait Associations {
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
-    def relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
+    lazy val relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
 
     def relation = relation1
 
@@ -103,7 +105,7 @@ trait Associations {
 
     def :=(list: List[T]): List[T] = inTransaction {
       deleteAll
-      list.map(associate)
+      relation.cache = list.map(associate)
     }
   }
 
@@ -113,7 +115,7 @@ trait Associations {
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
     val allConditions = conditions
 
-    def relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
+    lazy val relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
         val e1 = f.toExpression(m.id)
@@ -146,6 +148,7 @@ trait Associations {
 
     def :=(list: List[T]): List[I] = inTransaction {
       deleteAll
+      relation.cache = list
       list.map(associate)
     }
 
@@ -165,7 +168,7 @@ trait Associations {
 
     val allConditions = conditions
 
-    def relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
+    lazy val relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
       val on = {(m: T, inter: IntermediateRecord) =>
         m.id === (if (isLeftSide) inter.leftId else inter.rightId)
       }
@@ -204,7 +207,7 @@ trait Associations {
 
     def :=(list: List[T]): List[T] = inTransaction {
       deleteAll
-      list.map(associate)
+      relation.cache = list.map(associate)
     }
 
     override def deleteAll(): List[T] = inTransaction {
