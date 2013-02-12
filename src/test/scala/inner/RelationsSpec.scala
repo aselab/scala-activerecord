@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord.inner
 
 import org.specs2.mutable._
-import org.specs2.specification._
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
@@ -81,6 +80,20 @@ object RelationsSpec extends ActiveRecordSpecification {
       val user3 = User("user3").create
       users.toList mustEqual List(user1, user2)
       users.reload mustEqual List(user1, user2, user3)
+    }
+
+    "includes" >> {
+      val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
+      val (group1, group2) = (Group("group1").create, Group("group2").create)
+      group1.users << user1
+      group1.users << user2
+      group2.users << user3
+
+      val List(g1, g2) = Group.where(_.name like "group%").includes(_.users).toList
+      g1.users.isLoaded must beTrue
+      g1.users.cache must contain(user1, user2).only
+      g2.users.isLoaded must beTrue
+      g2.users.cache must contain(user3).only
     }
   }
 }

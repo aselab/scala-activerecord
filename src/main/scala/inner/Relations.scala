@@ -35,7 +35,7 @@ trait Relations {
     val pages: Option[(Int, Int)]
     val queryable: Queryable[T]
     val selector: JOINED_TYPE => S
-    val includeAssociations: List[T => Association[T, _]]
+    val includeAssociations: List[T => Association[T, AR]]
     val manifest: Manifest[T]
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
@@ -51,22 +51,24 @@ trait Relations {
       value
     }
 
+    private[inner] var eagerLoadingAssociations: List[Association[T, AR]] = Nil
+
     def reload(implicit m: Manifest[S]): List[S] = inTransaction {
       cache = queryToIterable(toQuery).toList
-      /*
-      if (manifest.erasure == m.erasure) {
+
+      if (manifest == m && !cache.isEmpty) {
         val records = cache.asInstanceOf[List[T]]
-        for (association <- includeAssociations; m <- records) {
-          //association(m).relation.cache = 
+        val mapList = eagerLoadingAssociations.map(a => Association.eagerLoad(a, records))
+        for ((association, map) <- includeAssociations.zip(mapList); m <- records) {
+          association(m).relation.cache = map.getOrElse(m.id, Nil)
         }
       }
-      */
       cache
     }
 
     def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
 
-    def includes(association: T => Association[T, _]): this.type
+    def includes[A <: AR](association: T => Association[T, A]): this.type
 
     protected def whereState(m: JOINED_TYPE) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
@@ -190,7 +192,7 @@ trait Relations {
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     selector: T => S,
-    includeAssociations: List[T => Association[T, _]] = Nil
+    includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
 
@@ -215,17 +217,19 @@ trait Relations {
     )
 
     def toQuery: Query[S] = paginate(
-      from(queryable)(m =>
+      from(queryable){m =>
+        eagerLoadingAssociations = includeAssociations.map(_.apply(m))
+
         if (conditions.isEmpty) {
           PrimitiveTypeMode.select(selector(m)).orderBy(ordersExpression(m))
         } else {
           whereState(m).select(selector(m)).orderBy(ordersExpression(m))
         }
-      )
+      }
     )
 
-    def includes(association: T => Association[T, _]): this.type = {
-      copy(includeAssociations = includeAssociations :+ association)
+    def includes[A <: AR](association: T => Association[T, A]): this.type = {
+      copy(includeAssociations = includeAssociations :+ association.asInstanceOf[T => Association[T, AR]])
         .asInstanceOf[this.type]
     }
 
@@ -267,7 +271,7 @@ trait Relations {
     joinTable: Queryable[J1],
     on: ((T, J1)) => LogicalBoolean,
     selector: ((T, J1)) => S,
-    includeAssociations: List[T => Association[T, _]] = Nil
+    includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
 
@@ -292,8 +296,8 @@ trait Relations {
       whereState(t).compute(PrimitiveTypeMode.count).on(on(t))
     })
 
-    def includes(association: T => Association[T, _]): this.type = {
-      copy(includeAssociations = includeAssociations :+ association)
+    def includes[A <: AR](association: T => Association[T, A]): this.type = {
+      copy(includeAssociations = includeAssociations :+ association.asInstanceOf[T => Association[T, AR]])
         .asInstanceOf[this.type]
     }
 
@@ -318,7 +322,7 @@ trait Relations {
     joinTable2: Queryable[J2],
     on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean),
     selector: ((T, J1, J2)) => S,
-    includeAssociations: List[T => Association[T, _]] = Nil
+    includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
 
@@ -345,8 +349,8 @@ trait Relations {
         whereState(t).compute(PrimitiveTypeMode.count).on(on1, on2)
     })
 
-    def includes(include: T => Association[T, _]): this.type = {
-      copy(includeAssociations = includeAssociations :+ include).asInstanceOf[this.type]
+    def includes[A <: AR](include: T => Association[T, A]): this.type = {
+      copy(includeAssociations = includeAssociations :+ include.asInstanceOf[T => Association[T, AR]]).asInstanceOf[this.type]
     }
 
     def toQuery: Query[S] = paginate(
