@@ -5,7 +5,7 @@ import models._
 import java.util.Date
 import java.sql.Timestamp
 
-object TimestampsSpec extends Specification {
+object TimestampsSpec extends ActiveRecordSpecification {
   "Timestamps" should {
     "create" in {
       val model = TimestampsModel("")
