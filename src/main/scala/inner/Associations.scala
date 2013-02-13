@@ -13,24 +13,38 @@ trait BaseAssociation {
 }
 
 trait BaseHasManyAssociation extends BaseAssociation {
-  var foreignKey: String
+  val foreignKey: String
 }
 
-trait BaseBelongToAssociation extends BaseAssociation
+trait BaseBelongToAssociation extends BaseAssociation {
+  val foreignKey: String
+}
 
 trait Associations {
 
   object Association {
-    def eagerLoad[T <: AR](association: BaseAssociation, records: List[T]): Map[Any, List[AR]] = {
+    def eagerLoad[T <: AR](association: BaseAssociation, records: List[T])(implicit m: Manifest[T]): Map[Any, List[AR]] = {
       if (records.isEmpty) return Map()
+      val ids = records.map(_.id)
       association match {
         case a: BaseHasManyAssociation =>
           val key = a.foreignKey
           val field = a.fieldInfo(key)
-          val ids = records.map(_.id)
           val r = a.asInstanceOf[HasManyAssociation[T, AR]].eagerLoadingRelation.where(
             m => field.toInExpression(m.getValue(key), ids)).toQuery.toList
           r.groupBy(_.getValue[Any](key).toOption[Any].orNull)
+        case a: BaseBelongToAssociation =>
+          val association = a.asInstanceOf[BelongsToAssociation[T, AR]]
+          val owner = association.owner
+          val key = a.foreignKey
+          val field = association.fieldInfo
+          val r = association.eagerLoadingRelation.joins[T]{(m, o) =>
+            val e1 = field.toExpression(m.id)
+            val e2 = field.toExpression(o.getValue(key))
+            new EqualityExpression(e1, e2)
+          }.where((m, o) => field.toInExpression(o.id, ids)).toQuery.toList
+          val map = r.groupBy(_.id)
+          records.map(r => (r.id, map.getOrElse(r.getValue[Any](key).toOption[Any].orNull, Nil))).toMap
         case _ => throw new Exception("not implemented")
       }
     }
@@ -86,7 +100,7 @@ trait Associations {
   }
 
   class BelongsToAssociation[O <: AR, T <: AR](
-    val owner: O, foreignKey: String
+    val owner: O, val foreignKey: String
   )(implicit val manifest: Manifest[T]) extends Association[O, T] with BaseBelongToAssociation {
     lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
 
@@ -118,7 +132,7 @@ trait Associations {
   }
 
   class HasManyAssociation[O <: AR, T <: AR](
-    val owner: O, conditions: Map[String, Any], override var foreignKey: String
+    val owner: O, conditions: Map[String, Any], val foreignKey: String
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] with BaseHasManyAssociation {
     val allConditions = conditions + (foreignKey -> owner.id)
 
@@ -327,7 +341,7 @@ trait IntermediateRecordCompanion extends ActiveRecordBaseCompanion[CKey, Interm
   override lazy val targetClass = classOf[IntermediateRecord]
   override lazy val table =
     schema.tableMap(tableName).asInstanceOf[Table[IntermediateRecord]]
-  
+
   override def newInstance = {
     val m = super.newInstance
     m.interCompanion = this

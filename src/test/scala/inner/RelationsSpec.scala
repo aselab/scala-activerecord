@@ -29,7 +29,7 @@ object RelationsSpec extends ActiveRecordSpecification {
       }
 
       "multiple fields" >> {
-        relation.orderBy(m => m.oint asc, m => m.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
+        relation.orderBy(_.oint asc, _.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
           (m1, m2) => (m1.oint, m2.oint) match {
             case (a, b) if a == b => m1.int > m2.int
             case (Some(a), Some(b)) => a < b
@@ -83,17 +83,47 @@ object RelationsSpec extends ActiveRecordSpecification {
     }
 
     "includes" >> {
-      val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
-      val (group1, group2) = (Group("group1").create, Group("group2").create)
-      group1.users << user1
-      group1.users << user2
-      group2.users << user3
+      "eager loading (simple)" >> withRollback {
+        val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
+        val (group1, group2) = (Group("group1").create, Group("group2").create)
+        group1.users << user1
+        group1.users << user2
+        group2.users << user3
 
-      val List(g1, g2) = Group.where(_.name like "group%").includes(_.users).toList
-      g1.users.isLoaded must beTrue
-      g1.users.cache must contain(user1, user2).only
-      g2.users.isLoaded must beTrue
-      g2.users.cache must contain(user3).only
+        val List(g1, g2) = Group.where(_.name like "group%").includes(_.users).toList
+        g1.users.isLoaded must beTrue
+        g1.users.cache must contain(user1, user2).only
+        g2.users.isLoaded must beTrue
+        g2.users.cache must contain(user3).only
+      }
+
+      "eager loading (multiple associations)" >> withRollback {
+        val (user1, user2, user3, user4) = (User("user1").create, User("user2", true).create, User("user3").create, User("user4").create)
+        val (group1, group2) = (Group("group1").create, Group("group2").create)
+        group1.users << user1
+        group2.users << user3
+        group2.adminUsers << user2
+        group2.adminUsers << user4
+
+        val List(g1, g2) = Group.where(_.name like "group%").includes(_.users, _.adminUsers).toList
+        g1.users.isLoaded must beTrue
+        g1.users.cache must contain(user1).only
+        g2.users.isLoaded must beTrue
+        g2.users.cache must contain(user2, user3, user4).only
+        g2.adminUsers.isLoaded must beTrue
+        g2.adminUsers.cache must contain(user2, user4).only
+      }
+
+      "eager loading (BelongsTo association)" >> withRollback {
+        val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
+        val (group1, group2) = (Group("group1").create, Group("group2").create)
+        group1.users := List(user1, user2)
+        group2.users << user3
+
+        val users = group1.users.where(_.name like "user%").includes(_.group).toList
+        users.map(_.group.isLoaded).forall(_ == true) must beTrue
+        users.map(_.group.toOption).flatten must contain(group1, group1).only
+      }
     }
   }
 }

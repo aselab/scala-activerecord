@@ -58,7 +58,7 @@ trait Relations {
 
       if (manifest == m && !cache.isEmpty) {
         val records = cache.asInstanceOf[List[T]]
-        val mapList = eagerLoadingAssociations.map(a => Association.eagerLoad(a, records))
+        val mapList = eagerLoadingAssociations.map(a => Association.eagerLoad(a, records)(manifest))
         for ((association, map) <- includeAssociations.zip(mapList); m <- records) {
           association(m).relation.cache = map.getOrElse(m.id, Nil)
         }
@@ -68,7 +68,7 @@ trait Relations {
 
     def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
 
-    def includes[A <: AR](association: T => Association[T, A]): this.type
+    def includes[A <: AR](associations: (T => Association[T, A])*): this.type
 
     protected def whereState(m: JOINED_TYPE) =
       PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
@@ -83,8 +83,10 @@ trait Relations {
 
     def head = headOption.get
 
-    def headOption = inTransaction {
-      limit(1).toQuery.headOption
+    def headOption = if (isLoaded) {
+      cache.headOption
+    } else {
+      inTransaction { limit(1).toQuery.headOption }
     }
 
     def where(condition: T => LogicalBoolean): this.type
@@ -228,8 +230,8 @@ trait Relations {
       }
     )
 
-    def includes[A <: AR](association: T => Association[T, A]): this.type = {
-      copy(includeAssociations = includeAssociations :+ association.asInstanceOf[T => Association[T, AR]])
+    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
+      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
         .asInstanceOf[this.type]
     }
 
@@ -296,8 +298,8 @@ trait Relations {
       whereState(t).compute(PrimitiveTypeMode.count).on(on(t))
     })
 
-    def includes[A <: AR](association: T => Association[T, A]): this.type = {
-      copy(includeAssociations = includeAssociations :+ association.asInstanceOf[T => Association[T, AR]])
+    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
+      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
         .asInstanceOf[this.type]
     }
 
@@ -349,8 +351,8 @@ trait Relations {
         whereState(t).compute(PrimitiveTypeMode.count).on(on1, on2)
     })
 
-    def includes[A <: AR](include: T => Association[T, A]): this.type = {
-      copy(includeAssociations = includeAssociations :+ include.asInstanceOf[T => Association[T, AR]]).asInstanceOf[this.type]
+    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
+      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]]).asInstanceOf[this.type]
     }
 
     def toQuery: Query[S] = paginate(

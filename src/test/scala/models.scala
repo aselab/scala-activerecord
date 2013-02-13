@@ -28,7 +28,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
   }
 }
 
-case class User(name: String) extends ActiveRecord {
+case class User(name: String, isAdmin: Boolean = false) extends ActiveRecord {
   val groupId: Option[Long] = None
   lazy val group = belongsTo[Group]
   lazy val memberships = hasMany[ProjectMembership]
@@ -37,6 +37,9 @@ case class User(name: String) extends ActiveRecord {
 
 case class Group(name: String) extends ActiveRecord {
   lazy val users = hasMany[User]
+  lazy val adminUsers = hasMany[User](
+    conditions = Map("isAdmin" -> true)
+  )
 }
 
 case class Project(name: String) extends ActiveRecord {
