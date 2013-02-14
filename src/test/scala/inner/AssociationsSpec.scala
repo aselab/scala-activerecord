@@ -40,6 +40,7 @@ object AssociationSpec extends ActiveRecordSpecification {
       belongsTo.headOption must beSome(group)
       belongsTo.headOption must beSome(group)
       belongsTo.where(_.name === "group1").toList mustEqual List(group)
+      belongsTo.name mustEqual group.name
     }
   }
 

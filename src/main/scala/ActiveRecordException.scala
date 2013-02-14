@@ -29,6 +29,9 @@ object ActiveRecordException {
   def notFoundField(name: String): ActiveRecordException =
     apply("Cannot find declaration of field: " + name)
 
+  def recordNotFound: ActiveRecordException =
+    apply("Cannot find record")
+
   def cannotCleanSession: ActiveRecordException =
     apply("Must start session by ActiveRecordTables#start()")
 

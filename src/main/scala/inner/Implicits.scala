@@ -41,6 +41,9 @@ trait DSL extends IterableConversion { self: PrimitiveTypeMode =>
   implicit def belongsToAssociationToOption[T <: AR]
     (association: BelongsToAssociation[_, T]): Option[T] = association.toOption
 
+  implicit def belongsToAssociationToRecord[T <: AR]
+    (association: BelongsToAssociation[_, T]): T = association.relation.head
+
   implicit def associationToRelation1[T <: AR]
     (association: {def relation1: Relation1[T, T]}) = association.relation1
 

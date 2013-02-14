@@ -81,7 +81,11 @@ trait Relations {
 
     protected def wrap[A <: {def _1: T}, R](f: T => R): A => R = {m: A => f(m._1)}
 
-    def head = headOption.get
+    def head = try {
+      headOption.get
+    } catch { case e: java.util.NoSuchElementException =>
+      throw ActiveRecordException.recordNotFound
+    }
 
     def headOption = if (isLoaded) {
       cache.headOption
