@@ -31,7 +31,7 @@ trait Relations {
   trait Relation[T <: AR, S] {
     type JOINED_TYPE
     val conditions: List[JOINED_TYPE => LogicalBoolean]
-    val orders: List[JOINED_TYPE => OrderByExpression]
+    val orders: List[JOINED_TYPE => ExpressionNode]
     val pages: Option[(Int, Int)]
     val queryable: Queryable[T]
     val selector: JOINED_TYPE => S
@@ -190,7 +190,7 @@ trait Relations {
 
   case class Relation1[T <: AR, S](
     conditions: List[T => LogicalBoolean],
-    orders: List[T => OrderByExpression],
+    orders: List[T => ExpressionNode],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     selector: T => S,
@@ -206,7 +206,7 @@ trait Relations {
       copy(selector = selector)
     }
 
-    def orderBy(conditions: (T => OrderByExpression)*): this.type = {
+    def orderBy(conditions: (T => ExpressionNode)*): this.type = {
       copy(orders = orders ++ conditions.toList).asInstanceOf[this.type]
     }
 
@@ -221,11 +221,10 @@ trait Relations {
     def toQuery: Query[S] = paginate(
       from(queryable){m =>
         eagerLoadingAssociations = includeAssociations.map(_.apply(m))
-
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(m)).orderBy(ordersExpression(m))
+          PrimitiveTypeMode.select(selector(m)).orderBy(orders.map(_.apply(m)))
         } else {
-          whereState(m).select(selector(m)).orderBy(ordersExpression(m))
+          whereState(m).select(selector(m)).orderBy(orders.map(_.apply(m)))
         }
       }
     )
@@ -267,7 +266,7 @@ trait Relations {
 
   case class Relation2[T <: AR, J1 <: AR, S](
     conditions: List[((T, J1)) => LogicalBoolean],
-    orders: List[((T, J1)) => OrderByExpression],
+    orders: List[((T, J1)) => ExpressionNode],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     joinTable: Queryable[J1],
@@ -287,7 +286,7 @@ trait Relations {
     def select[R](selector: (T, J1) => R): Relation[T, R] =
       copy(selector = Function.tupled(selector))
 
-    def orderBy(conditions: ((T, J1) => OrderByExpression)*): this.type =
+    def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
       copy(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
 
     def page(offset: Int, count: Int): this.type =
@@ -305,11 +304,11 @@ trait Relations {
 
     def toQuery: Query[S] = paginate(
       join(queryable, joinTable) {(m, j1) =>
-        val t = (m, j1)  
+        val t = (m, j1)
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
+          PrimitiveTypeMode.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
         } else {
-          whereState(t).select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
+          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
         }
       }
     )
@@ -317,7 +316,7 @@ trait Relations {
 
   case class Relation3[T <: AR, J1 <: AR, J2 <: AR, S](
     conditions: List[((T, J1, J2)) => LogicalBoolean],
-    orders: List[((T, J1, J2)) => OrderByExpression],
+    orders: List[((T, J1, J2)) => ExpressionNode],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     joinTable1: Queryable[J1],
@@ -357,12 +356,12 @@ trait Relations {
 
     def toQuery: Query[S] = paginate(
       join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
-        val t = (m, j1, j2)  
+        val t = (m, j1, j2)
         val (on1, on2) = on(t)
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
+          PrimitiveTypeMode.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
         } else {
-          whereState(t).select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
+          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
         }
       }
     )

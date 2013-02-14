@@ -39,6 +39,10 @@ object RelationsSpec extends ActiveRecordSpecification {
           }
         }
       }
+
+      "use ExpressionNode" >> {
+        relation.orderBy(_.int).toList mustEqual PrimitiveModel.all.toList
+      }
     }
 
     "#limit returns only specified count" >> {
