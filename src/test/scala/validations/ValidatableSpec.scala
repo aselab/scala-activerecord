@@ -54,6 +54,20 @@ object ValidatableSpec extends ActiveRecordSpecification {
           ValidationError(mc, "i", "field error2")
         ).only
       }
+
+      "hasErrors" in {
+        m.hasErrors must beTrue
+      }
+
+      "hasError" in {
+        m.hasError("s") must beTrue
+        m.hasError("i") must beTrue
+        m.hasError("xxx") must beFalse
+      }
+
+      "isValid" in {
+        m.isValid must beFalse
+      }
     }
 
     "validate success" in {
