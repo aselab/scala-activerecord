@@ -22,13 +22,8 @@ class ExpressionConversion(field: FieldInfo) {
     case f if f.is[UUID] => value.toOption[UUID]
   }
 
-  def toEqualityExpression(v1: Any, v2: Any): ast.EqualityExpression = try {
-    if (!field.isOption && (v2 == null || v2 == None)) throw new Exception
+  def toEqualityExpression(v1: => Any, v2: => Any): ast.EqualityExpression = {
     new ast.EqualityExpression(toExpression(v1), toExpression(v2))
-  } catch {
-    case e => throw ActiveRecordException.unsupportedType(
-      field.name + " by " + Option(v2).map(_.toString).getOrElse("null")
-    )
   }
 
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {

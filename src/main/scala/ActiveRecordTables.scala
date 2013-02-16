@@ -44,7 +44,7 @@ trait ActiveRecordTables extends Schema {
     Seq(c1, c2).map(tableNameFromClass).sorted.mkString("_")
 
   def foreignKeyFromClass(c: Class[_]): String =
-    c.getSimpleName.takeWhile(_ != '$').camelize + "Id"
+    c.getSimpleName.camelize + "Id"
 
   private def createTables = inTransaction {
     val isCreated = all.headOption.exists{ t =>

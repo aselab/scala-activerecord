@@ -172,7 +172,6 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
 
       "null, None" >> {
-        PrimitiveModel.findAllBy("int", null).toList must throwA(ActiveRecordException.unsupportedType("int by null"))
         PrimitiveModel.findAllBy("oboolean", null).toList must have size 50
         PrimitiveModel.findAllBy("oboolean", None).toList must have size 50
       }

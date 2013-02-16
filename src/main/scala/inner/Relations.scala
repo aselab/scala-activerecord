@@ -51,16 +51,18 @@ trait Relations {
       value
     }
 
-    private[inner] var eagerLoadingAssociations: List[Association[T, AR]] = Nil
+    protected var sampleRecord: T = _
 
     def reload(implicit m: Manifest[S]): List[S] = inTransaction {
       cache = queryToIterable(toQuery).toList
 
       if (manifest == m && !cache.isEmpty) {
-        val records = cache.asInstanceOf[List[T]]
-        val mapList = eagerLoadingAssociations.map(a => Association.eagerLoad(a, records)(manifest))
-        for ((association, map) <- includeAssociations.zip(mapList); m <- records) {
-          association(m).relation.cache = map.getOrElse(m.id, Nil)
+        val sources = cache.asInstanceOf[List[T]]
+        val eagerLoadedMaps = includeAssociations.map(a =>
+          (a, a(sampleRecord).eagerLoad(sources)(manifest))
+        )
+        for ((associationOf, map) <- eagerLoadedMaps; m <- sources) {
+          associationOf(m).relation.cache = map.getOrElse(m.id, Nil)
         }
       }
       cache
@@ -224,7 +226,7 @@ trait Relations {
 
     def toQuery: Query[S] = paginate(
       from(queryable){m =>
-        eagerLoadingAssociations = includeAssociations.map(_.apply(m))
+        sampleRecord = m
         if (conditions.isEmpty) {
           PrimitiveTypeMode.select(selector(m)).orderBy(orders.map(_.apply(m)))
         } else {

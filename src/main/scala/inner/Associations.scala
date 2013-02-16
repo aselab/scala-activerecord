@@ -8,56 +8,18 @@ import org.squeryl.dsl.ast.{LogicalBoolean, EqualityExpression}
 import squeryl.Implicits._
 import ReflectionUtil._
 
-trait BaseAssociation {
-  protected[inner] def fieldInfo(name: String): FieldInfo
-}
-
-trait BaseHasManyAssociation extends BaseAssociation {
-  val foreignKey: String
-}
-
-trait BaseBelongToAssociation extends BaseAssociation {
-  val foreignKey: String
-}
-
 trait Associations {
-
-  object Association {
-    def eagerLoad[T <: AR](association: BaseAssociation, records: List[T])(implicit m: Manifest[T]): Map[Any, List[AR]] = {
-      if (records.isEmpty) return Map()
-      val ids = records.map(_.id)
-      association match {
-        case a: BaseHasManyAssociation =>
-          val key = a.foreignKey
-          val field = a.fieldInfo(key)
-          val r = a.asInstanceOf[HasManyAssociation[T, AR]].eagerLoadingRelation.where(
-            m => field.toInExpression(m.getValue(key), ids)).toQuery.toList
-          r.groupBy(_.getValue[Any](key).toOption[Any].orNull)
-        case a: BaseBelongToAssociation =>
-          val association = a.asInstanceOf[BelongsToAssociation[T, AR]]
-          val owner = association.owner
-          val key = a.foreignKey
-          val field = association.fieldInfo
-          val r = association.eagerLoadingRelation.joins[T]{(m, o) =>
-            val e1 = field.toExpression(m.id)
-            val e2 = field.toExpression(o.getValue(key))
-            new EqualityExpression(e1, e2)
-          }.where((m, o) => field.toInExpression(o.id, ids)).toQuery.toList
-          val map = r.groupBy(_.id)
-          records.map(r => (r.id, map.getOrElse(r.getValue[Any](key).toOption[Any].orNull, Nil))).toMap
-        case _ => throw new Exception("not implemented")
-      }
-    }
-  }
-
-  trait Association[+O <: AR, T <: AR] extends BaseAssociation {
+  trait Association[+O <: AR, T <: AR] {
     val owner: O
     val associationClass = manifest.erasure
     implicit val manifest: Manifest[T]
 
     def relation: ActiveRecord.Relation[T, T]
 
-    def eagerLoadingRelation: ActiveRecord.Relation[T, T]
+    protected[inner] def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      throw new Exception("not implemented")
+    }
 
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
@@ -65,7 +27,7 @@ trait Associations {
     protected lazy val source =
       ActiveRecord.Relation(companion.table, {m: T => m})(manifest)
 
-    protected[inner] override def fieldInfo(name: String) =
+    protected[inner] def fieldInfo(name: String) =
       companion.fieldInfo.getOrElse(name, throw ActiveRecordException.notFoundField(name))
   }
 
@@ -76,7 +38,7 @@ trait Associations {
     def conditionFactory(conditions: Map[String, Any]) = {
       m: T => LogicalBoolean.and(conditions.map {
         case (key, value) =>
-          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+          fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
       }.toSeq)
     }
 
@@ -101,14 +63,23 @@ trait Associations {
 
   class BelongsToAssociation[O <: AR, T <: AR](
     val owner: O, val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends Association[O, T] with BaseBelongToAssociation {
-    lazy val fieldInfo = owner._companion.fieldInfo(foreignKey)
+  )(implicit val manifest: Manifest[T]) extends Association[O, T] {
+    lazy val foreignKeyInfo = owner._companion.fieldInfo(foreignKey)
 
     def condition: T => LogicalBoolean = {
-      m => fieldInfo.toEqualityExpression(m.id, owner.getValue(foreignKey))
+      m => foreignKeyInfo.toEqualityExpression(m.id, owner.getValue[Any](foreignKey))
     }
 
-    lazy val eagerLoadingRelation = source
+    override def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      val ids = sources.map(_.id)
+      val field = foreignKeyInfo
+      val r = source.joins[S]((m, o) =>
+        field.toEqualityExpression(m.id, o.getValue[Any](foreignKey))
+      ).where((m, o) => field.toInExpression(o.id, ids)).toQuery.toList
+      val map = r.groupBy(_.id)
+      sources.map(r => (r.id, map.getOrElse(r.getValue[Any](foreignKey).toOption[Any].orNull, Nil))).toMap
+    }
 
     lazy val relation1: ActiveRecord.Relation1[T, T] =
       source.where(condition).limit(1)
@@ -118,7 +89,7 @@ trait Associations {
     def toOption: Option[T] = relation.headOption
 
     def assign(m: T): T = {
-      fieldInfo.setValue(owner, m.id)
+      foreignKeyInfo.setValue(owner, m.id)
       m
     }
 
@@ -133,14 +104,22 @@ trait Associations {
 
   class HasManyAssociation[O <: AR, T <: AR](
     val owner: O, conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] with BaseHasManyAssociation {
+  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
     lazy val relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
 
     def relation = relation1
 
-    lazy val eagerLoadingRelation = source.where(conditionFactory(conditions))
+    override def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      val ids = sources.map(_.id)
+      val field = fieldInfo(foreignKey)
+
+      val r = source.where(conditionFactory(conditions)).where(
+        m => field.toInExpression(m.getValue(foreignKey), ids)).toQuery.toList
+      r.groupBy(_.getValue[Any](foreignKey).toOption[Any].orNull)
+    }
 
     def assign(m: T): T = assignConditions(m)
 
@@ -167,20 +146,16 @@ trait Associations {
     lazy val relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
-        val e1 = f.toExpression(m.id)
-        val e2 = f.toExpression(inter.getValue(foreignKey))
-        new EqualityExpression(e1, e2)
+        f.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
     }.where(
       (m, inter) =>
       LogicalBoolean.and(through.condition(inter) :: conditions.map {
         case (key, value) =>
-          fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+          fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
       }.toList)
     )
 
     def relation = relation2
-
-    lazy val eagerLoadingRelation = throw new Error("not implemented")
 
     def assign(m: T): I = {
       assignConditions(m)
@@ -232,15 +207,13 @@ trait Associations {
           (owner.id === (if (isLeftSide) inter.rightId else inter.leftId)) ::
           conditions.map {
             case (key, value) =>
-              fieldInfo(key).toEqualityExpression(m.getValue(key), value)
+              fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
           }.toList
         )
       )
     }
 
     def relation = relation2
-
-    lazy val eagerLoadingRelation = throw new Error("not implemented")
 
     def associate(m: T): T = {
       val t = assignConditions(m)
