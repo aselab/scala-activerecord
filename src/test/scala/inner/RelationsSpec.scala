@@ -131,7 +131,7 @@ object RelationsSpec extends ActiveRecordSpecification {
       }
     }
 
-    "#update" >> {
+    "#update" >> withRollback {
       val now = new Timestamp(System.currentTimeMillis)
       val query = relation.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
       query.count mustEqual 0
