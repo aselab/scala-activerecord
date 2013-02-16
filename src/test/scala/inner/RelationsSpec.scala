@@ -5,6 +5,7 @@ import org.specs2.mutable._
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import models._
+import java.sql.Timestamp
 
 object RelationsSpec extends ActiveRecordSpecification {
   override def before = {
@@ -128,6 +129,14 @@ object RelationsSpec extends ActiveRecordSpecification {
         users.map(_.group.isLoaded).forall(_ == true) must beTrue
         users.map(_.group.toOption).flatten must contain(group1, group1).only
       }
+    }
+
+    "#update" >> {
+      val now = new Timestamp(System.currentTimeMillis)
+      val query = relation.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
+      query.count mustEqual 0
+      relation.where(_.id.~ > 40).update(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
+      query.count mustEqual 60
     }
   }
 }

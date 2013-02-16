@@ -240,6 +240,10 @@ trait Relations {
         .asInstanceOf[this.type]
     }
 
+    def update(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
+      PrimitiveTypeMode.update(companion.table)(m => whereState(m).set(updateAssignments.map(_.apply(m)): _*))
+    }
+
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
       val c = classToCompanion(m.erasure)
