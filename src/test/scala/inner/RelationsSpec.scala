@@ -87,8 +87,8 @@ object RelationsSpec extends ActiveRecordSpecification {
       users.reload mustEqual List(user1, user2, user3)
     }
 
-    "includes" >> {
-      "eager loading (simple)" >> withRollback {
+    "includes (eager loading)" >> {
+      "HasMany association" >> withRollback {
         val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users << user1
@@ -102,7 +102,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         g2.users.cache must contain(user3).only
       }
 
-      "eager loading (multiple associations)" >> withRollback {
+      "multiple associations" >> withRollback {
         val (user1, user2, user3, user4) = (User("user1").create, User("user2", true).create, User("user3").create, User("user4").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users << user1
@@ -119,7 +119,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         g2.adminUsers.cache must contain(user2, user4).only
       }
 
-      "eager loading (BelongsTo association)" >> withRollback {
+      "BelongsTo association" >> withRollback {
         val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users := List(user1, user2)
@@ -128,6 +128,19 @@ object RelationsSpec extends ActiveRecordSpecification {
         val users = group1.users.where(_.name like "user%").includes(_.group).toList
         users.map(_.group.isLoaded).forall(_ == true) must beTrue
         users.map(_.group.toOption).flatten must contain(group1, group1).only
+      }
+
+      "HABTM association" >> withRollback {
+        val (foo1, foo2) = (Foo("foo1").create, Foo("foo2").create)
+        val (bar1, bar2, bar3) = (Bar("bar1").create, Bar("bar2").create, Bar("bar3").create)
+        foo1.bars := List(bar1, bar2)
+        foo2.bars << bar3
+
+        val List(f1, f2) = Foo.where(_.name like "foo%").includes(_.bars).toList
+        f1.bars.isLoaded must beTrue
+        f2.bars.isLoaded must beTrue
+        f1.bars.cache must contain(bar1, bar2).only
+        f2.bars.cache must contain(bar3).only
       }
     }
 

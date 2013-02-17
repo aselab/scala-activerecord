@@ -15,9 +15,7 @@ trait Associations {
     def relation: ActiveRecord.Relation[T, T]
 
     protected[inner] def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
-      throw new Exception("not implemented")
-    }
+      (implicit m: Manifest[S]): Map[Any, List[T]]
 
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
@@ -68,7 +66,7 @@ trait Associations {
       m => foreignKeyInfo.toEqualityExpression(m.id, owner.getValue[Any](foreignKey))
     }
 
-    override def eagerLoad[S <: AR](sources: List[S])
+    def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id)
       val field = foreignKeyInfo
@@ -109,7 +107,7 @@ trait Associations {
 
     def relation = relation1
 
-    override def eagerLoad[S <: AR](sources: List[S])
+    def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id)
       val field = fieldInfo(foreignKey)
@@ -146,14 +144,17 @@ trait Associations {
         val f = fieldInfo("id")
         f.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
     }.where(
-      (m, inter) =>
-      LogicalBoolean.and(through.condition(inter) :: conditions.map {
-        case (key, value) =>
-          fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
-      }.toList)
+      (m, inter) => LogicalBoolean.and(
+        through.condition(inter) :: condition(m) :: Nil
+      )
     )
 
     def relation = relation2
+
+    def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      throw new Exception("not implemented")
+    }
 
     def assign(m: T): I = {
       assignConditions(m)
@@ -192,7 +193,7 @@ trait Associations {
 
     val allConditions = conditions
 
-    lazy val relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
+    private def joinedRelation = {
       val on = {(m: T, inter: IntermediateRecord) =>
         m.id === (if (isLeftSide) inter.leftId else inter.rightId)
       }
@@ -200,18 +201,26 @@ trait Associations {
 
       new ActiveRecord.Relation2(Nil, Nil, None, companion.table,
         interCompanion.table, Function.tupled(on), Function.tupled(select)
-      ).where((m, inter) =>
-        LogicalBoolean.and(
-          (owner.id === (if (isLeftSide) inter.rightId else inter.leftId)) ::
-          conditions.map {
-            case (key, value) =>
-              fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
-          }.toList
-        )
+      ).where(condition)
+    }
+
+    lazy val relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
+      joinedRelation.where((m, inter) => 
+        owner.id === (if (isLeftSide) inter.rightId else inter.leftId)
       )
     }
 
     def relation = relation2
+
+    def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      val ids = sources.map(_.id).asInstanceOf[List[Long]]
+      joinedRelation.where((m, inter) =>
+        (if (isLeftSide) inter.rightId else inter.leftId) in ids
+      ).select((m, inter) =>
+        (if (isLeftSide) inter.rightId else inter.leftId) -> m
+      ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
+    }
 
     def associate(m: T): T = {
       val t = assignConditions(m)
