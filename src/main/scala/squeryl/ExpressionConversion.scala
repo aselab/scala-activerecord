@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord.squeryl
 
 import com.github.aselab.activerecord._
-import dsl._
+import com.github.aselab.activerecord.dsl._
 import org.squeryl.dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp

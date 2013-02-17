@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord.inner
 
-import org.squeryl._
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
@@ -18,7 +17,7 @@ trait CompanionConversion[T <: AR] extends CompanionIterable[T] {
 }
 
 // low priority implicits
-trait IterableConversion { self: PrimitiveTypeMode =>
+trait IterableConversion {
   implicit def relationToIterable[T](relation: Relation[_, T])
     (implicit m: Manifest[T]): Iterable[T] = relation.load
 
@@ -27,7 +26,7 @@ trait IterableConversion { self: PrimitiveTypeMode =>
       relationToIterable(association.relation)
 }
 
-trait DSL extends IterableConversion { self: PrimitiveTypeMode =>
+trait DSL extends IterableConversion {
   implicit def keyedEntityDef[T <: AR](implicit m: Manifest[T]) = {
     ReflectionUtil.classToCompanion(m.erasure.getName)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]

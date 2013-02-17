@@ -1,10 +1,10 @@
 package com.github.aselab.activerecord
 
-import aliases._
-import org.squeryl._
-import org.squeryl.PrimitiveTypeMode._
+import org.squeryl.{Session, SessionFactory}
+import com.github.aselab.activerecord.dsl._
+import com.github.aselab.activerecord.aliases._
+import com.github.aselab.activerecord.squeryl.Implicits._
 import mojolly.inflector.InflectorImports._
-import squeryl.Implicits._
 
 /**
  * Base class of database schema.

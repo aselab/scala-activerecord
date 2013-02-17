@@ -1,7 +1,5 @@
 package com.github.aselab.activerecord
 
-import org.squeryl.annotations.Transient
-
 trait Saveable {
   def save(): Boolean = false
   def isNewRecord: Boolean
@@ -11,7 +9,7 @@ trait Saveable {
  * Interface of CRUD and callbacks.
  */
 trait CRUDable extends Saveable {
-  @Transient
+  @dsl.Transient
   protected var _isNewRecord = true
 
   def isNewRecord: Boolean = _isNewRecord

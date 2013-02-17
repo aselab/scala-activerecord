@@ -3,8 +3,6 @@ package com.github.aselab.activerecord.inner
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
-import org.squeryl._
-import org.squeryl.dsl.ast.{LogicalBoolean, EqualityExpression}
 import squeryl.Implicits._
 import ReflectionUtil._
 

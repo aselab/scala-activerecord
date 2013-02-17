@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord
 
-import org.squeryl.annotations.Transient
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
@@ -48,7 +47,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
 }
 
 trait Validatable extends Saveable {
-  @Transient
+  @dsl.Transient
   @dsl.Ignore
   val errors = new Errors(getClass)
 

@@ -1,14 +1,13 @@
 package com.github.aselab.activerecord
 
-import org.squeryl._
-import org.squeryl.dsl.CompositeKey2
 import ActiveRecord._
 
-object dsl extends PrimitiveTypeMode with Annotations with inner.DSL
+object dsl extends org.squeryl.PrimitiveTypeMode
+  with inner.Annotations with inner.DSL with inner.Types
 
 package object aliases {
   type AR = ActiveRecordBase[_]
-  type CKey = CompositeKey2[Long, Long]
+  type CKey = dsl.CompositeKey2[Long, Long]
 }
 
 package object support {

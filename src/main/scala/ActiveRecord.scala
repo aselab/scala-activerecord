@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import com.github.aselab.activerecord.dsl._
-import org.squeryl._
 
 trait ActiveRecordBase[T] extends ProductModel with CRUDable
   with ActiveRecord.AssociationSupport with ValidationSupport with IO

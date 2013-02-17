@@ -1,12 +1,11 @@
 package com.github.aselab.activerecord.experimental
 
 import com.github.aselab.activerecord._
-import annotations._
 
 trait Versionable extends ActiveRecord with Serializable {
   import ReflectionUtil._
 
-  @Ignore private lazy val _className = getClass.getName
+  @dsl.Ignore private lazy val _className = getClass.getName
 
   abstract override def doUpdate: Boolean = dsl.inTransaction {
     changed.foreach { case (name, value) =>
@@ -16,7 +15,7 @@ trait Versionable extends ActiveRecord with Serializable {
     super.doUpdate
   }
 
-  @Ignore private var changed = collection.mutable.Map[String, (Any, Any)]()
+  @dsl.Ignore private var changed = collection.mutable.Map[String, (Any, Any)]()
 
   private def setId(id: Long) = {
     val f = classOf[ActiveRecord].getDeclaredField("id")

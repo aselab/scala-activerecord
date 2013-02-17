@@ -3,18 +3,15 @@ package com.github.aselab.activerecord.inner
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
+import com.github.aselab.activerecord.squeryl.Implicits._
 import ActiveRecord._
-import squeryl.Implicits._
-import org.squeryl._
-import org.squeryl.dsl._
-import org.squeryl.dsl.ast._
 import ReflectionUtil._
 
 trait Relations {
   object Relation {
     def apply[T <: AR, S](
       conditions: List[T => LogicalBoolean],
-      orders: List[T => OrderByExpression],
+      orders: List[T => ExpressionNode],
       pages: Option[(Int, Int)],
       queryable: Queryable[T],
       selector: T => S
@@ -56,7 +53,7 @@ trait Relations {
     def reload(implicit m: Manifest[S]): List[S] = inTransaction {
       cache = queryToIterable(toQuery).toList
 
-      if (manifest == m && !cache.isEmpty) {
+      if (manifest == m && cache.nonEmpty) {
         val sources = cache.asInstanceOf[List[T]]
         val eagerLoadedMaps = includeAssociations.map(a =>
           (a, a(sampleRecord).eagerLoad(sources)(manifest))
@@ -73,7 +70,7 @@ trait Relations {
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type
 
     protected def whereState(m: JOINED_TYPE) =
-      PrimitiveTypeMode.where(LogicalBoolean.and(conditions.map(_.apply(m))))
+      dsl.where(LogicalBoolean.and(conditions.map(_.apply(m))))
 
     protected def ordersExpression(m: JOINED_TYPE) = orders.map(_.apply(m))
 
@@ -221,14 +218,14 @@ trait Relations {
     }
 
     def count: Long = paginate(
-      from(queryable)(m => whereState(m).compute(PrimitiveTypeMode.count))
+      from(queryable)(m => whereState(m).compute(dsl.count))
     )
 
     def toQuery: Query[S] = paginate(
       from(queryable){m =>
         sampleRecord = m
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(m)).orderBy(orders.map(_.apply(m)))
+          dsl.select(selector(m)).orderBy(orders.map(_.apply(m)))
         } else {
           whereState(m).select(selector(m)).orderBy(orders.map(_.apply(m)))
         }
@@ -241,7 +238,7 @@ trait Relations {
     }
 
     def update(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
-      PrimitiveTypeMode.update(companion.table)(m => whereState(m).set(updateAssignments.map(_.apply(m)): _*))
+      dsl.update(companion.table)(m => whereState(m).set(updateAssignments.map(_.apply(m)): _*))
     }
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
@@ -304,7 +301,7 @@ trait Relations {
 
     def count: Long = paginate(join(queryable, joinTable) {(m, j1) =>
       val t = (m, j1)  
-      whereState(t).compute(PrimitiveTypeMode.count).on(on(t))
+      whereState(t).compute(dsl.count).on(on(t))
     })
 
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
@@ -316,7 +313,7 @@ trait Relations {
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
+          dsl.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
         } else {
           whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
         }
@@ -347,7 +344,7 @@ trait Relations {
     def select[R](selector: (T, J1, J2) => R): Relation[T, R] =
       copy(selector = Function.tupled(selector))
 
-    def orderBy(conditions: ((T, J1, J2) => OrderByExpression)*): this.type =
+    def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
       copy(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
 
     def page(offset: Int, count: Int): this.type =
@@ -357,7 +354,7 @@ trait Relations {
       (m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
-        whereState(t).compute(PrimitiveTypeMode.count).on(on1, on2)
+        whereState(t).compute(dsl.count).on(on1, on2)
     })
 
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
@@ -369,7 +366,7 @@ trait Relations {
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
         if (conditions.isEmpty) {
-          PrimitiveTypeMode.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
+          dsl.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
         } else {
           whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
         }

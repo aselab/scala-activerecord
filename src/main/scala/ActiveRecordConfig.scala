@@ -1,6 +1,6 @@
 package com.github.aselab.activerecord
 
-import org.squeryl._
+import org.squeryl.Session
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import java.sql.Connection
@@ -21,7 +21,7 @@ object Config {
     .asInstanceOf[ActiveRecordTables]
 
   def connection: java.sql.Connection = conf.connection
-  def adapter: internals.DatabaseAdapter = conf.adapter
+  def adapter: DatabaseAdapter = conf.adapter
 
   def cleanup: Unit = conf.cleanup
 
