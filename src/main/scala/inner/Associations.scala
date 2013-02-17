@@ -12,6 +12,8 @@ trait Associations {
     val associationClass = manifest.erasure
     implicit val manifest: Manifest[T]
 
+    def foreignKey: String
+
     def relation: ActiveRecord.Relation[T, T]
 
     protected[inner] def eagerLoad[S <: AR](sources: List[S])
@@ -74,7 +76,7 @@ trait Associations {
         field.toEqualityExpression(m.id, o.getValue[Any](foreignKey))
       ).where((m, o) => field.toInExpression(o.id, ids)).toQuery.toList
       val map = r.groupBy(_.id)
-      sources.map(r => (r.id, map.getOrElse(r.getValue[Any](foreignKey).toOption[Any].orNull, Nil))).toMap
+      sources.map(r => (r.id, map.getOrElse(r.getOption[Any](foreignKey).orNull, Nil))).toMap
     }
 
     lazy val relation1: ActiveRecord.Relation1[T, T] =
@@ -114,7 +116,7 @@ trait Associations {
 
       val r = source.where(conditionFactory(conditions)).where(
         m => field.toInExpression(m.getValue(foreignKey), ids)).toQuery.toList
-      r.groupBy(_.getValue[Any](foreignKey).toOption[Any].orNull)
+      r.groupBy(_.getOption[Any](foreignKey).orNull)
     }
 
     def assign(m: T): T = assignConditions(m)
@@ -135,25 +137,32 @@ trait Associations {
 
   class HasManyThroughAssociation[O <: AR, T <: AR, I <: AR](
     val owner: O, val through: CollectionAssociation[O, I],
-    conditions: Map[String, Any], foreignKey: String
+    conditions: Map[String, Any], val foreignKey: String
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
     val allConditions = conditions
 
-    lazy val relation2: ActiveRecord.Relation2[T, I, T] = source.joins[I]{
+    private def joinedRelation = source.joins[I]{
       (m, inter) =>
         val f = fieldInfo("id")
         f.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
-    }.where(
-      (m, inter) => LogicalBoolean.and(
-        through.condition(inter) :: condition(m) :: Nil
-      )
-    )
+    }.where(condition)
+
+    lazy val relation2: ActiveRecord.Relation2[T, I, T] =
+      joinedRelation.where((m, inter) => through.condition(inter))
 
     def relation = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
-      throw new Exception("not implemented")
+      val idMap = through.eagerLoad(sources).map {
+        case (id, inters) => (id, inters.flatMap(_.getOption[Any](foreignKey)))
+      }
+      val ids = idMap.values.flatten.toList.distinct
+
+      val field = fieldInfo("id")
+      val recordMap = source.where(m => field.toInExpression(m.id, ids))
+        .toList.map(m => (m.id, m)).toMap
+      idMap.map {case (id, ids) => (id, ids.map(recordMap))}
     }
 
     def assign(m: T): I = {
@@ -187,6 +196,7 @@ trait Associations {
     val owner: O, conditions: Map[String, Any],
     interCompanion: IntermediateRecordCompanion
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
+    lazy val foreignKey = if (isLeftSide) "leftId" else "rightId"
 
     private val isLeftSide = List(owner.getClass, manifest.erasure)
       .sortBy(_.getSimpleName).head == manifest.erasure

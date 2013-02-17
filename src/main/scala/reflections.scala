@@ -229,11 +229,16 @@ trait ReflectionUtil {
         f => m.erasure.isAssignableFrom(f.getType)
       }
 
-    def toOption[T]: Option[T] = o match {
+    private def convertToOption[T](v: Any) = v match {
       case null | None => None
       case Some(o) => Some(o.asInstanceOf[T])
       case o => Some(o.asInstanceOf[T])
     }
+
+    def toOption[T]: Option[T] = convertToOption[T](o)
+
+    def getOption[T](name: String): Option[T] =
+      convertToOption[T](getValue[Any](name))
   }
 
   def getGenericType(field: Field): Class[_] = getGenericTypes(field).head

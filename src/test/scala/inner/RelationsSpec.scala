@@ -142,6 +142,35 @@ object RelationsSpec extends ActiveRecordSpecification {
         f1.bars.cache must contain(bar1, bar2).only
         f2.bars.cache must contain(bar3).only
       }
+
+      "HasManyThrough association" >> withRollback {
+        val (project1, project2) = (Project("p1").create, Project("p2").create)
+        val (group1, group2) = (Group("group1").create, Group("group2").create)
+        val managers1 = (1 to 2).map(i => User("user" + i).create).toList
+        val developers1 = (3 to 6).map(i => User("user" + i).create).toList
+        val managers2 = (7 to 8).map(i => User("user" + i).create).toList
+        val developers2 = (9 to 10).map(i => User("user" + i).create).toList
+        project1.managers := managers1
+        project1.developers := developers1
+        project2.managers := managers2
+        project2.developers := developers2
+        group1.users << managers1.head
+        group2.users << developers1.head
+
+        val List(p1, p2) = Project.where(_.name like "p%")
+          .includes(_.users, _.managers, _.developers).includes(_.groups).toList
+        List(p1, p2).forall(p => p.users.isLoaded &&  p.managers.isLoaded &&
+          p.developers.isLoaded && p.groups.isLoaded) must beTrue
+
+        p1.users.cache mustEqual managers1 ++ developers1
+        p2.users.cache mustEqual managers2 ++ developers2
+        p1.managers.cache mustEqual managers1
+        p2.managers.cache mustEqual managers2
+        p1.developers.cache mustEqual developers1
+        p2.developers.cache mustEqual developers2
+        p1.groups.cache mustEqual List(group1, group2)
+        p2.groups.cache must beEmpty
+      }
     }
 
     "#update" >> withRollback {
