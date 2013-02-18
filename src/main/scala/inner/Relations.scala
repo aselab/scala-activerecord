@@ -32,6 +32,7 @@ trait Relations {
     val pages: Option[(Int, Int)]
     val queryable: Queryable[T]
     val selector: JOINED_TYPE => S
+    val isUnique: Boolean
     val includeAssociations: List[T => Association[T, AR]]
     val manifest: Manifest[T]
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
@@ -170,6 +171,8 @@ trait Relations {
       page(pages.map(_._1).getOrElse(0) , count)
     }
 
+    def distinct: this.type
+
     /**
      * returns page results.
      * {{{
@@ -184,7 +187,10 @@ trait Relations {
       where(condition).limit(1).count != 0
     }
 
-    def count: Long
+    def count: Long = if (isUnique) toQuery.Count else nonNestQueryCount
+
+    protected def nonNestQueryCount: Long
+
 
     def toQuery: Query[S]
 
@@ -197,6 +203,7 @@ trait Relations {
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
     selector: T => S,
+    isUnique: Boolean = false,
     includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
@@ -217,12 +224,14 @@ trait Relations {
       copy(pages = Some(offset, count)).asInstanceOf[this.type]
     }
 
-    def count: Long = paginate(
+    def nonNestQueryCount: Long = paginate(
       from(queryable)(m => whereState(m).compute(dsl.count))
     )
 
-    def toQuery: Query[S] = paginate(
-      from(queryable){m =>
+    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
+
+    def toQuery: Query[S] = paginate{
+      val query = from(queryable){m =>
         sampleRecord = m
         if (conditions.isEmpty) {
           dsl.select(selector(m)).orderBy(orders.map(_.apply(m)))
@@ -230,15 +239,18 @@ trait Relations {
           whereState(m).select(selector(m)).orderBy(orders.map(_.apply(m)))
         }
       }
-    )
+      if (isUnique) query.distinct else query
+    }
 
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
       copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
         .asInstanceOf[this.type]
     }
 
-    def update(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
-      dsl.update(companion.table)(m => whereState(m).set(updateAssignments.map(_.apply(m)): _*))
+    def deleteAll()(implicit ev: S =:= T): List[T] = inTransaction {
+      val records = toQuery.toList
+      records.foreach(_.delete)
+      records.asInstanceOf[List[T]]
     }
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
@@ -279,6 +291,7 @@ trait Relations {
     joinTable: Queryable[J1],
     on: ((T, J1)) => LogicalBoolean,
     selector: ((T, J1)) => S,
+    isUnique: Boolean = false,
     includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
@@ -299,18 +312,20 @@ trait Relations {
     def page(offset: Int, count: Int): this.type =
       copy(pages = Some(offset, count)).asInstanceOf[this.type]
 
-    def count: Long = paginate(join(queryable, joinTable) {(m, j1) =>
+    def nonNestQueryCount: Long = paginate(join(queryable, joinTable) {(m, j1) =>
       val t = (m, j1)  
       whereState(t).compute(dsl.count).on(on(t))
     })
+
+    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
 
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
       copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
         .asInstanceOf[this.type]
     }
 
-    def toQuery: Query[S] = paginate(
-      join(queryable, joinTable) {(m, j1) =>
+    def toQuery: Query[S] = paginate{
+      val query = join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
         if (conditions.isEmpty) {
           dsl.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
@@ -318,7 +333,8 @@ trait Relations {
           whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
         }
       }
-    )
+      if (isUnique) query.distinct else query
+    }
   }
 
   case class Relation3[T <: AR, J1 <: AR, J2 <: AR, S](
@@ -330,6 +346,7 @@ trait Relations {
     joinTable2: Queryable[J2],
     on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean),
     selector: ((T, J1, J2)) => S,
+    isUnique: Boolean = false,
     includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
@@ -350,19 +367,21 @@ trait Relations {
     def page(offset: Int, count: Int): this.type =
       copy(pages = Some(offset, count)).asInstanceOf[this.type]
 
-    def count: Long = paginate(join(queryable, joinTable1, joinTable2) {
+    def nonNestQueryCount: Long = paginate(join(queryable, joinTable1, joinTable2) {
       (m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
         whereState(t).compute(dsl.count).on(on1, on2)
     })
 
+    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
+
     def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
       copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]]).asInstanceOf[this.type]
     }
 
-    def toQuery: Query[S] = paginate(
-      join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
+    def toQuery: Query[S] = paginate{
+      val query = join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
         if (conditions.isEmpty) {
@@ -371,6 +390,7 @@ trait Relations {
           whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
         }
       }
-    )
+      if (isUnique) query.distinct else query
+    }
   }
 }

@@ -62,6 +62,11 @@ object RelationsSpec extends ActiveRecordSpecification {
       relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
     }
 
+    "#distinct" >> withRollback {
+      PrimitiveModel.newModel(1).save
+      PrimitiveModel.where(_.string === "string1").select(_.string).distinct.count mustEqual 1
+    }
+
     "#joins" >> withRollback {
       val u1 = User("string50").create
       PrimitiveModel.joins[User]((p, u) => p.string === u.name)
@@ -171,14 +176,6 @@ object RelationsSpec extends ActiveRecordSpecification {
         p1.groups.cache mustEqual List(group1, group2)
         p2.groups.cache must beEmpty
       }
-    }
-
-    "#update" >> withRollback {
-      val now = new Timestamp(System.currentTimeMillis)
-      val query = relation.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
-      query.count mustEqual 0
-      relation.where(_.id.~ > 40).update(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
-      query.count mustEqual 60
     }
   }
 }

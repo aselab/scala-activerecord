@@ -184,6 +184,32 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
     }
 
+    "#forceUpdate" >> withRollback {
+      val now = new Timestamp(System.currentTimeMillis)
+      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
+      query.count mustEqual 0
+      PrimitiveModel.forceUpdate(_.id.~ > 40, _.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
+      query.count mustEqual 60
+    }
+
+    "#forceUpdateAll" >> withRollback {
+      val now = new Timestamp(System.currentTimeMillis)
+      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
+      query.count mustEqual 0
+      PrimitiveModel.forceUpdateAll(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 100
+      query.count mustEqual 100
+    }
+
+    "#forceDelete" >> withRollback {
+      PrimitiveModel.forceDelete(_.id.~ > 40) mustEqual 60
+      PrimitiveModel.count mustEqual 40
+    }
+
+    "#forceDeleteAll" >> withRollback {
+      PrimitiveModel.forceDeleteAll() mustEqual 100
+      PrimitiveModel.count mustEqual 0
+    }
+
     "implicit conversions" >> {
       "relation should be able to chain" >> {
         PrimitiveModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")

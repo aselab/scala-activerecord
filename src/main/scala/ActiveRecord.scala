@@ -110,13 +110,20 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     table.delete(id)
   }
 
-  /**
-   * delete all records.
-   */
-  def deleteAll(): List[T] = inTransaction {
-    val models = all.toList
-    models.foreach(_.delete)
-    models
+  def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
+    dsl.update(table)(m => setAll(updateAssignments.map(_.apply(m)): _*))
+  }
+
+  def forceUpdate(condition: T => LogicalBoolean, updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
+    dsl.update(table)(m => where(condition(m)).set(updateAssignments.map(_.apply(m)): _*))
+  }
+
+  def forceDeleteAll(): Int = inTransaction {
+    table.delete(all.toQuery)
+  }
+
+  def forceDelete(condition: T => LogicalBoolean): Int = inTransaction {
+    table.deleteWhere(m => condition(m))
   }
 
   /**
