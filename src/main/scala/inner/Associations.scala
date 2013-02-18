@@ -22,8 +22,7 @@ trait Associations {
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
-    protected lazy val source =
-      ActiveRecord.Relation(companion.table, {m: T => m})(manifest)
+    protected lazy val source: ActiveRecord.Relation1[T, T] = companion.table
 
     protected[inner] def fieldInfo(name: String) =
       companion.fieldInfo.getOrElse(name, throw ActiveRecordException.notFoundField(name))
@@ -33,7 +32,7 @@ trait Associations {
     
     val allConditions: Map[String, Any]
 
-    def conditionFactory(conditions: Map[String, Any]) = {
+    protected def conditionFactory(conditions: Map[String, Any]) = {
       m: T => LogicalBoolean.and(conditions.map {
         case (key, value) =>
           fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
@@ -141,11 +140,11 @@ trait Associations {
   )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
     val allConditions = conditions
 
-    private def joinedRelation = source.joins[I]{
-      (m, inter) =>
-        val f = fieldInfo("id")
-        f.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
-    }.where(condition)
+    private lazy val idFieldInfo = fieldInfo("id")
+
+    private def joinedRelation = source.joins[I]((m, inter) =>
+      idFieldInfo.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
+    ).where(condition)
 
     lazy val relation2: ActiveRecord.Relation2[T, I, T] =
       joinedRelation.where((m, inter) => through.condition(inter))
@@ -159,8 +158,7 @@ trait Associations {
       }
       val ids = idMap.values.flatten.toList.distinct
 
-      val field = fieldInfo("id")
-      val recordMap = source.where(m => field.toInExpression(m.id, ids))
+      val recordMap = source.where(m => idFieldInfo.toInExpression(m.id, ids))
         .toList.map(m => (m.id, m)).toMap
       idMap.map {case (id, ids) => (id, ids.map(recordMap))}
     }

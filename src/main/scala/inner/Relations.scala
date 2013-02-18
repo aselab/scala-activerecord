@@ -8,23 +8,6 @@ import ActiveRecord._
 import ReflectionUtil._
 
 trait Relations {
-  object Relation {
-    def apply[T <: AR, S](
-      conditions: List[T => LogicalBoolean],
-      orders: List[T => ExpressionNode],
-      pages: Option[(Int, Int)],
-      queryable: Queryable[T],
-      selector: T => S
-    )(implicit m: Manifest[T]): Relation1[T, S] =
-      Relation1(conditions, orders, pages, queryable, selector)(m)
-
-    def apply[T <: AR, S](
-      queryable: Queryable[T],
-      selector: T => S
-    )(implicit m: Manifest[T]): Relation1[T, S] =
-      apply(Nil, Nil, None, queryable, selector)(m)
-  }
-
   trait Relation[T <: AR, S] {
     type JOINED_TYPE
     val conditions: List[JOINED_TYPE => LogicalBoolean]
@@ -37,6 +20,8 @@ trait Relations {
     val manifest: Manifest[T]
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+
+    protected def copyPages(pages: Option[(Int, Int)]): this.type
 
     private var _isLoaded = false
     def isLoaded: Boolean = _isLoaded
@@ -81,13 +66,13 @@ trait Relations {
 
     protected def wrap[A <: {def _1: T}, R](f: T => R): A => R = {m: A => f(m._1)}
 
-    def head = try {
+    def head: S = try {
       headOption.get
     } catch { case e: java.util.NoSuchElementException =>
       throw ActiveRecordException.recordNotFound
     }
 
-    def headOption = if (isLoaded) {
+    def headOption: Option[S] = if (isLoaded) {
       cache.headOption
     } else {
       inTransaction { limit(1).toQuery.headOption }
@@ -105,7 +90,7 @@ trait Relations {
      * @param conditions multiple fieldname-value tuples(optional)
      */
     def findBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = inTransaction {
-      findAllBy(condition, conditions:_*).limit(1).toQuery.headOption
+      findAllBy(condition, conditions:_*).headOption
     }
 
     def findByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
@@ -136,7 +121,7 @@ trait Relations {
      * @param value field value
      */
     def findBy(name: String, value: Any): Option[S] = inTransaction {
-      findAllBy(name, value).limit(1).toQuery.headOption
+      findAllBy(name, value).headOption
     }
 
     /**
@@ -151,13 +136,7 @@ trait Relations {
       val field = companion.fieldInfo.getOrElse(name,
         throw ActiveRecordException.notFoundField(name)
       )
-
-      val clause = {m: T =>
-        val v1 = m.getValue[Any](name)
-        val v2 = value
-        field.toEqualityExpression(v1, v2)
-      }
-      where(clause)
+      where(m => field.toEqualityExpression(m.getValue[Any](name), value))
     }
 
     /**
@@ -181,7 +160,8 @@ trait Relations {
      * @param offset offset count
      * @param count max count
      */
-    def page(offset: Int, count: Int): this.type
+    def page(offset: Int, count: Int): this.type =
+      copyPages(Some(offset, count))
 
     def exists(condition: T => LogicalBoolean): Boolean = inTransaction {
       where(condition).limit(1).count != 0
@@ -208,6 +188,9 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
 
+    def copyPages(pages: Option[(Int, Int)]) =
+      copy(pages = pages).asInstanceOf[this.type]
+    
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ condition).asInstanceOf[this.type]
     }
@@ -218,10 +201,6 @@ trait Relations {
 
     def orderBy(conditions: (T => ExpressionNode)*): this.type = {
       copy(orders = orders ++ conditions.toList).asInstanceOf[this.type]
-    }
-
-    def page(offset: Int, count: Int): this.type = {
-      copy(pages = Some(offset, count)).asInstanceOf[this.type]
     }
 
     def nonNestQueryCount: Long = paginate(
@@ -296,6 +275,9 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
 
+    def copyPages(pages: Option[(Int, Int)]) =
+      copy(pages = pages).asInstanceOf[this.type]
+    
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
     }
@@ -308,9 +290,6 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
       copy(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
-
-    def page(offset: Int, count: Int): this.type =
-      copy(pages = Some(offset, count)).asInstanceOf[this.type]
 
     def nonNestQueryCount: Long = paginate(join(queryable, joinTable) {(m, j1) =>
       val t = (m, j1)  
@@ -351,6 +330,9 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
 
+    def copyPages(pages: Option[(Int, Int)]) =
+      copy(pages = pages).asInstanceOf[this.type]
+    
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
     }
@@ -363,9 +345,6 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
       copy(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
-
-    def page(offset: Int, count: Int): this.type =
-      copy(pages = Some(offset, count)).asInstanceOf[this.type]
 
     def nonNestQueryCount: Long = paginate(join(queryable, joinTable1, joinTable2) {
       (m, j1, j2) =>
