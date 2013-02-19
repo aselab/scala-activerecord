@@ -21,7 +21,11 @@ trait Relations {
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
-    protected def copyPages(pages: Option[(Int, Int)]): this.type
+    protected def copyParams(
+      includeAssociations: List[T => Association[T, AR]] = includeAssociations,
+      pages: Option[(Int, Int)] = pages,
+      isUnique: Boolean = isUnique
+    ): this.type
 
     private var _isLoaded = false
     def isLoaded: Boolean = _isLoaded
@@ -53,7 +57,10 @@ trait Relations {
 
     def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
 
-    def includes[A <: AR](associations: (T => Association[T, A])*): this.type
+    def includes[A <: AR](associations: (T => Association[T, A])*): this.type =
+      copyParams(includeAssociations = includeAssociations ++
+        associations.toList.asInstanceOf[List[T => Association[T, AR]]])
+        .asInstanceOf[this.type]
 
     protected def whereState(m: JOINED_TYPE) =
       dsl.where(LogicalBoolean.and(conditions.map(_.apply(m))))
@@ -150,7 +157,8 @@ trait Relations {
       page(pages.map(_._1).getOrElse(0) , count)
     }
 
-    def distinct: this.type
+    def distinct: this.type =
+      copyParams(isUnique = true).asInstanceOf[this.type]
 
     /**
      * returns page results.
@@ -161,7 +169,7 @@ trait Relations {
      * @param count max count
      */
     def page(offset: Int, count: Int): this.type =
-      copyPages(Some(offset, count))
+      copyParams(pages = Some(offset, count))
 
     def exists(condition: T => LogicalBoolean): Boolean = inTransaction {
       where(condition).limit(1).count != 0
@@ -171,6 +179,11 @@ trait Relations {
 
     protected def nonNestQueryCount: Long
 
+    def deleteAll()(implicit ev: S =:= T): List[T] = inTransaction {
+      val records = toQuery.toList
+      records.foreach(_.delete)
+      records.asInstanceOf[List[T]]
+    }
 
     def toQuery: Query[S]
 
@@ -188,8 +201,13 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = T
 
-    def copyPages(pages: Option[(Int, Int)]) =
-      copy(pages = pages).asInstanceOf[this.type]
+    protected def copyParams(
+      includeAssociations: List[T => Association[T, AR]] = includeAssociations,
+      pages: Option[(Int, Int)] = pages,
+      isUnique: Boolean = isUnique
+    ): this.type =
+      copy(includeAssociations = includeAssociations,
+        pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ condition).asInstanceOf[this.type]
@@ -207,7 +225,6 @@ trait Relations {
       from(queryable)(m => whereState(m).compute(dsl.count))
     )
 
-    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
 
     def toQuery: Query[S] = paginate{
       val query = from(queryable){m =>
@@ -219,17 +236,6 @@ trait Relations {
         }
       }
       if (isUnique) query.distinct else query
-    }
-
-    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
-      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
-        .asInstanceOf[this.type]
-    }
-
-    def deleteAll()(implicit ev: S =:= T): List[T] = inTransaction {
-      val records = toQuery.toList
-      records.foreach(_.delete)
-      records.asInstanceOf[List[T]]
     }
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
@@ -275,8 +281,13 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1)
 
-    def copyPages(pages: Option[(Int, Int)]) =
-      copy(pages = pages).asInstanceOf[this.type]
+    protected def copyParams(
+      includeAssociations: List[T => Association[T, AR]] = includeAssociations,
+      pages: Option[(Int, Int)] = pages,
+      isUnique: Boolean = isUnique
+    ): this.type =
+      copy(includeAssociations = includeAssociations,
+        pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
@@ -295,13 +306,6 @@ trait Relations {
       val t = (m, j1)  
       whereState(t).compute(dsl.count).on(on(t))
     })
-
-    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
-
-    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
-      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]])
-        .asInstanceOf[this.type]
-    }
 
     def toQuery: Query[S] = paginate{
       val query = join(queryable, joinTable) {(m, j1) =>
@@ -330,8 +334,13 @@ trait Relations {
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JOINED_TYPE = (T, J1, J2)
 
-    def copyPages(pages: Option[(Int, Int)]) =
-      copy(pages = pages).asInstanceOf[this.type]
+    protected def copyParams(
+      includeAssociations: List[T => Association[T, AR]] = includeAssociations,
+      pages: Option[(Int, Int)] = pages,
+      isUnique: Boolean = isUnique
+    ): this.type =
+      copy(includeAssociations = includeAssociations,
+        pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
     def where(condition: T => LogicalBoolean): this.type = {
       copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
@@ -352,12 +361,6 @@ trait Relations {
         val (on1, on2) = on(t)
         whereState(t).compute(dsl.count).on(on1, on2)
     })
-
-    def distinct: this.type = copy(isUnique = true).asInstanceOf[this.type]
-
-    def includes[A <: AR](associations: (T => Association[T, A])*): this.type = {
-      copy(includeAssociations = includeAssociations ++ associations.toList.asInstanceOf[List[T => Association[T, AR]]]).asInstanceOf[this.type]
-    }
 
     def toQuery: Query[S] = paginate{
       val query = join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
