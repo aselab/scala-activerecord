@@ -35,7 +35,7 @@ trait DSL extends IterableConversion {
 
   implicit def queryToRelation[T <: AR](query: Queryable[T])
     (implicit m: Manifest[T]): Relation1[T, T] =
-    Relation1(Nil, Nil, None, query, identity)
+    Relation1(Nil, Nil, None, query, {t => t._1})
 
   implicit def belongsToAssociationToOption[T <: AR]
     (association: BelongsToAssociation[_, T]): Option[T] = association.toOption

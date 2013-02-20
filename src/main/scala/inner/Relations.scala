@@ -9,7 +9,7 @@ import ReflectionUtil._
 
 trait Relations {
   trait Relation[T <: AR, S] {
-    type JOINED_TYPE
+    type JOINED_TYPE <: {def _1: T}
     val conditions: List[JOINED_TYPE => LogicalBoolean]
     val orders: List[JOINED_TYPE => ExpressionNode]
     val pages: Option[(Int, Int)]
@@ -22,6 +22,8 @@ trait Relations {
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
     protected def copyParams(
+      conditions: List[JOINED_TYPE => LogicalBoolean] = conditions,
+      orders: List[JOINED_TYPE => ExpressionNode] = orders,
       includeAssociations: List[T => Association[T, AR]] = includeAssociations,
       pages: Option[(Int, Int)] = pages,
       isUnique: Boolean = isUnique
@@ -72,6 +74,8 @@ trait Relations {
     }.getOrElse(query)
 
     protected def wrap[A <: {def _1: T}, R](f: T => R): A => R = {m: A => f(m._1)}
+    protected def wrapTuple1[A <: {def _1: T}, R](f: Tuple1[T] => R): A => R =
+      {t: A => f(Tuple1(t._1))}
 
     def head: S = try {
       headOption.get
@@ -85,7 +89,11 @@ trait Relations {
       inTransaction { limit(1).toQuery.headOption }
     }
 
-    def where(condition: T => LogicalBoolean): this.type
+    def where(condition: T => LogicalBoolean): this.type =
+      copyParams(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
+
+    def orderBy(conditions: (T => ExpressionNode)*): this.type =
+      copyParams(orders = orders ++ conditions.map(wrap).toList).asInstanceOf[this.type]
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -191,48 +199,44 @@ trait Relations {
   }
 
   case class Relation1[T <: AR, S](
-    conditions: List[T => LogicalBoolean],
-    orders: List[T => ExpressionNode],
+    conditions: List[Tuple1[T] => LogicalBoolean],
+    orders: List[Tuple1[T] => ExpressionNode],
     pages: Option[(Int, Int)],
     queryable: Queryable[T],
-    selector: T => S,
+    selector: Tuple1[T] => S,
     isUnique: Boolean = false,
     includeAssociations: List[T => Association[T, AR]] = Nil
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
-    type JOINED_TYPE = T
+    type JOINED_TYPE = Tuple1[T]
 
     protected def copyParams(
+      conditions: List[JOINED_TYPE => LogicalBoolean] = conditions,
+      orders: List[JOINED_TYPE => ExpressionNode] = orders,
       includeAssociations: List[T => Association[T, AR]] = includeAssociations,
       pages: Option[(Int, Int)] = pages,
       isUnique: Boolean = isUnique
     ): this.type =
-      copy(includeAssociations = includeAssociations,
+      copy(conditions = conditions, orders = orders,
+        includeAssociations = includeAssociations,
         pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
-    def where(condition: T => LogicalBoolean): this.type = {
-      copy(conditions = conditions :+ condition).asInstanceOf[this.type]
-    }
-
     def select[R](selector: T => R): Relation[T, R] = {
-      copy(selector = selector)
-    }
-
-    def orderBy(conditions: (T => ExpressionNode)*): this.type = {
-      copy(orders = orders ++ conditions.toList).asInstanceOf[this.type]
+      copy(selector = wrap(selector))
     }
 
     def nonNestQueryCount: Long = paginate(
-      from(queryable)(m => whereState(m).compute(dsl.count))
+      from(queryable)(m => whereState(Tuple1(m)).compute(dsl.count))
     )
 
 
     def toQuery: Query[S] = paginate{
       val query = from(queryable){m =>
         sampleRecord = m
+        val t = Tuple1(m)
         if (conditions.isEmpty) {
-          dsl.select(selector(m)).orderBy(orders.map(_.apply(m)))
+          dsl.select(selector(t)).orderBy(orders.map(_.apply(t)))
         } else {
-          whereState(m).select(selector(m)).orderBy(orders.map(_.apply(m)))
+          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t)))
         }
       }
       if (isUnique) query.distinct else query
@@ -244,10 +248,10 @@ trait Relations {
         .asInstanceOf[ActiveRecordBaseCompanion[_, J]]
 
       new Relation2(
-        conditions.map(wrap),
-        orders.map(wrap), pages,
+        conditions.map(wrapTuple1),
+        orders.map(wrapTuple1), pages,
         queryable, c.table, Function.tupled(on),
-        wrap[(T, J), S](selector)
+        wrapTuple1[(T, J), S](selector)
       )(manifest)
     }
 
@@ -260,10 +264,10 @@ trait Relations {
         .asInstanceOf[ActiveRecordBaseCompanion[_, J2]]
 
       new Relation3(
-        conditions.map(wrap),
-        orders.map(wrap), pages,
+        conditions.map(wrapTuple1),
+        orders.map(wrapTuple1), pages,
         queryable, c1.table, c2.table, Function.tupled(on),
-        wrap[(T, J1, J2), S](selector)
+        wrapTuple1[(T, J1, J2), S](selector)
       )(manifest)
     }
   }
@@ -282,17 +286,16 @@ trait Relations {
     type JOINED_TYPE = (T, J1)
 
     protected def copyParams(
+      conditions: List[JOINED_TYPE => LogicalBoolean] = conditions,
+      orders: List[JOINED_TYPE => ExpressionNode] = orders,
       includeAssociations: List[T => Association[T, AR]] = includeAssociations,
       pages: Option[(Int, Int)] = pages,
       isUnique: Boolean = isUnique
     ): this.type =
-      copy(includeAssociations = includeAssociations,
+      copy(conditions = conditions, orders = orders,
+        includeAssociations = includeAssociations,
         pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
-    def where(condition: T => LogicalBoolean): this.type = {
-      copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
-    }
-
     def where(condition: (T, J1) => LogicalBoolean): this.type =
       copy(conditions = conditions :+ Function.tupled(condition)).asInstanceOf[this.type]
 
@@ -335,17 +338,16 @@ trait Relations {
     type JOINED_TYPE = (T, J1, J2)
 
     protected def copyParams(
+      conditions: List[JOINED_TYPE => LogicalBoolean] = conditions,
+      orders: List[JOINED_TYPE => ExpressionNode] = orders,
       includeAssociations: List[T => Association[T, AR]] = includeAssociations,
       pages: Option[(Int, Int)] = pages,
       isUnique: Boolean = isUnique
     ): this.type =
-      copy(includeAssociations = includeAssociations,
+      copy(conditions = conditions, orders = orders,
+        includeAssociations = includeAssociations,
         pages = pages, isUnique = isUnique).asInstanceOf[this.type]
     
-    def where(condition: T => LogicalBoolean): this.type = {
-      copy(conditions = conditions :+ wrap(condition)).asInstanceOf[this.type]
-    }
-
     def where(condition: (T, J1, J2) => LogicalBoolean): this.type =
       copy(conditions = conditions :+ Function.tupled(condition)).asInstanceOf[this.type]
 
