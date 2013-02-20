@@ -188,7 +188,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       val now = new Timestamp(System.currentTimeMillis)
       val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
       query.count mustEqual 0
-      PrimitiveModel.forceUpdate(_.id.~ > 40, _.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
+      PrimitiveModel.forceUpdate(_.id.~ > 40)(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
       query.count mustEqual 60
     }
 

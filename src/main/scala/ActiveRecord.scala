@@ -114,7 +114,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductMode
     dsl.update(table)(m => setAll(updateAssignments.map(_.apply(m)): _*))
   }
 
-  def forceUpdate(condition: T => LogicalBoolean, updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
+  def forceUpdate(condition: T => LogicalBoolean)(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
     dsl.update(table)(m => where(condition(m)).set(updateAssignments.map(_.apply(m)): _*))
   }
 
