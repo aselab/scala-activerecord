@@ -45,14 +45,14 @@ trait Relations {
       Parameters(conditions, orders, selector, includeAssociations, pages, isUnique)
     )
 
-    implicit def relationToThisType[R](self: Relation[T, R]): this.type =
+    protected implicit def relationToThisType[R](self: Relation[T, R]): this.type =
       self.asInstanceOf[this.type]
 
-    private def _includes(associations: (T => Association[T, _])*): this.type =
+    private def _includes(associations: Inc[_]*): this.type =
       copyParams(includeAssociations =
-        includeAssociations ++ associations.map(_.asInstanceOf[T => Association[T, AR]]))
+        includeAssociations ++ associations.map(_.asInstanceOf[Inc[AR]]))
 
-    def includes[A <: AR](association: T => Association[T, A]): this.type =
+    def includes[A <: AR](association: Inc[A]): this.type =
       _includes(association)
 
     def includes[A1 <: AR, A2 <: AR](a1: Inc[A1], a2: Inc[A2]): this.type =
@@ -95,9 +95,8 @@ trait Relations {
      * }}}
      * @param count max count
      */
-    def limit(count: Int): this.type = {
-      page(pages.map(_._1).getOrElse(0) , count)
-    }
+    def limit(count: Int): this.type =
+      page(pages.map(_._1).getOrElse(0), count)
 
     def distinct: this.type =
       copyParams(isUnique = true)
@@ -254,7 +253,7 @@ trait Relations {
       from(queryable)(m => whereState(Tuple1(m)).compute(dsl.count))
     )
 
-    def toQuery: Query[S] = paginate{
+    def toQuery: Query[S] = paginate {
       val query = from(queryable){m =>
         sampleRecord = m
         val t = Tuple1(m)
@@ -271,7 +270,7 @@ trait Relations {
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
       val c = classToARCompanion[J](m.erasure)
 
-      new Relation2(
+      Relation2(
         Parameters[T, (T, J), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J), S](selector), includeAssociations, pages, isUnique),
         queryable, c.table, Function.tupled(on)
@@ -284,7 +283,7 @@ trait Relations {
       val c1 = classToARCompanion[J1](m1.erasure)
       val c2 = classToARCompanion[J2](m2.erasure)
 
-      new Relation3(
+      Relation3(
         Parameters[T, (T, J1, J2), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2), S](selector), includeAssociations, pages, isUnique),
         queryable, c1.table, c2.table, Function.tupled(on)
@@ -317,7 +316,7 @@ trait Relations {
       whereState(t).compute(dsl.count).on(on(t))
     })
 
-    def toQuery: Query[S] = paginate{
+    def toQuery: Query[S] = paginate {
       val query = join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
         if (conditions.isEmpty) {
@@ -358,7 +357,7 @@ trait Relations {
         whereState(t).compute(dsl.count).on(on1, on2)
     })
 
-    def toQuery: Query[S] = paginate{
+    def toQuery: Query[S] = paginate {
       val query = join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
