@@ -35,6 +35,7 @@ trait Relations {
     // scalastyle:on
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]): Relation[T, R]
+
     protected def copyParams[R](
       conditions: List[JoinedType => LogicalBoolean] = parameters.conditions,
       orders: List[JoinedType => ExpressionNode] = parameters.orders,
@@ -72,11 +73,15 @@ trait Relations {
 
     protected def ordersExpression(m: JoinedType) = orders.map(_.apply(m))
 
-    protected def paginate[R](query: Query[R]) = pages.map {
-      case (offset, count) => query.page(offset, count)
-    }.getOrElse(query)
+    protected def paginate[R](query: Query[R]) = {
+      val q = if (isUnique) query.distinct else query
+      pages.map {
+        case (offset, count) => q.page(offset, count)
+      }.getOrElse(q)
+    }
 
     protected def wrap[A <: TupleN, R](f: T => R): A => R = {m: A => f(m._1)}
+
     protected def wrapTuple1[A <: TupleN, R](f: Tuple1[T] => R): A => R =
       {t: A => f(Tuple1(t._1))}
 
@@ -84,7 +89,7 @@ trait Relations {
       copyParams(conditions = conditions :+ wrap(condition))
 
     def orderBy(conditions: (T => ExpressionNode)*): this.type =
-      copyParams(orders = orders ++ conditions.map(wrap).toList)
+      copyParams(orders = orders ++ conditions.map(wrap))
 
     def select[R](selector: T => R): Relation[T, R] =
       copyParams(selector = wrap(selector))
@@ -132,15 +137,14 @@ trait Relations {
       value
     }
 
-    protected var sampleRecord: T = _
-
     def reload(implicit m: Manifest[S]): List[S] = inTransaction {
       cache = queryToIterable(toQuery).toList
 
       if (manifest == m && cache.nonEmpty) {
         val sources = cache.asInstanceOf[List[T]]
+        val sample = companion.newInstance
         val eagerLoadedMaps = includeAssociations.map(a =>
-          (a, a(sampleRecord).eagerLoad(sources)(manifest))
+          (a, a(sample).eagerLoad(sources)(manifest))
         )
         for ((associationOf, map) <- eagerLoadedMaps; m <- sources) {
           associationOf(m).relation.cache = map.getOrElse(m.id, Nil)
@@ -254,18 +258,13 @@ trait Relations {
       from(queryable)(m => whereState(Tuple1(m)).compute(dsl.count))
     )
 
-    def toQuery: Query[S] = paginate {
-      val query = from(queryable){m =>
-        sampleRecord = m
+    def toQuery: Query[S] = paginate(
+      from(queryable){ m =>
         val t = Tuple1(m)
-        if (conditions.isEmpty) {
-          dsl.select(selector(t)).orderBy(orders.map(_.apply(t)))
-        } else {
-          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t)))
-        }
+        val scope = if (conditions.isEmpty) dsl else whereState(t)
+        scope.select(selector(t)).orderBy(orders.map(_.apply(t)))
       }
-      if (isUnique) query.distinct else query
-    }
+    )
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
@@ -274,7 +273,7 @@ trait Relations {
       Relation2(
         Parameters[T, (T, J), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J), S](selector), includeAssociations, pages, isUnique),
-        queryable, c.table, Function.tupled(on)
+        queryable, c.table, on.tupled
       )(manifest)
     }
 
@@ -287,7 +286,7 @@ trait Relations {
       Relation3(
         Parameters[T, (T, J1, J2), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2), S](selector), includeAssociations, pages, isUnique),
-        queryable, c1.table, c2.table, Function.tupled(on)
+        queryable, c1.table, c2.table, on.tupled
       )(manifest)
     }
   }
@@ -304,30 +303,26 @@ trait Relations {
       Relation2(params, queryable, joinTable, on)
 
     def where(condition: (T, J1) => LogicalBoolean): this.type =
-      copyParams(conditions = conditions :+ Function.tupled(condition))
+      copyParams(conditions = conditions :+ condition.tupled)
 
     def select[R](selector: (T, J1) => R): Relation[T, R] =
-      copyParams(selector = Function.tupled(selector))
+      copyParams(selector = selector.tupled)
 
     def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
-      copyParams(orders = orders ++ conditions.toList.map(Function.tupled(_)))
+      copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
     def nonNestQueryCount: Long = paginate(join(queryable, joinTable) {(m, j1) =>
       val t = (m, j1)
       whereState(t).compute(dsl.count).on(on(t))
     })
 
-    def toQuery: Query[S] = paginate {
-      val query = join(queryable, joinTable) {(m, j1) =>
+    def toQuery: Query[S] = paginate(
+      join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
-        if (conditions.isEmpty) {
-          dsl.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
-        } else {
-          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
-        }
+        val scope = if (conditions.isEmpty) dsl else whereState(t)
+        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
       }
-      if (isUnique) query.distinct else query
-    }
+    )
   }
 
   case class Relation3[T <: AR, J1 <: AR, J2 <: AR, S](
@@ -343,13 +338,13 @@ trait Relations {
       Relation3(params, queryable, joinTable1, joinTable2, on)
 
     def where(condition: (T, J1, J2) => LogicalBoolean): this.type =
-      copyParams(conditions = conditions :+ Function.tupled(condition))
+      copyParams(conditions = conditions :+ condition.tupled)
 
     def select[R](selector: (T, J1, J2) => R): Relation[T, R] =
-      copyParams(selector = Function.tupled(selector))
+      copyParams(selector = selector.tupled)
 
     def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
-      copyParams(orders = orders ++ conditions.toList.map(Function.tupled(_)))
+      copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
     def nonNestQueryCount: Long = paginate(join(queryable, joinTable1, joinTable2) {
       (m, j1, j2) =>
@@ -358,17 +353,13 @@ trait Relations {
         whereState(t).compute(dsl.count).on(on1, on2)
     })
 
-    def toQuery: Query[S] = paginate {
-      val query = join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
+    def toQuery: Query[S] = paginate(
+      join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
-        if (conditions.isEmpty) {
-          dsl.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
-        } else {
-          whereState(t).select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
-        }
+        val scope = if (conditions.isEmpty) dsl else whereState(t)
+        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
       }
-      if (isUnique) query.distinct else query
-    }
+    )
   }
 }
