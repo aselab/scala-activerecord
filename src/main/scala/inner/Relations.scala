@@ -289,6 +289,20 @@ trait Relations {
         queryable, c1.table, c2.table, on.tupled
       )(manifest)
     }
+
+    def joins[J1 <: AR, J2 <: AR, J3 <: AR](
+      on: (T, J1, J2, J3) => (LogicalBoolean, LogicalBoolean, LogicalBoolean)
+    )(implicit m1: Manifest[J1], m2: Manifest[J2], m3: Manifest[J3]): Relation4[T, J1, J2, J3, S] = {
+      val c1 = classToARCompanion[J1](m1.erasure)
+      val c2 = classToARCompanion[J2](m2.erasure)
+      val c3 = classToARCompanion[J3](m3.erasure)
+
+      Relation4(
+        Parameters[T, (T, J1, J2, J3), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
+          wrapTuple1[(T, J1, J2, J3), S](selector), includeAssociations, pages, isUnique),
+        queryable, c1.table, c2.table, c3.table, on.tupled
+      )(manifest)
+    }
   }
 
   case class Relation2[T <: AR, J1 <: AR, S](
@@ -359,6 +373,47 @@ trait Relations {
         val (on1, on2) = on(t)
         val scope = if (conditions.isEmpty) dsl else whereState(t)
         scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
+      }
+    )
+  }
+
+  case class Relation4[T <: AR, J1 <: AR, J2 <: AR, J3 <: AR, S](
+    parameters: Parameters[T, (T, J1, J2, J3), S],
+    queryable: Queryable[T],
+    joinTable1: Queryable[J1],
+    joinTable2: Queryable[J2],
+    joinTable3: Queryable[J3],
+    on: ((T, J1, J2, J3)) => (LogicalBoolean, LogicalBoolean, LogicalBoolean)
+  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+    type JoinedType = (T, J1, J2, J3)
+
+    protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
+      Relation4(params, queryable, joinTable1, joinTable2, joinTable3, on)
+
+    def where(condition: (T, J1, J2, J3) => LogicalBoolean): this.type =
+      copyParams(conditions = conditions :+ condition.tupled)
+
+    def select[R](selector: (T, J1, J2, J3) => R): Relation[T, R] =
+      copyParams(selector = selector.tupled)
+
+    def orderBy(conditions: ((T, J1, J2, J3) => ExpressionNode)*): this.type =
+      copyParams(orders = orders ++ conditions.toList.map(_.tupled))
+
+    def nonNestQueryCount: Long = paginate(
+      join(queryable, joinTable1, joinTable2, joinTable3) {
+        (m, j1, j2, j3) =>
+          val t = (m, j1, j2, j3)
+          val (on1, on2, on3) = on(t)
+          whereState(t).compute(dsl.count).on(on1, on2, on3)
+      }
+    )
+
+    def toQuery: Query[S] = paginate(
+      join(queryable, joinTable1, joinTable2, joinTable3) {(m, j1, j2, j3) =>
+        val t = (m, j1, j2, j3)
+        val (on1, on2, on3) = on(t)
+        val scope = if (conditions.isEmpty) dsl else whereState(t)
+        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2, on3)
       }
     )
   }
