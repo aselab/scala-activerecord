@@ -5,6 +5,7 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
 import ActiveRecord._
+import reflections._
 import ReflectionUtil._
 
 trait Relations {

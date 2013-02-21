@@ -1,4 +1,4 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.reflections
 
 trait RegistrationManager[K, V] {
   protected val registrations: collection.mutable.Map[K, V]

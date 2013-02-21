@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord
 
 import ActiveRecord._
+import reflections._
 
 object dsl extends org.squeryl.PrimitiveTypeMode
   with inner.Annotations with inner.DSL with inner.Types
@@ -29,7 +30,7 @@ package object support {
 
   def modelClass(implicit classLoader: ClassLoader = defaultLoader): PF =
     new PF {
-      val c = classOf[ProductModel]
+      val c = classOf[inner.ProductModel]
 
       def apply(s: String): Class[_] = s match {
         case s if isDefinedAt(s) => ReflectionUtil.loadClass(s)

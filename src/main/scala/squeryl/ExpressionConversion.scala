@@ -5,6 +5,7 @@ import com.github.aselab.activerecord.dsl._
 import org.squeryl.dsl._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
+import reflections._
 
 class ExpressionConversion(field: FieldInfo) {
   import ReflectionUtil._

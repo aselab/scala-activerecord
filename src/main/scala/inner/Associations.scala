@@ -4,6 +4,7 @@ import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
+import reflections._
 import ReflectionUtil._
 import ActiveRecord._
 

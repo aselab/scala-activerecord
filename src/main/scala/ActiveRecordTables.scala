@@ -10,7 +10,7 @@ import mojolly.inflector.InflectorImports._
  * Base class of database schema.
  */
 trait ActiveRecordTables extends Schema {
-  import ReflectionUtil._
+  import reflections.ReflectionUtil._
 
   lazy val tableMap = {
     val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[_, _]]
@@ -138,7 +138,7 @@ trait ActiveRecordTables extends Schema {
         f.toExpression(r.getValue[Any](f.name)).is(unique)
 
       case f if f.hasAnnotation[Confirmation] =>
-        val name = Validator.confirmationFieldName(f.name, f.getAnnotation[Confirmation])
+        val name = validations.Validator.confirmationFieldName(f.name, f.getAnnotation[Confirmation])
         f.toExpression(r.getValue[Any](name)).is(transient)
     }:_*))
     t

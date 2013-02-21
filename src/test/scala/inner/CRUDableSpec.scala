@@ -1,4 +1,4 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.inner
 
 import org.specs2.mutable._
 

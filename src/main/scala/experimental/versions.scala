@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.experimental
 import com.github.aselab.activerecord._
 
 trait Versionable extends ActiveRecord with Serializable {
-  import ReflectionUtil._
+  import reflections.ReflectionUtil._
 
   @dsl.Ignore private lazy val _className = getClass.getName
 

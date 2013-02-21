@@ -1,5 +1,7 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.validations
 
+import com.github.aselab.activerecord._
+import inner._
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
@@ -247,7 +249,7 @@ object Validator {
   }
 
   val confirmationValidator = new Validator[annotations.Confirmation] {
-    import ReflectionUtil._
+    import reflections.ReflectionUtil._
 
     def validate(value: Any) :Unit = if (!isBlank(value)) {
       val name = confirmationFieldName(fieldName, annotation)
@@ -291,7 +293,7 @@ object Validator {
 }
 
 trait ValidationSupport extends Validatable {self: ProductModel =>
-  import ReflectionUtil._
+  import reflections.ReflectionUtil._
 
   abstract override def doValidate(): Unit = {
     _companion.fieldInfo.foreach {

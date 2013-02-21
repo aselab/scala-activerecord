@@ -1,9 +1,10 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.io
 
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
+import com.github.aselab.activerecord._
 
 object convertersSpec extends ActiveRecordSpecification {
   "FormConverter" should {

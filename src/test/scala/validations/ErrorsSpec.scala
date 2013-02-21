@@ -1,9 +1,10 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.validations
 
 import org.specs2.mutable._
 import org.specs2.mock._
 
 import java.util.Locale
+import com.github.aselab.activerecord._
 
 object ErrorsSpec extends ActiveRecordSpecification with Mockito {
   val userClass = classOf[models.User]

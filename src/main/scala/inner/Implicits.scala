@@ -4,6 +4,7 @@ import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import ActiveRecord._
+import reflections._
 
 // scalastyle:off
 

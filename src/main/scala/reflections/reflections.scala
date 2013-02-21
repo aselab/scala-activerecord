@@ -1,5 +1,6 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.reflections
 
+import com.github.aselab.activerecord._
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
 import scala.reflect.Manifest

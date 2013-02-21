@@ -1,4 +1,6 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.inner
+
+import com.github.aselab.activerecord._
 
 trait Saveable {
   def save(): Boolean = false

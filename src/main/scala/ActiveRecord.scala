@@ -1,9 +1,10 @@
 package com.github.aselab.activerecord
 
 import com.github.aselab.activerecord.dsl._
+import inner._
 
 trait ActiveRecordBase[T] extends ProductModel with CRUDable
-  with ActiveRecord.AssociationSupport with ValidationSupport with IO
+  with ActiveRecord.AssociationSupport with validations.ValidationSupport with io.IO
 {
   def id: T
   def isPersisted: Boolean
@@ -54,8 +55,8 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 object ActiveRecord extends inner.Relations with inner.Associations
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
-  extends ProductModelCompanion[T] with inner.CompanionConversion[T] with FormSupport[T] {
-  import ReflectionUtil._
+  extends ProductModelCompanion[T] with inner.CompanionConversion[T] with io.FormSupport[T] {
+  import reflections.ReflectionUtil._
   import ActiveRecord._
 
   implicit val manifest: Manifest[T] = Manifest.classType(targetClass)

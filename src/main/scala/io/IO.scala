@@ -1,4 +1,9 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.io
+
+import com.github.aselab.activerecord._
+import validations._
+import inner._
+import reflections._
 
 trait IO extends Validatable { this: ProductModel =>
   import ReflectionUtil._

@@ -1,5 +1,7 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.io
 
+import com.github.aselab.activerecord._
+import reflections._
 import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._

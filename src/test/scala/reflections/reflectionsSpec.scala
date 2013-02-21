@@ -1,6 +1,7 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.reflections
 
 import org.specs2.mutable._
+import com.github.aselab.activerecord._
 
 object reflectionsSpec extends Specification {
   class Dummy {

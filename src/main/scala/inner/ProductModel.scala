@@ -1,5 +1,8 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.inner
 
+import com.github.aselab.activerecord._
+import reflections._
+import validations.Validator
 import java.lang.annotation.Annotation
 
 trait ProductModel extends Product with Saveable {

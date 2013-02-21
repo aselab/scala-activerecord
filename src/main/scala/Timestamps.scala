@@ -2,6 +2,7 @@ package com.github.aselab.activerecord
 
 import java.util.Date
 import java.sql.Timestamp
+import inner._
 
 trait Timestamps extends CRUDable {
   var createdAt: Timestamp = null

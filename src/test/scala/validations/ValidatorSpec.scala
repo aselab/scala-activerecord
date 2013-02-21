@@ -1,7 +1,8 @@
-package com.github.aselab.activerecord
+package com.github.aselab.activerecord.validations
 
 import org.specs2.mutable._
 import org.specs2.mock._
+import com.github.aselab.activerecord._
 
 object ValidatorSpec extends Specification with Mockito {
   import annotation.target._

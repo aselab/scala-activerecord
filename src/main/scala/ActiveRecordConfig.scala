@@ -17,7 +17,7 @@ object Config {
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
-  lazy val schema = ReflectionUtil.classToCompanion(conf.schemaClass)
+  lazy val schema = reflections.ReflectionUtil.classToCompanion(conf.schemaClass)
     .asInstanceOf[ActiveRecordTables]
 
   def connection: java.sql.Connection = conf.connection
