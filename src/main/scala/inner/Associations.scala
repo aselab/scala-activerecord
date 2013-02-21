@@ -20,8 +20,7 @@ trait Associations {
     protected[inner] def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]]
 
-    protected lazy val companion = classToCompanion(associationClass)
-      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+    protected lazy val companion = classToARCompanion[T](associationClass)
 
     protected lazy val source: Relation1[T, T] = companion.table
 

@@ -163,7 +163,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         group2.users << developers1.head
 
         val List(p1, p2) = Project.where(_.name like "p%")
-          .includes(_.users, _.managers, _.developers).includes(_.groups).toList
+          .includes(_.users, _.managers, _.developers, _.groups).toList
         List(p1, p2).forall(p => p.users.isLoaded &&  p.managers.isLoaded &&
           p.developers.isLoaded && p.groups.isLoaded) must beTrue
 

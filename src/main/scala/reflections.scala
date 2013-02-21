@@ -199,6 +199,14 @@ trait ReflectionUtil {
     classToCompanion(c.getName)(c.getClassLoader)
 
   /**
+   * returns companion object from class
+   * @param c class
+   */
+  def classToARCompanion[T <: ActiveRecordBase[_]](c: Class[_]): ActiveRecordBaseCompanion[_, T] =
+    classToCompanion(c.getName)(c.getClassLoader)
+      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+
+  /**
    * returns corresponding class from companion object
    * @param o companion object
    */

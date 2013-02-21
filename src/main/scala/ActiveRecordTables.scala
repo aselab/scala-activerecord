@@ -128,7 +128,7 @@ trait ActiveRecordTables extends Schema {
   def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
     val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
 
-    val c = classToCompanion(m.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+    val c = classToARCompanion[T](m.erasure)
     val fields = c.fieldInfo.values.toSeq
     import annotations._
 

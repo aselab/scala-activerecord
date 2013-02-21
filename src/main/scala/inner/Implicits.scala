@@ -30,8 +30,7 @@ trait IterableConversion {
 
 trait DSL extends IterableConversion {
   implicit def keyedEntityDef[T <: AR](implicit m: Manifest[T]) = {
-    ReflectionUtil.classToCompanion(m.erasure.getName)
-      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+    ReflectionUtil.classToARCompanion[T](m.erasure)
       .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
   }
 
