@@ -207,8 +207,8 @@ trait Associations {
       }
       val select = {(m: T, inter: IntermediateRecord) => m}
 
-      new ActiveRecord.Relation2(Nil, Nil, None, companion.table,
-        interCompanion.table, Function.tupled(on), Function.tupled(select)
+      new ActiveRecord.Relation2(ActiveRecord.Parameters[T, (T, IntermediateRecord), T](selector = Function.tupled(select)), companion.table,
+        interCompanion.table, Function.tupled(on)
       ).where(condition)
     }
 
