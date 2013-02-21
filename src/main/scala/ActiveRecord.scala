@@ -53,16 +53,17 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 
 object ActiveRecord extends inner.Relations with inner.Associations
 
-trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]] extends ProductModelCompanion[T] with inner.CompanionConversion[T] with FormSupport[T] {
+trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
+  extends ProductModelCompanion[T] with inner.CompanionConversion[T] with FormSupport[T] {
   import ReflectionUtil._
   import ActiveRecord._
 
   implicit val manifest: Manifest[T] = Manifest.classType(targetClass)
 
   implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
-    def getId(m: T) = m.id
-    def isPersisted(m: T) = m.isPersisted
-    def idPropertyName = "id"
+    def getId(m: T): K = m.id
+    def isPersisted(m: T): Boolean = m.isPersisted
+    val idPropertyName = "id"
   }
 
   /** self reference */

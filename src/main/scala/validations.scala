@@ -180,7 +180,7 @@ object Validator {
 
   def confirmationFieldName(fieldName: String, a: annotations.Confirmation): String =
     Option(a.value).filter(!_.isEmpty).getOrElse(fieldName + "Confirmation")
-    
+
   val requiredValidator = new Validator[annotations.Required] {
     def validate(value: Any): Unit =
       if (isBlank(value)) errors.add(fieldName, message("required"))

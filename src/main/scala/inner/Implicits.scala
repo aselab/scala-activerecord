@@ -5,11 +5,13 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import ActiveRecord._
 
+// scalastyle:off
+
 // low priority implicits
 trait CompanionIterable[T <: AR] {
   implicit val manifest: Manifest[T]
   def all: Relation1[T, T]
-  implicit def companionToIterable(c: this.type) = c.all.toList
+  implicit def companionToIterable(c: this.type): List[T] = c.all.toList
 }
 
 trait CompanionConversion[T <: AR] extends CompanionIterable[T] {

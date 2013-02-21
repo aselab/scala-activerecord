@@ -5,6 +5,7 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import squeryl.Implicits._
 import ReflectionUtil._
+import ActiveRecord._
 
 trait Associations {
   trait Association[+O <: AR, T <: AR] {
@@ -14,7 +15,7 @@ trait Associations {
 
     def foreignKey: String
 
-    def relation: ActiveRecord.Relation[T, T]
+    def relation: Relation[T, T]
 
     protected[inner] def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]]
@@ -22,14 +23,14 @@ trait Associations {
     protected lazy val companion = classToCompanion(associationClass)
       .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
 
-    protected lazy val source: ActiveRecord.Relation1[T, T] = companion.table
+    protected lazy val source: Relation1[T, T] = companion.table
 
     protected[inner] def fieldInfo(name: String) =
       companion.fieldInfo.getOrElse(name, throw ActiveRecordException.notFoundField(name))
   }
 
   trait CollectionAssociation[O <: AR, T <: AR] extends Association[O, T] {
-    
+
     val allConditions: Map[String, Any]
 
     protected def conditionFactory(conditions: Map[String, Any]) = {
@@ -78,10 +79,10 @@ trait Associations {
       sources.map(r => (r.id, map.getOrElse(r.getOption[Any](foreignKey).orNull, Nil))).toMap
     }
 
-    lazy val relation1: ActiveRecord.Relation1[T, T] =
+    lazy val relation1: Relation1[T, T] =
       source.where(condition).limit(1)
 
-    def relation = relation1
+    def relation: Relation[T, T] = relation1
 
     def toOption: Option[T] = relation.headOption
 
@@ -104,9 +105,9 @@ trait Associations {
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
-    lazy val relation1: ActiveRecord.Relation1[T, T] = source.where(condition)
+    lazy val relation1: Relation1[T, T] = source.where(condition)
 
-    def relation = relation1
+    def relation: Relation[T, T] = relation1
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
@@ -146,10 +147,10 @@ trait Associations {
       idFieldInfo.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
     ).where(condition)
 
-    lazy val relation2: ActiveRecord.Relation2[T, I, T] =
+    lazy val relation2: Relation2[T, I, T] =
       joinedRelation.where((m, inter) => through.condition(inter))
 
-    def relation = relation2
+    def relation: Relation[T, T] = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
@@ -207,18 +208,19 @@ trait Associations {
       }
       val select = {(m: T, inter: IntermediateRecord) => m}
 
-      new ActiveRecord.Relation2(ActiveRecord.Parameters[T, (T, IntermediateRecord), T](selector = Function.tupled(select)), companion.table,
-        interCompanion.table, Function.tupled(on)
+      new Relation2(
+        Parameters[T, (T, IntermediateRecord), T](selector = Function.tupled(select)),
+        companion.table, interCompanion.table, Function.tupled(on)
       ).where(condition)
     }
 
-    lazy val relation2: ActiveRecord.Relation2[T, IntermediateRecord, T] = {
-      joinedRelation.where((m, inter) => 
+    lazy val relation2: Relation2[T, IntermediateRecord, T] = {
+      joinedRelation.where((m, inter) =>
         owner.id === (if (isLeftSide) inter.rightId else inter.leftId)
       )
     }
 
-    def relation = relation2
+    def relation: Relation[T, T] = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
@@ -330,7 +332,7 @@ trait IntermediateRecordCompanion extends ActiveRecordBaseCompanion[CKey, Interm
   override lazy val table =
     schema.tableMap(tableName).asInstanceOf[Table[IntermediateRecord]]
 
-  override def newInstance = {
+  override def newInstance: IntermediateRecord = {
     val m = super.newInstance
     m.interCompanion = this
     m
@@ -339,8 +341,8 @@ trait IntermediateRecordCompanion extends ActiveRecordBaseCompanion[CKey, Interm
 
 object IntermediateRecord {
   val keyedEntityDef = new KeyedEntityDef[IntermediateRecord, CKey] {
-    def getId(m: IntermediateRecord) = m.id
-    def isPersisted(m: IntermediateRecord) = m.isPersisted
-    def idPropertyName = "id"
+    def getId(m: IntermediateRecord): CKey = m.id
+    def isPersisted(m: IntermediateRecord): Boolean = m.isPersisted
+    val idPropertyName = "id"
   }
 }

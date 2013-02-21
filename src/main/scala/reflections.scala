@@ -207,7 +207,7 @@ trait ReflectionUtil {
     loadClass(c.getName.dropRight(1))(c.getClassLoader)
   }
 
-  implicit def toReflectable(o: Any) = new {
+  class Reflectable(o: Any) {
     def getValue[T](name: String): T =
       o.getClass.getMethod(name).invoke(o).asInstanceOf[T]
 
@@ -240,6 +240,8 @@ trait ReflectionUtil {
     def getOption[T](name: String): Option[T] =
       convertToOption[T](getValue[Any](name))
   }
+
+  implicit def toReflectable(o: Any): Reflectable = new Reflectable(o)
 
   def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
   def getGenericTypes(field: Field): List[Class[_]] =

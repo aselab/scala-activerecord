@@ -36,7 +36,7 @@ trait ActiveRecordTables extends Schema {
 
   override def columnNameFromPropertyName(propertyName: String): String  =
     propertyName.underscore
-    
+
   override def tableNameFromClass(c: Class[_]): String =
     c.getSimpleName.underscore.pluralize
 
@@ -136,7 +136,7 @@ trait ActiveRecordTables extends Schema {
     on(t)(r => declare(fields.collect {
       case f if f.hasAnnotation[Unique] =>
         f.toExpression(r.getValue[Any](f.name)).is(unique)
-        
+
       case f if f.hasAnnotation[Confirmation] =>
         val name = Validator.confirmationFieldName(f.name, f.getAnnotation[Confirmation])
         f.toExpression(r.getValue[Any](name)).is(transient)

@@ -23,12 +23,14 @@ trait Relations {
     val queryable: Queryable[T]
     val manifest: Manifest[T]
 
+    // scalastyle:off
     def conditions = parameters.conditions
     def orders = parameters.orders
     def includeAssociations = parameters.includeAssociations
     def pages = parameters.pages
     def isUnique = parameters.isUnique
     def selector = parameters.selector
+    // scalastyle:on
 
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
       classToCompanion(manifest.erasure).asInstanceOf[ActiveRecordBaseCompanion[_, T]]
@@ -290,7 +292,7 @@ trait Relations {
       copyParams(orders = orders ++ conditions.toList.map(Function.tupled(_))).asInstanceOf[this.type]
 
     def nonNestQueryCount: Long = paginate(join(queryable, joinTable) {(m, j1) =>
-      val t = (m, j1)  
+      val t = (m, j1)
       whereState(t).compute(dsl.count).on(on(t))
     })
 
