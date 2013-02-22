@@ -8,7 +8,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import models._
 
-object ActiveRecordSpec extends ActiveRecordSpecification with AutoRollback {
+object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData

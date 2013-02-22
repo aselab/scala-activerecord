@@ -17,9 +17,7 @@ object Config {
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
-  lazy val schema = reflections.ReflectionUtil.classToCompanion(conf.schemaClass)
-    .asInstanceOf[ActiveRecordTables]
-
+  def schema: ActiveRecordTables = conf.schema
   def connection: java.sql.Connection = conf.connection
   def adapter: DatabaseAdapter = conf.adapter
 
@@ -37,6 +35,12 @@ trait ActiveRecordConfig {
   def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
+  lazy val schema = try {
+    reflections.ReflectionUtil.classToCompanion(schemaClass)
+      .asInstanceOf[ActiveRecordTables]
+  } catch {
+    case e => throw ActiveRecordException.cannotLoadSchema(schemaClass)
+  }
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter

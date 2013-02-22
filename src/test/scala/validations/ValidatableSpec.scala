@@ -4,7 +4,7 @@ import org.specs2.mutable._
 import com.github.aselab.activerecord._
 import inner._
 
-object ValidatableSpec extends ActiveRecordSpecification {
+object ValidatableSpec extends DatabaseSpecification {
   class SaveableImpl extends Saveable {
     var calledMethods = List[String]()
     override def save = {

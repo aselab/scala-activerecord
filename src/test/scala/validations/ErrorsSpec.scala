@@ -6,7 +6,7 @@ import org.specs2.mock._
 import java.util.Locale
 import com.github.aselab.activerecord._
 
-object ErrorsSpec extends ActiveRecordSpecification with Mockito {
+object ErrorsSpec extends DatabaseSpecification with Mockito {
   val userClass = classOf[models.User]
 
   "Errors" should {

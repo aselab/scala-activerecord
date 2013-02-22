@@ -8,7 +8,7 @@ import validations._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 
-object IOSpec extends ActiveRecordSpecification with Mockito {
+object IOSpec extends DatabaseSpecification with Mockito {
 
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord
   object ListModel extends ActiveRecordCompanion[ListModel]

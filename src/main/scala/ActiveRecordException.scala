@@ -31,6 +31,9 @@ object ActiveRecordException {
   def notFoundField(name: String): ActiveRecordException =
     apply("Cannot find declaration of field: " + name)
 
+  def cannotLoadSchema(schemaClass: String) =
+    apply("Cannot load schema class: " + schemaClass)
+
   def recordNotFound: ActiveRecordException =
     apply("Cannot find record")
 

@@ -7,7 +7,7 @@ import models._
 import dsl._
 import ActiveRecord._
 
-object AssociationSpec extends ActiveRecordSpecification {
+object AssociationSpec extends DatabaseSpecification {
   trait OneToManyAssociation extends Scope {
     val user = User("user1").create
     val group = Group("group1").create

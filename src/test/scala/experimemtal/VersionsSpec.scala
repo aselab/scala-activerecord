@@ -4,7 +4,7 @@ import com.github.aselab.activerecord._
 import org.specs2.mutable._
 import dsl._
 
-object VersionsSpec extends ActiveRecordSpecification {
+object VersionsSpec extends DatabaseSpecification {
   "Versions" should {
     val modelName = "com.github.aselab.activerecord.models.VersionModel"
 

@@ -29,13 +29,8 @@ trait BeforeAfterAllExamples extends Specification {
 trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   sequential
 
-  def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
-
   def beforeAll = {
     System.setProperty("run.mode", "test")
-    logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
-    if (System.getProperty("debug") == "true")
-      logger("activerecord").setLevel(Level.DEBUG)
     schema.initialize(config)
     schema.reset
   }
@@ -45,14 +40,15 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
     System.clearProperty("run.mode")
   }
 
-  def config: Map[String, String] = Map(
-    "schema" -> "com.github.aselab.activerecord.models.TestTables"
-  )
+  def loglevel: Level = Level.OFF
+  def config: Map[String, String] = Map()
 
-  lazy val schema: ActiveRecordTables = try {
-    reflections.ReflectionUtil.classToCompanion(config("schema"))
-      .asInstanceOf[ActiveRecordTables]
-  } catch {
-    case e => throw new RuntimeException("cannot load schema class %s")
-  }
+  lazy val schema: ActiveRecordTables = new DefaultConfig().schema
+}
+
+trait DatabaseSpecification extends ActiveRecordSpecification {
+  def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
+  logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
+  if (System.getProperty("debug") == "true")
+    logger("activerecord").setLevel(Level.DEBUG)
 }

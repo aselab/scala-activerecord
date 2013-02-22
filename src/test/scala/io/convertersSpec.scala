@@ -6,7 +6,7 @@ import com.github.nscala_time.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 import com.github.aselab.activerecord._
 
-object convertersSpec extends ActiveRecordSpecification {
+object convertersSpec extends DatabaseSpecification {
   "FormConverter" should {
     "String" in {
       val converter = FormConverter.get(classOf[String]).get

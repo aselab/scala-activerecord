@@ -5,7 +5,7 @@ import org.specs2.mutable._
 import dsl._
 import models._
 
-object ActiveRecordTablesSpec extends ActiveRecordSpecification {
+object ActiveRecordTablesSpec extends DatabaseSpecification {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData

@@ -7,7 +7,7 @@ import com.github.aselab.activerecord.dsl._
 import models._
 import java.sql.Timestamp
 
-object RelationsSpec extends ActiveRecordSpecification with AutoRollback {
+object RelationsSpec extends DatabaseSpecification with AutoRollback {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData
