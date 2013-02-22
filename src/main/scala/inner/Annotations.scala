@@ -36,5 +36,6 @@ trait Annotations {
   type Confirmation = annotations.Confirmation @field
 
   type StringEnum = annotations.StringEnum @field
+
   type NumberEnum = annotations.NumberEnum @field
 }

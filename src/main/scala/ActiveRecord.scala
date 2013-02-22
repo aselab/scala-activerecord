@@ -147,9 +147,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /** Unique annotated fields */
   lazy val uniqueFields = fields.filter(_.isUnique)
 
-  def fromMap(data: Map[String, Any]) {
-    newInstance.assign(data)
-  }
+  def fromMap(data: Map[String, Any]): Unit = newInstance.assign(data)
 }
 
 /**
@@ -157,6 +155,5 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
  *
  * This class provides database table mapping and query logic.
  */
-trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T] {
-}
+trait ActiveRecordCompanion[T <: ActiveRecord] extends ActiveRecordBaseCompanion[Long, T]
 

@@ -34,7 +34,7 @@ trait ActiveRecordTables extends Schema {
   /** All tables */
   lazy val all = tableMap.values
 
-  override def columnNameFromPropertyName(propertyName: String): String  =
+  override def columnNameFromPropertyName(propertyName: String): String =
     propertyName.underscore
 
   override def tableNameFromClass(c: Class[_]): String =
@@ -55,7 +55,7 @@ trait ActiveRecordTables extends Schema {
       } catch {
         case e => false
       } finally {
-        try { stat.close } catch {case e => }
+        try { stat.close } catch { case e => }
       }
     }
 
@@ -68,9 +68,7 @@ trait ActiveRecordTables extends Schema {
   def initialize(config: Map[String, Any]) {
     if (!_initialized) {
       Config.conf = loadConfig(config)
-
       SessionFactory.concreteFactory = Some(() => session)
-
       createTables
     }
 
@@ -132,14 +130,13 @@ trait ActiveRecordTables extends Schema {
     case e: NoSuchElementException => throw ActiveRecordException.cannotRollback
   }
 
-  def withRollback[T](f: => T) = {
+  def withRollback[T](f: => T): T = {
     startTransaction
     try { f } finally { rollback }
   }
 
-  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {
+  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] =
     table(tableNameFromClass(m.erasure))(m)
-  }
 
   def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
     val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
@@ -159,5 +156,4 @@ trait ActiveRecordTables extends Schema {
     }:_*))
     t
   }
-
 }

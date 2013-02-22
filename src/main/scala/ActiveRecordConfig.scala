@@ -91,11 +91,11 @@ class DefaultConfig(
 
     val conf = new BoneCPConfig
     conf.setJdbcUrl(jdbcurl)
-    username.foreach(conf.setUsername(_))
-    password.foreach(conf.setPassword(_))
-    partitionCount.foreach(conf.setPartitionCount(_))
-    maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition(_))
-    minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition(_))
+    username.foreach(conf.setUsername)
+    password.foreach(conf.setPassword)
+    partitionCount.foreach(conf.setPartitionCount)
+    maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
+    minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
     new BoneCP(conf)
   }
 
@@ -105,6 +105,6 @@ class DefaultConfig(
 
   def connection: Connection = pool.getConnection
   val translator: i18n.Translator = i18n.DefaultTranslator
-  lazy val timeZone = getString("timeZone").map(TimeZone.getTimeZone(_))
+  lazy val timeZone = getString("timeZone").map(TimeZone.getTimeZone)
     .getOrElse(TimeZone.getDefault)
 }

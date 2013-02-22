@@ -30,7 +30,6 @@ trait Associations {
   }
 
   trait CollectionAssociation[O <: AR, T <: AR] extends Association[O, T] {
-
     val allConditions: Map[String, Any]
 
     protected def conditionFactory(conditions: Map[String, Any]) = {
@@ -64,9 +63,8 @@ trait Associations {
   )(implicit val manifest: Manifest[T]) extends Association[O, T] {
     lazy val foreignKeyInfo = owner._companion.fieldInfo(foreignKey)
 
-    def condition: T => LogicalBoolean = {
+    def condition: T => LogicalBoolean =
       m => foreignKeyInfo.toEqualityExpression(m.id, owner.getValue[Any](foreignKey))
-    }
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
@@ -79,8 +77,7 @@ trait Associations {
       sources.map(r => (r.id, map.getOrElse(r.getOption[Any](foreignKey).orNull, Nil))).toMap
     }
 
-    lazy val relation1: Relation1[T, T] =
-      source.where(condition).limit(1)
+    lazy val relation1: Relation1[T, T] = source.where(condition).limit(1)
 
     def relation: Relation[T, T] = relation1
 
@@ -91,11 +88,7 @@ trait Associations {
       m
     }
 
-    def associate(m: T): T = {
-      val t = assign(m)
-      t.save
-      t
-    }
+    def associate(m: T): T = assign(m).create
 
     def :=(m: T): T = assign(m)
   }
@@ -121,11 +114,7 @@ trait Associations {
 
     def assign(m: T): T = assignConditions(m)
 
-    def associate(m: T): T = {
-      val t = assign(m)
-      t.save
-      t
-    }
+    def associate(m: T): T = assign(m).create
 
     def <<(m: T): T = associate(m)
 
@@ -171,11 +160,7 @@ trait Associations {
       inter
     }
 
-    def associate(m: T): I = {
-      val i = assign(m)
-      i.save
-      i
-    }
+    def associate(m: T): I = assign(m).create
 
     def <<(m: T): I = associate(m)
 
@@ -260,7 +245,6 @@ trait Associations {
       relation.toList
     }
   }
-
 
   trait AssociationSupport { self: AR =>
     protected def belongsTo[T <: AR]

@@ -23,9 +23,8 @@ class ExpressionConversion(field: FieldInfo) {
     case f if f.is[UUID] => value.toOption[UUID]
   }
 
-  def toEqualityExpression(v1: => Any, v2: => Any): ast.EqualityExpression = {
+  def toEqualityExpression(v1: => Any, v2: => Any): ast.EqualityExpression =
     new ast.EqualityExpression(toExpression(v1), toExpression(v2))
-  }
 
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {
     new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2)))

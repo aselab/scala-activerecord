@@ -9,7 +9,7 @@ trait IO extends Validatable { this: ProductModel =>
   import ReflectionUtil._
 
   def toMap: Map[String, Any] = _companion.fields.flatMap { f =>
-    this.getValue[Any](f.name).toOption[Any].map(f.name -> _)
+    this.getOption[Any](f.name).map(f.name -> _)
   }.toMap
 
   def toFormValues: Map[String, String] = toFormValues(None)
@@ -40,7 +40,6 @@ trait IO extends Validatable { this: ProductModel =>
   }
 
   def assign(data: Map[String, Any]): Unit = {
-    import ReflectionUtil._
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
       val value = if (info.isOption) Some(v) else v
@@ -73,7 +72,7 @@ trait IO extends Validatable { this: ProductModel =>
   }
 }
 
-trait FormSupport[T <: ProductModel with IO] {self: ProductModelCompanion[T] =>
+trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
