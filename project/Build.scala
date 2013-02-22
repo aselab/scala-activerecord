@@ -75,7 +75,7 @@ object ActiveRecordBuild extends Build {
   lazy val specs: Project = Project("specs", file("activerecord-specs"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-specs",
-      libraryDependencies += "org.specs2" %% "specs2" % "1.12.3"
+      libraryDependencies += "org.specs2" %% "specs2" % "1.12.3" % "provided"
     )
   ) dependsOn(core)
 
