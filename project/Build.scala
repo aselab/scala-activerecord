@@ -19,7 +19,7 @@ object ActiveRecordBuild extends Build {
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
     scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
-      "https://github.com/aselab/scala-activerecord/tree/master€{FILE_PATH}.scala"
+      "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
     )},
     testOptions in ScctTest += Tests.Argument("junitxml", "console"),
     crossPaths := false,
