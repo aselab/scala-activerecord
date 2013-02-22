@@ -29,16 +29,16 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   def beforeAll = {
     System.setProperty("run.mode", "test")
     schema.initialize(config)
-    schema.reset
   }
 
   def afterAll = dsl.transaction {
+    schema.reset
     schema.cleanup
     System.clearProperty("run.mode")
   }
 
   def config: Map[String, String] = Map()
 
-  lazy val schema: ActiveRecordTables = new DefaultConfig().schema
+  lazy val schema: ActiveRecordTables = new DefaultConfig(overrideSettings = config).schema
 }
 
