@@ -85,7 +85,10 @@ trait ActiveRecordTables extends Schema {
   }
 
   /** cleanup database resources */
-  def cleanup: Unit = Config.cleanup
+  def cleanup: Unit = {
+    Config.cleanup
+    _initialized = false
+  }
 
   def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
     new DefaultConfig(overrideSettings = config)

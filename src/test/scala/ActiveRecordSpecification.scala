@@ -32,28 +32,27 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
 
   def beforeAll = {
+    System.setProperty("run.mode", "test")
     logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
     if (System.getProperty("debug") == "true")
       logger("activerecord").setLevel(Level.DEBUG)
-
     schema.initialize(config)
     schema.reset
   }
 
   def afterAll = dsl.transaction {
     schema.cleanup
+    System.clearProperty("run.mode")
   }
 
   def config: Map[String, String] = Map(
     "schema" -> "com.github.aselab.activerecord.models.TestTables"
   )
 
-  def withRollback[T](f: => T) = dsl.transaction {
-    val s = org.squeryl.Session.currentSession
-    val result = f
-    s.connection.rollback
-    result
+  lazy val schema: ActiveRecordTables = try {
+    reflections.ReflectionUtil.classToCompanion(config("schema"))
+      .asInstanceOf[ActiveRecordTables]
+  } catch {
+    case e => throw new RuntimeException("cannot load schema class %s")
   }
-
-  def schema: ActiveRecordTables = models.TestTables
 }
