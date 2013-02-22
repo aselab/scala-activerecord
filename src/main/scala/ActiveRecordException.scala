@@ -32,8 +32,8 @@ object ActiveRecordException {
   def recordNotFound: ActiveRecordException =
     apply("Cannot find record")
 
-  def cannotCleanSession: ActiveRecordException =
-    apply("Must start session by ActiveRecordTables#start()")
+  def cannotRollback: ActiveRecordException =
+    apply("Must call ActiveRecordTables#startTransaction before rollback")
 
   def scalaSig(c: Class[_]): ActiveRecordException =
     apply("Failed to extract ScalaSig from class " + c.getName)

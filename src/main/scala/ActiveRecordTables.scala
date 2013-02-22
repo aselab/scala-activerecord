@@ -65,7 +65,7 @@ trait ActiveRecordTables extends Schema {
   private var _initialized = false
 
   /** load configuration and then setup database and session */
-  def initialize(implicit config: Map[String, Any] = Map()) {
+  def initialize(config: Map[String, Any]) {
     if (!_initialized) {
       Config.conf = loadConfig(config)
 
@@ -75,6 +75,13 @@ trait ActiveRecordTables extends Schema {
     }
 
     _initialized = true
+  }
+
+  def initialize: Unit = initialize(Map())
+
+  def apply[T](config: Map[String, Any] = Map())(f: => T): T = {
+    initialize(config)
+    try { f } finally { cleanup }
   }
 
   /** cleanup database resources */
@@ -95,10 +102,11 @@ trait ActiveRecordTables extends Schema {
     create
   }
 
-  private var _session: (Option[Session], Option[Session]) = (None, None)
+  type SwapSession = (Option[Session], Session)
+  private val sessionStack = collection.mutable.Stack.empty[SwapSession]
 
   /** Set rollback point for test */
-  def start {
+  def startTransaction {
     val oldSession = Session.currentSessionOption
     val newSession = SessionFactory.newSession
     oldSession.foreach(_.unbindFromCurrentThread)
@@ -107,18 +115,23 @@ trait ActiveRecordTables extends Schema {
     try {
       if (c.getAutoCommit) c.setAutoCommit(false)
     } catch { case e => }
-    _session = (oldSession, Option(newSession))
+    sessionStack.push(oldSession -> newSession)
   }
 
-  /** Rollback to start point */
-  def clean: Unit = _session match {
-    case (oldSession, Some(newSession)) =>
-      newSession.connection.rollback
-      newSession.unbindFromCurrentThread
-      oldSession.foreach(_.bindToCurrentThread)
-      _session = (None, None)
-    case _ =>
-      throw ActiveRecordException.cannotCleanSession
+  /** Rollback to startTransaction point */
+  def rollback: Unit = try {
+    val (oldSession, newSession) = sessionStack.pop
+    newSession.connection.rollback
+    newSession.unbindFromCurrentThread
+    newSession.close
+    oldSession.foreach(_.bindToCurrentThread)
+  } catch {
+    case e: NoSuchElementException => throw ActiveRecordException.cannotRollback
+  }
+
+  def withRollback[T](f: => T) = {
+    startTransaction
+    try { f } finally { rollback }
   }
 
   def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {

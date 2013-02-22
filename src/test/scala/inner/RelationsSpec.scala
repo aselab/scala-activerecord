@@ -7,9 +7,9 @@ import com.github.aselab.activerecord.dsl._
 import models._
 import java.sql.Timestamp
 
-object RelationsSpec extends ActiveRecordSpecification {
-  override def before = {
-    super.before
+object RelationsSpec extends ActiveRecordSpecification with AutoRollback {
+  override def beforeAll = {
+    super.beforeAll
     TestTables.createTestData
   }
 
@@ -62,12 +62,12 @@ object RelationsSpec extends ActiveRecordSpecification {
       relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
     }
 
-    "#distinct" >> withRollback {
+    "#distinct" >> {
       PrimitiveModel.newModel(1).save
       PrimitiveModel.where(_.string === "string1").select(_.string).distinct.count mustEqual 1
     }
 
-    "#joins" >> withRollback {
+    "#joins" >> {
       val u1 = User("string50").create
       PrimitiveModel.joins[User]((p, u) => p.string === u.name)
         .where((p, u) => u.name === u1.name).headOption mustEqual
@@ -93,7 +93,7 @@ object RelationsSpec extends ActiveRecordSpecification {
     }
 
     "includes (eager loading)" >> {
-      "HasMany association" >> withRollback {
+      "HasMany association" >> {
         val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users << user1
@@ -107,7 +107,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         g2.users.cache must contain(user3).only
       }
 
-      "multiple associations" >> withRollback {
+      "multiple associations" >> {
         val (user1, user2, user3, user4) = (User("user1").create, User("user2", true).create, User("user3").create, User("user4").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users << user1
@@ -124,7 +124,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         g2.adminUsers.cache must contain(user2, user4).only
       }
 
-      "BelongsTo association" >> withRollback {
+      "BelongsTo association" >> {
         val (user1, user2, user3) = (User("user1").create, User("user2").create, User("user3").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         group1.users := List(user1, user2)
@@ -135,7 +135,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         users.map(_.group.toOption).flatten must contain(group1, group1).only
       }
 
-      "HABTM association" >> withRollback {
+      "HABTM association" >> {
         val (foo1, foo2) = (Foo("foo1").create, Foo("foo2").create)
         val (bar1, bar2, bar3) = (Bar("bar1").create, Bar("bar2").create, Bar("bar3").create)
         foo1.bars := List(bar1, bar2)
@@ -148,7 +148,7 @@ object RelationsSpec extends ActiveRecordSpecification {
         f2.bars.cache must contain(bar3).only
       }
 
-      "HasManyThrough association" >> withRollback {
+      "HasManyThrough association" >> {
         val (project1, project2) = (Project("p1").create, Project("p2").create)
         val (group1, group2) = (Group("group1").create, Group("group2").create)
         val managers1 = (1 to 2).map(i => User("user" + i).create).toList

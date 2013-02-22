@@ -8,9 +8,9 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import models._
 
-object ActiveRecordSpec extends ActiveRecordSpecification {
-  override def before = {
-    super.before
+object ActiveRecordSpec extends ActiveRecordSpecification with AutoRollback {
+  override def beforeAll = {
+    super.beforeAll
     TestTables.createTestData
   }
 
@@ -184,7 +184,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       }
     }
 
-    "#forceUpdate" >> withRollback {
+    "#forceUpdate" >> {
       val now = new Timestamp(System.currentTimeMillis)
       val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
       query.count mustEqual 0
@@ -192,7 +192,7 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       query.count mustEqual 60
     }
 
-    "#forceUpdateAll" >> withRollback {
+    "#forceUpdateAll" >> {
       val now = new Timestamp(System.currentTimeMillis)
       val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
       query.count mustEqual 0
@@ -200,12 +200,12 @@ object ActiveRecordSpec extends ActiveRecordSpecification {
       query.count mustEqual 100
     }
 
-    "#forceDelete" >> withRollback {
+    "#forceDelete" >> {
       PrimitiveModel.forceDelete(_.id.~ > 40) mustEqual 60
       PrimitiveModel.count mustEqual 40
     }
 
-    "#forceDeleteAll" >> withRollback {
+    "#forceDeleteAll" >> {
       PrimitiveModel.forceDeleteAll() mustEqual 100
       PrimitiveModel.count mustEqual 0
     }

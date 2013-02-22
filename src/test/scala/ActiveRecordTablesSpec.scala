@@ -6,24 +6,34 @@ import dsl._
 import models._
 
 object ActiveRecordTablesSpec extends ActiveRecordSpecification {
-  override def before = {
-    super.before
+  override def beforeAll = {
+    super.beforeAll
     TestTables.createTestData
   }
 
   "session" should {
-    "clean throws exception when not start session" >> {
-      TestTables.clean must throwA[ActiveRecordException]
+    "rollback throws exception when not startTransaction" >> {
+      TestTables.rollback must throwA[ActiveRecordException]
     }
 
-    "start and clean" >> {
-      TestTables.start
+    "withRollback" >> {
+      val users: List[User] = User.all.toList
+      TestTables.withRollback {
+        User("testuser").save
+        User("testuser2").save
+        User("testuser3").save
+        User.all.toList must not equalTo(users)
+      }
+      User.all.toList mustEqual users
+    }
+
+    "startTransaction and rollback" >> {
+      TestTables.startTransaction
       val users: List[User] = User.all.toList
       User("testuser").save
       User("testuser2").save
       User("testuser3").save
-      User.all.toList
-      TestTables.clean
+      TestTables.rollback
       User.all.toList mustEqual users
     }
   }

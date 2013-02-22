@@ -1,17 +1,37 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
+import org.specs2.execute._
 import org.specs2.specification._
 
 import org.slf4j.LoggerFactory
 import ch.qos.logback.classic._
 
-trait ActiveRecordSpecification extends Specification {
+trait AutoRollback extends BeforeAfterExample {
+  def schema: ActiveRecordTables
+
+  def before = schema.startTransaction
+  def after = schema.rollback
+}
+
+trait BeforeAfterAllExamples extends Specification {
+  def beforeAll: Unit
+  def afterAll: Unit
+  override def map(fs: => Fragments) = {
+    Step {
+      beforeAll
+    } ^ fs ^ Step {
+      afterAll
+    }
+  }
+}
+
+trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   sequential
 
   def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
 
-  def before = {
+  def beforeAll = {
     logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
     if (System.getProperty("debug") == "true")
       logger("activerecord").setLevel(Level.DEBUG)
@@ -20,7 +40,7 @@ trait ActiveRecordSpecification extends Specification {
     schema.reset
   }
 
-  def after = dsl.transaction {
+  def afterAll = dsl.transaction {
     schema.cleanup
   }
 
@@ -36,12 +56,4 @@ trait ActiveRecordSpecification extends Specification {
   }
 
   def schema: ActiveRecordTables = models.TestTables
-
-  override def map(fs: => Fragments) = {
-    Step {
-      before
-    } ^ fs ^ Step {
-      after
-    }
-  }
 }
