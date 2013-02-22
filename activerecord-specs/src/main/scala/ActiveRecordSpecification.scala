@@ -4,9 +4,6 @@ import org.specs2.mutable._
 import org.specs2.execute._
 import org.specs2.specification._
 
-import org.slf4j.LoggerFactory
-import ch.qos.logback.classic._
-
 trait AutoRollback extends BeforeAfterExample {
   def schema: ActiveRecordTables
 
@@ -40,15 +37,8 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
     System.clearProperty("run.mode")
   }
 
-  def loglevel: Level = Level.OFF
   def config: Map[String, String] = Map()
 
   lazy val schema: ActiveRecordTables = new DefaultConfig().schema
 }
 
-trait DatabaseSpecification extends ActiveRecordSpecification {
-  def logger(name: String) = LoggerFactory.getLogger(name).asInstanceOf[Logger]
-  logger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.OFF)
-  if (System.getProperty("debug") == "true")
-    logger("activerecord").setLevel(Level.DEBUG)
-}
