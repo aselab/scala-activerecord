@@ -19,6 +19,18 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
   def save(throws: Boolean): Boolean =
     super.save || (throws && (throw ActiveRecordException.saveFailed(errors)))
 
+  def create(): this.type = if (isNewRecord) {
+    save()
+    return this
+  } else {
+    throw ActiveRecordException.notImplemented
+  }
+
+  def update(): this.type = {
+    save()
+    this
+  }
+
   protected def doCreate = {
     recordCompanion.create(this)
     true

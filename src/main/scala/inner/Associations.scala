@@ -88,7 +88,7 @@ trait Associations {
       m
     }
 
-    def associate(m: T): T = assign(m).create
+    def associate(m: T): T = assign(m).update
 
     def :=(m: T): T = assign(m)
   }
@@ -114,7 +114,7 @@ trait Associations {
 
     def assign(m: T): T = assignConditions(m)
 
-    def associate(m: T): T = assign(m).create
+    def associate(m: T): T = assign(m).update
 
     def <<(m: T): T = associate(m)
 
@@ -160,7 +160,7 @@ trait Associations {
       inter
     }
 
-    def associate(m: T): I = assign(m).create
+    def associate(m: T): I = assign(m).update
 
     def <<(m: T): I = associate(m)
 

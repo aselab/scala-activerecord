@@ -5,6 +5,8 @@ case class ActiveRecordException(msg: String) extends RuntimeException(msg)
 object ActiveRecordException {
   def notInitialized: ActiveRecordException = apply("Not initialized")
 
+  def notImplemented: ActiveRecordException = apply("Not implemented")
+
   def unsupportedType(name: String): ActiveRecordException =
     apply("Unsupported type: " + name)
 
