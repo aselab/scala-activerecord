@@ -140,6 +140,20 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     table.deleteWhere(m => condition(m))
   }
 
+  def forceInsertAll(models: Iterable[T]): Unit = inTransaction {
+    table.insert(models)
+  }
+
+  def forceInsertAll(models: T*): Unit = forceInsertAll(models.toIterable)
+
+  def insertWithValidation(models: Iterable[T]): Iterable[T] = {
+    val (valid, invalid) = models.partition(_.validate)
+    forceInsertAll(valid)
+    invalid
+  }
+
+  def insertWithValidation(models: T*): Iterable[T] = insertWithValidation(models.toIterable)
+
   /**
    * unique validation.
    */

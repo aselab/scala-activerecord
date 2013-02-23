@@ -210,6 +210,26 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       PrimitiveModel.count mustEqual 0
     }
 
+    "#forceInsert" >> {
+      val invalidUser = new User("invalid") {
+        override def doValidate() { errors.add("error") }
+      }
+      User.forceInsertAll(List(User("user1"), invalidUser))
+      User.count mustEqual 2
+      User.forceInsertAll(User("user2"), invalidUser)
+      User.count mustEqual 4
+    }
+
+    "#insertWithValidation" >> {
+      val invalidUser = new User("invalid") {
+        override def doValidate() { errors.add("error") }
+      }
+      User.insertWithValidation(List(User("user1"), invalidUser)) must contain(invalidUser).only
+      User.count mustEqual 1
+      User.insertWithValidation(User("user2"), invalidUser) must contain(invalidUser).only
+      User.count mustEqual 2
+    }
+
     "implicit conversions" >> {
       "relation should be able to chain" >> {
         PrimitiveModel.all.where(m => m.int lt 50).findBy("string", "string22").map(_.string) must beSome("string22")
