@@ -11,7 +11,7 @@ object ActiveRecordBuild extends Build {
     Classpaths.typesafeReleases
   )
 
-  val defaultSettings: Seq[Project.Setting[_]] = Defaults.defaultSettings ++ Seq(
+  val defaultSettings = Defaults.defaultSettings ++ Seq(
     version := _version,
     organization := "com.github.aselab",
     scalaVersion := "2.9.2",
@@ -78,6 +78,10 @@ object ActiveRecordBuild extends Build {
       libraryDependencies += "org.specs2" %% "specs2" % "1.12.3" % "provided"
     )
   ) dependsOn(core)
+
+  lazy val all: Project = Project("all", file(".")) aggregate(
+    core, specs
+  )
 
   val pomXml =
     <url>https://github.com/aselab/scala-activerecord</url>
