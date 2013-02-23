@@ -210,7 +210,7 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       PrimitiveModel.count mustEqual 0
     }
 
-    "#forceInsert" >> {
+    "#forceInsertAll" >> {
       val invalidUser = new User("invalid") {
         override def doValidate() { errors.add("error") }
       }

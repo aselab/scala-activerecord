@@ -24,9 +24,9 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
 
-  def createTestData = (1 to 100).foreach { i =>
-    PrimitiveModel.newModel(i, i > 50).save
-  }
+  def createTestData = PrimitiveModel.forceInsertAll(
+    (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
+  )
 }
 
 case class User(name: String, isAdmin: Boolean = false) extends ActiveRecord {
