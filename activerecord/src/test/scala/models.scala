@@ -23,6 +23,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
 
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
+  val optimistics = table[OptimisticModel]
 
   def createTestData = PrimitiveModel.forceInsertAll(
     (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
@@ -171,4 +172,8 @@ case class AnnotationModel(
 ) extends ActiveRecord
 
 object AnnotationModel extends ActiveRecordCompanion[AnnotationModel]
+
+case class OptimisticModel(var field: String) extends ActiveRecord with Optimistic
+
+object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
 

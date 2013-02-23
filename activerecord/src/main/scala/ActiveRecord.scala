@@ -48,6 +48,8 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
   } else {
     super.toMap
   }
+
+  def recordInDatabase: Option[this.type] = recordCompanion.find(id)
 }
 
 /**
@@ -73,10 +75,15 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
 
   implicit val manifest: Manifest[T] = Manifest.classType(targetClass)
 
+  lazy val isOptimistic =
+    classOf[Optimistic].isAssignableFrom(manifest.erasure)
+
   implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
     def getId(m: T): K = m.id
     def isPersisted(m: T): Boolean = m.isPersisted
     val idPropertyName = "id"
+    override def optimisticCounterPropertyName =
+      if (isOptimistic) Some("occVersionNumber") else None
   }
 
   /** self reference */

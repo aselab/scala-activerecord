@@ -344,5 +344,15 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       PrimitiveModel.find(m.id) must beNone
     }
 
+    "recordInDatabase" >> {
+      OptimisticModel("record").save
+      val m1 = OptimisticModel.head
+      val m2 = OptimisticModel.head
+      m1.field = "update"
+      m1.save
+      m2.recordInDatabase must beSome(m1)
+      m1.delete
+      m2.recordInDatabase must beNone
+    }
   }
 }

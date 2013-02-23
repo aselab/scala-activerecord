@@ -45,5 +45,11 @@ object ActiveRecordException {
 
   def saveFailed(errors: validations.Errors): ActiveRecordException =
     apply(errors.messages.mkString("\n"))
+
+  def staleUpdate(e: dsl.StaleUpdateException): ActiveRecordException =
+    apply(e.getMessage)
+
+  def staleDelete(modelName: String): ActiveRecordException =
+    apply("Attempted to delete a stale object: " + modelName)
 }
 
