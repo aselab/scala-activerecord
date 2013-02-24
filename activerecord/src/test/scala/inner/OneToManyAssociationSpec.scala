@@ -40,10 +40,19 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
   )
 
   "BelongsToAssociation" should {
+    "assign persisted record" >> new TestData {
+      user.group := group
+      user.groupId mustEqual(group.id)
+    }
+
+    "assign non-persisted record" >> new TestData {
+      val newGroup = Group("group2")
+      user.group.assign(newGroup) must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
     "associate persisted record" >> new TestData {
       user.group.associate(group)
       user.group.toOption must beSome(group)
-      user.groupId mustEqual(group.id)
     }
 
     "configure foreignKey" >> new TestData {
@@ -61,10 +70,19 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
   }
 
   "HasManyAssociation" should {
+    "assign to non-persisted record" >> new TestData {
+      val newGroup = Group("group2")
+      newGroup.users.assign(user) must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
+    "assign persisted record" >> new TestData {
+      group.users.assign(user)
+      user.groupId mustEqual(group.id)
+    }
+
     "associate persisted record" >> new TestData {
       group.users.associate(user)
       group.users.toList mustEqual List(user)
-      user.groupId mustEqual(group.id)
     }
 
     "deleteAll" >> new TestData {

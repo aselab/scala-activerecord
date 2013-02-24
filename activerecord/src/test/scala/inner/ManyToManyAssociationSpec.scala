@@ -46,11 +46,27 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
   )
 
   "HasManyThroughAssociation" should {
-    "associate persisted record" << new TestData {
-      val inter = foo.through << bar
-      foo.through.toList mustEqual List(bar)
+    "assign persisted record" >> new TestData {
+      val inter = foo.through.assign(bar)
+      inter.isPersisted must beFalse
       inter.fooId mustEqual foo.id
       inter.barId mustEqual bar.id
+    }
+
+    "assign non-persisted record" >> new TestData {
+      val newBar = Bar("bar2")
+      foo.through.assign(newBar) must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
+    "assign to non-persisted record" >> new TestData {
+      val newFoo = Foo("foo2")
+      newFoo.through.assign(bar) must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
+    "associate persisted record" << new TestData {
+      val inter = foo.through << bar
+      inter.isPersisted must beTrue
+      foo.through.toList mustEqual List(bar)
     }
 
     "implicit conversions" in new TestData {
@@ -60,6 +76,16 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
   }
 
   "HasAndBelongsToManyAssociation" should {
+    "associate non-persisted record" >> new TestData {
+      val newBar = Bar("bar2")
+      foo.bars << newBar must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
+    "associate to non-persisted record" >> new TestData {
+      val newFoo = Foo("foo2")
+      newFoo.bars << bar must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
     "associate persisted record" >> new TestData {
       foo.bars << bar
       foo.bars.toList mustEqual List(bar)

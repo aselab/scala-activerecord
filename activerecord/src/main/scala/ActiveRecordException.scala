@@ -64,5 +64,8 @@ object ActiveRecordException {
 
   def staleDelete(modelName: String): StaleObjectException =
     StaleObjectException("Attempted to delete a stale object: " + modelName)
+
+  def recordMustBeSaved: ActiveRecordException =
+    apply("owning side record must be saved")
 }
 

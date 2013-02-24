@@ -44,6 +44,7 @@ trait Associations {
     def build: T = assignConditions(companion.newInstance)
 
     protected def assignConditions(m: T): T = {
+      if (owner.isNewRecord) throw ActiveRecordException.recordMustBeSaved
       allConditions.foreach {
         case (key, value) => fieldInfo(key).setValue(m, value)
       }
@@ -84,6 +85,7 @@ trait Associations {
     def toOption: Option[T] = relation.headOption
 
     def assign(m: T): T = {
+      if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
       foreignKeyInfo.setValue(owner, m.id)
       m
     }
@@ -154,6 +156,7 @@ trait Associations {
     }
 
     def assign(m: T): I = {
+      if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
       assignConditions(m)
       val inter = through.build
       through.fieldInfo(foreignKey).setValue(inter, m.id)
@@ -218,6 +221,8 @@ trait Associations {
     }
 
     def associate(m: T): T = {
+      if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
+      assignConditions(m)
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
       if (isLeftSide) {
