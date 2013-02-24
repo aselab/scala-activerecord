@@ -122,8 +122,21 @@ trait Associations {
     def <<(m: T): T = associate(m)
 
     def :=(list: List[T]): List[T] = inTransaction {
-      deleteAll
+      if (fieldInfo(foreignKey).isOption) removeAll else deleteAll
       relation.cache = list.map(associate)
+    }
+
+    def removeAll(): List[T] = inTransaction {
+      if (!fieldInfo(foreignKey).isOption) {
+        throw ActiveRecordException.notNullConstraint(foreignKey)
+      }
+      val result = relation.toList
+      result.foreach {r =>
+        r.setValue(foreignKey, None)
+        r.save
+      }
+      relation.cache = Nil
+      result
     }
   }
 

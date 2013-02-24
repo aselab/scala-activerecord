@@ -87,15 +87,49 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       group.users.toList mustEqual List(user)
     }
 
+    "removeAll" >> new TestData {
+      val user2 = User("user2").create
+      group.usersByOtherKey << user
+      group.usersByOtherKey << user2
+      val removed = group.usersByOtherKey.removeAll
+      removed mustEqual List(user, user2)
+      removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
+      group.usersByOtherKey must beEmpty
+    }
+
+    "removeAll with not null constraint" >> new TestData {
+      group.users << user
+      group.users.removeAll must throwA(ActiveRecordException.notNullConstraint("groupId"))
+    }
+
     "deleteAll" >> new TestData {
       val user2 = User("user2").create
       val user3 = User("user3").create
-      group.users := List(user, user2)
+      group.users << user
+      group.users << user2
       group.users.deleteAll mustEqual List(user, user2)
       group.users must beEmpty
       User.exists(_.id === user.id) must beFalse
       User.exists(_.id === user2.id) must beFalse
       User.exists(_.id === user3.id) must beTrue
+    }
+
+    "replace records" >> new TestData {
+      val user2 = User("user2").create
+      val user3 = User("user3").create
+      group.usersByOtherKey << user
+      group.usersByOtherKey := List(user2, user3)
+      User.exists(_.id === user.id) must beTrue
+      group.usersByOtherKey.toList mustEqual List(user2, user3)
+    }
+
+    "replace records with not null constraint" >> new TestData {
+      val user2 = User("user2").create
+      val user3 = User("user3").create
+      group.users << user
+      group.users := List(user2, user3)
+      User.exists(_.id === user.id) must beFalse
+      group.users.toList mustEqual List(user2, user3)
     }
 
     "implicit conversions" >> new TestData {
