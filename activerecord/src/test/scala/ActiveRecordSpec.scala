@@ -340,7 +340,9 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       m.id mustEqual oldId
       PrimitiveModel.find(oldId).get.string mustEqual "aaaa"
 
-      m.delete
+      m.delete must beTrue
+      m.isPersisted must beFalse
+      m.delete must beFalse
       PrimitiveModel.find(m.id) must beNone
     }
 

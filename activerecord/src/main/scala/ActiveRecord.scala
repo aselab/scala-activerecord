@@ -9,6 +9,9 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
   def id: T
   def isPersisted: Boolean
 
+  private var _isDeleted: Boolean = false
+  def isDeleted: Boolean = _isDeleted
+
   /** corresponding ActiveRecordCompanion object */
   lazy val recordCompanion = _companion.asInstanceOf[ActiveRecordBaseCompanion[T, this.type]]
 
@@ -41,7 +44,11 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
     true
   }
 
-  protected def doDelete = recordCompanion.delete(id)
+  protected def doDelete = {
+    val result = if (isDeleted) false else recordCompanion.delete(id)
+    if (result) _isDeleted = true
+    result
+  }
 
   override def toMap: Map[String, Any] = if (isNewRecord) {
     super.toMap - "id"
@@ -63,7 +70,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
   /** primary key */
   val id: Long = 0L
 
-  def isPersisted: Boolean = id > 0
+  def isPersisted: Boolean = id > 0 && !isDeleted
 }
 
 object ActiveRecord extends inner.Relations with inner.Associations
