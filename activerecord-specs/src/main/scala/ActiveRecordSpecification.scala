@@ -32,7 +32,7 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   }
 
   def afterAll = dsl.transaction {
-    schema.reset
+    schema.drop
     schema.cleanup
   }
 
