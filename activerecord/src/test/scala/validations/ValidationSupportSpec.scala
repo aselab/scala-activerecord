@@ -389,7 +389,7 @@ object ValidationSupportSpec extends DatabaseSpecification {
 
       "save(true) throws Exception" >> {
         val m = UserModel("a", "b")
-        m.save(true) must throwA[ActiveRecordException].like{ case e => e mustEqual ActiveRecordException.saveFailed(m.errors)}
+        m.save(true) must throwA[RecordInvalidException].like{ case e => e mustEqual ActiveRecordException.saveFailed(m.errors)}
       }
     }
   }

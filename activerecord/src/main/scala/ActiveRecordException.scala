@@ -1,8 +1,16 @@
 package com.github.aselab.activerecord
 
-case class ActiveRecordException(msg: String) extends RuntimeException(msg)
+class ActiveRecordException(msg: String) extends RuntimeException(msg)
+
+case class RecordInvalidException(msg: String) extends ActiveRecordException(msg)
+
+case class RecordNotFoundException(msg: String) extends ActiveRecordException(msg)
+
+case class StaleObjectException(msg: String) extends ActiveRecordException(msg)
 
 object ActiveRecordException {
+  def apply(msg :String) = new ActiveRecordException(msg)
+
   def notInitialized: ActiveRecordException = apply("Not initialized")
 
   def notImplemented: ActiveRecordException = apply("Not implemented")
@@ -34,8 +42,8 @@ object ActiveRecordException {
   def cannotLoadSchema(schemaClass: String) =
     apply("Cannot load schema class: " + schemaClass)
 
-  def recordNotFound: ActiveRecordException =
-    apply("Cannot find record")
+  def recordNotFound: RecordNotFoundException =
+    RecordNotFoundException("Cannot find record")
 
   def cannotRollback: ActiveRecordException =
     apply("Must call ActiveRecordTables#startTransaction before rollback")
@@ -43,13 +51,13 @@ object ActiveRecordException {
   def scalaSig(c: Class[_]): ActiveRecordException =
     apply("Failed to extract ScalaSig from class " + c.getName)
 
-  def saveFailed(errors: validations.Errors): ActiveRecordException =
-    apply(errors.messages.mkString("\n"))
+  def saveFailed(errors: validations.Errors): RecordInvalidException =
+    RecordInvalidException(errors.messages.mkString("\n"))
 
-  def staleUpdate(e: dsl.StaleUpdateException): ActiveRecordException =
-    apply(e.getMessage)
+  def staleUpdate(e: dsl.StaleUpdateException): StaleObjectException =
+    StaleObjectException(e.getMessage)
 
-  def staleDelete(modelName: String): ActiveRecordException =
-    apply("Attempted to delete a stale object: " + modelName)
+  def staleDelete(modelName: String): StaleObjectException =
+    StaleObjectException("Attempted to delete a stale object: " + modelName)
 }
 

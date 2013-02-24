@@ -19,7 +19,7 @@ object OptimisticSpec extends DatabaseSpecification with AutoRollback {
       m1.field = "update"
       m1.save
       m2.field = "other update"
-      m2.save must throwA[ActiveRecordException]
+      m2.save must throwA[StaleObjectException]
       m3.field = "other record update"
       m3.save must beTrue
     }
@@ -30,7 +30,7 @@ object OptimisticSpec extends DatabaseSpecification with AutoRollback {
       val m3 = OptimisticModel.last
       m1.field = "update"
       m1.save
-      m2.delete must throwA[ActiveRecordException]
+      m2.delete must throwA[StaleObjectException]
       m3.delete must beTrue
     }
   }

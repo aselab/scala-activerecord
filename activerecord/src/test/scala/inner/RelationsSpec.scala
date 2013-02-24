@@ -20,6 +20,10 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.head mustEqual PrimitiveModel.all.toList.head
     }
 
+    "#head (Exception)" >> {
+      User.all.head must throwA[RecordNotFoundException]
+    }
+
     "#headOption" >> {
       relation.headOption mustEqual PrimitiveModel.all.toList.headOption
     }
