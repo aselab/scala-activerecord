@@ -42,6 +42,8 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
   "BelongsToAssociation" should {
     "assign persisted record" >> new TestData {
       user.group := group
+      user.group.isLoaded must beTrue
+      user.group.cache mustEqual List(group)
       user.groupId mustEqual(group.id)
     }
 

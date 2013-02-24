@@ -87,6 +87,7 @@ trait Associations {
     def assign(m: T): T = {
       if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
       foreignKeyInfo.setValue(owner, m.id)
+      relation.cache = List(m)
       m
     }
 
