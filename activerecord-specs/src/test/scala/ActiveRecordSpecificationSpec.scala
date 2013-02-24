@@ -21,7 +21,10 @@ package models {
 object Model1Spec extends ActiveRecordSpecification {
   import models._
 
-  override def config = Map("schema" -> "com.github.aselab.activerecord.models.Tables1")
+  override def config = Map(
+    "schema" -> "com.github.aselab.activerecord.models.Tables1",
+    "jdbcurl" -> "jdbc:h2:mem:tables1"
+  )
 
   "ActiveRecordSpecification" should {
     "run.mode is test" << {
@@ -38,7 +41,10 @@ object Model1Spec extends ActiveRecordSpecification {
 object Model2Spec extends ActiveRecordSpecification {
   import models._
 
-  override def config = Map("schema" -> "com.github.aselab.activerecord.models.Tables2")
+  override def config = Map(
+    "schema" -> "com.github.aselab.activerecord.models.Tables2",
+    "jdbcurl" -> "jdbc:h2:mem:tables2"
+  )
 
   "ActiveRecordSpecification" should {
     "can override config" << {

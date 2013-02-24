@@ -97,7 +97,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
    */
   lazy val table: Table[T] = {
     val name = getClass.getName.dropRight(1)
-    schema.tableMap(name).asInstanceOf[Table[T]]
+    schema.getTable(name)
   }
 
   /**

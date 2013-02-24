@@ -8,6 +8,8 @@ case class RecordNotFoundException(msg: String) extends ActiveRecordException(ms
 
 case class StaleObjectException(msg: String) extends ActiveRecordException(msg)
 
+case class SchemaSettingException(msg: String) extends ActiveRecordException(msg)
+
 object ActiveRecordException {
   def apply(msg :String) = new ActiveRecordException(msg)
 
@@ -41,6 +43,9 @@ object ActiveRecordException {
 
   def cannotLoadSchema(schemaClass: String) =
     apply("Cannot load schema class: " + schemaClass)
+
+  def tableNotFound(name: String): SchemaSettingException =
+    SchemaSettingException("Cannot find table definition of " + name)
 
   def recordNotFound: RecordNotFoundException =
     RecordNotFoundException("Cannot find record")

@@ -313,8 +313,7 @@ trait IntermediateRecordCompanion extends ActiveRecordBaseCompanion[CKey, Interm
   val tableName: String
 
   override lazy val targetClass = classOf[IntermediateRecord]
-  override lazy val table =
-    schema.tableMap(tableName).asInstanceOf[Table[IntermediateRecord]]
+  override lazy val table = schema.getTable[IntermediateRecord](tableName)
 
   override def newInstance: IntermediateRecord = {
     val m = super.newInstance

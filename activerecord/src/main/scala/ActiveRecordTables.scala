@@ -31,6 +31,11 @@ trait ActiveRecordTables extends Schema {
     }.toMap ++ map
   }
 
+  def getTable[T](name: String): Table[T] = {
+    tableMap.getOrElse(name, throw ActiveRecordException.tableNotFound(name))
+      .asInstanceOf[Table[T]]
+  }
+
   /** All tables */
   lazy val all = tableMap.values
 
