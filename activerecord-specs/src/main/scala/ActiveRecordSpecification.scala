@@ -34,7 +34,6 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   def afterAll = dsl.transaction {
     schema.reset
     schema.cleanup
-    System.clearProperty("run.mode")
   }
 
   def config: Map[String, String] = Map()

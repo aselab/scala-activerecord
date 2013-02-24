@@ -57,7 +57,7 @@ trait ActiveRecordConfig {
   def translator: i18n.Translator
   def timeZone: TimeZone
 
-  val logger = LoggerFactory.getLogger("activerecord")
+  lazy val logger = LoggerFactory.getLogger("activerecord")
 }
 
 class DefaultConfig(

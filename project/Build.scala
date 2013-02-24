@@ -16,6 +16,13 @@ object ActiveRecordBuild extends Build {
     organization := "com.github.aselab",
     scalaVersion := "2.9.2",
     resolvers ++= defaultResolvers,
+    libraryDependencies ++= Seq(
+      "org.specs2" %% "specs2" % "1.12.3" % "test",
+      "junit" % "junit" % "4.11" % "test",
+      "org.mockito" % "mockito-all" % "1.9.5" % "test",
+      "com.h2database" % "h2" % "1.3.170" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.0.9" % "test"
+    ),
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
     scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
@@ -44,6 +51,10 @@ object ActiveRecordBuild extends Build {
     }
   ) ++ lsSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings ++ ScctPlugin.instrumentSettings
 
+  lazy val root: Project = Project("root", file("."))
+    .settings(ScctPlugin.mergeReportSettings:_*)
+    .aggregate(core, specs)
+
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
@@ -51,15 +62,11 @@ object ActiveRecordBuild extends Build {
         "com.github.aselab" % "squeryl" % "0.9.6-SNAPSHOT",
         "com.github.aselab" % "scala-activerecord-specs" % _version % "test",
         "com.typesafe" % "config" % "1.0.0",
-        "org.specs2" %% "specs2" % "1.12.3" % "test",
-        "junit" % "junit" % "4.11" % "test",
-        "org.mockito" % "mockito-all" % "1.9.5" % "test",
         "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
-        "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
-        "com.h2database" % "h2" % "1.3.170" % "test",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
         "com.github.nscala-time" %% "nscala-time" % "0.2.0",
-        "commons-validator" % "commons-validator" % "1.4.0"
+        "commons-validator" % "commons-validator" % "1.4.0",
+        "org.slf4j" % "slf4j-api" % "1.7.2"
       ),
       (description in LsKeys.lsync) :=
         "A Scala ORM library like ActiveRecord of Rails.",
@@ -78,10 +85,6 @@ object ActiveRecordBuild extends Build {
       libraryDependencies += "org.specs2" %% "specs2" % "1.12.3" % "provided"
     )
   ) dependsOn(core)
-
-  lazy val all: Project = Project("all", file(".")) aggregate(
-    core, specs
-  )
 
   val pomXml =
     <url>https://github.com/aselab/scala-activerecord</url>
