@@ -69,6 +69,6 @@ object ActiveRecordException {
     apply("owning side record must be saved")
 
   def notNullConstraint(name: String): ActiveRecordException =
-    apply("foreign key '%s' has not null constraint".format(name))
+    apply("foreign key '%s' has NotNull constraint".format(name))
 }
 

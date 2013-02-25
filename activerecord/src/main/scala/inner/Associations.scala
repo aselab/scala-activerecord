@@ -32,6 +32,8 @@ trait Associations {
   trait CollectionAssociation[O <: AR, T <: AR] extends Association[O, T] {
     val allConditions: Map[String, Any]
 
+    protected def hasConstraint: Boolean
+
     protected def conditionFactory(conditions: Map[String, Any]) = {
       m: T => LogicalBoolean.and(conditions.map {
         case (key, value) =>
@@ -50,6 +52,8 @@ trait Associations {
       }
       m
     }
+
+    def removeAll(): List[T]
 
     def deleteAll(): List[T] = inTransaction {
       val result = relation.toList
@@ -101,6 +105,8 @@ trait Associations {
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
+    protected lazy val hasConstraint = !fieldInfo(foreignKey).isOption
+
     lazy val relation1: Relation1[T, T] = source.where(condition)
 
     def relation: Relation[T, T] = relation1
@@ -125,12 +131,12 @@ trait Associations {
     def <<(m: T): T = associate(m)
 
     def :=(list: List[T]): List[T] = inTransaction {
-      if (fieldInfo(foreignKey).isOption) removeAll else deleteAll
+      if (hasConstraint) deleteAll else removeAll
       relation.cache = list.map(associate)
     }
 
     def removeAll(): List[T] = inTransaction {
-      if (!fieldInfo(foreignKey).isOption) {
+      if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
       val result = relation.toList
@@ -150,6 +156,8 @@ trait Associations {
     val allConditions = conditions
 
     private lazy val idFieldInfo = fieldInfo("id")
+
+    protected lazy val hasConstraint = !through.fieldInfo(foreignKey).isOption
 
     private def joinedRelation = source.joins[I]((m, inter) =>
       idFieldInfo.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
@@ -185,14 +193,30 @@ trait Associations {
     def <<(m: T): I = associate(m)
 
     def :=(list: List[T]): List[I] = inTransaction {
-      deleteAll
+      if (hasConstraint) deleteAll else removeAll
       relation.cache = list
       list.map(associate)
     }
 
+    def removeAll(): List[T] = inTransaction {
+      if (hasConstraint) {
+        throw ActiveRecordException.notNullConstraint(foreignKey)
+      }
+      
+      val result = relation.toList
+      through.relation.foreach {r =>
+        r.setValue(foreignKey, None)
+        r.save
+      }
+      relation.cache = Nil
+      result
+    }
+
     override def deleteAll(): List[T] = inTransaction {
-      through.deleteAll
-      super.deleteAll
+      val result = super.deleteAll
+      if (hasConstraint) through.deleteAll else removeAll
+      relation.cache = Nil
+      result
     }
   }
 
@@ -201,6 +225,8 @@ trait Associations {
     interCompanion: IntermediateRecordCompanion
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
     lazy val foreignKey = if (isLeftSide) "leftId" else "rightId"
+
+    protected val hasConstraint = false
 
     private val isLeftSide = List(owner.getClass, manifest.erasure)
       .sortBy(_.getSimpleName).head == manifest.erasure
@@ -255,15 +281,17 @@ trait Associations {
     def <<(m: T): T = associate(m)
 
     def :=(list: List[T]): List[T] = inTransaction {
-      deleteAll
+      removeAll
       relation.cache = list.map(associate)
     }
 
-    override def deleteAll(): List[T] = inTransaction {
-      val result = interCompanion.all.where(inter =>
+    def removeAll(): List[T] = inTransaction {
+      val result = relation.toList
+      interCompanion.forceDelete(inter =>
         owner.id === (if (isLeftSide) inter.leftId else inter.rightId)
-      ).foreach(_.delete)
-      relation.toList
+      )
+      relation.cache = Nil
+      result
     }
   }
 

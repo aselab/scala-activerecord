@@ -9,32 +9,40 @@ package manytomany {
     lazy val bars = hasAndBelongsToMany[Bar]
     lazy val many = hasMany[Inter]
     lazy val through = hasManyThrough[Bar, Inter](many)
+    lazy val throughOption = hasManyThrough[Baz, Inter](many)
   }
 
   case class Bar(name: String) extends ActiveRecord {
     lazy val foos = hasAndBelongsToMany[Foo]
   }
 
+  case class Baz(name: String) extends ActiveRecord
+
   case class Inter(value: Int) extends ActiveRecord {
     val fooId: Long = 0
     val barId: Long = 0
+    val bazId: Option[Long] = None
     lazy val foo = belongsTo[Foo]
     lazy val bar = belongsTo[Bar]
+    lazy val baz = belongsTo[Baz]
   }
 
   object Foo extends ActiveRecordCompanion[Foo]
   object Bar extends ActiveRecordCompanion[Bar]
+  object Baz extends ActiveRecordCompanion[Baz]
   object Inter extends ActiveRecordCompanion[Inter]
 
   object Tables extends ActiveRecordTables {
     val foos = table[Foo]
     val bars = table[Bar]
+    val bazs = table[Baz]
     val inters = table[Inter]
   }
 
   trait TestData extends Scope {
     val foo = Foo("foo1").create
     val bar = Bar("bar1").create
+    val baz = Baz("baz1").create
   }
 }
 
@@ -69,6 +77,53 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       foo.through.toList mustEqual List(bar)
     }
 
+    "removeAll" >> new TestData {
+      val inter = foo.throughOption << baz
+      val removed = foo.throughOption.removeAll
+      removed mustEqual List(baz)
+      foo.throughOption.toList must beEmpty
+      Inter.find(inter.id).map(_.bazId) must beSome(None)
+    }
+
+    "removeAll with not null constraint" >> new TestData {
+      val inter = foo.through << bar
+      foo.through.removeAll must throwA(ActiveRecordException.notNullConstraint("barId"))
+    }
+
+    "deleteAll" >> new TestData {
+      val inter = foo.throughOption << baz
+      val deleted = foo.throughOption.deleteAll
+      deleted mustEqual List(baz)
+      foo.throughOption.toList must beEmpty
+      Inter.find(inter.id).map(_.bazId) must beSome(None)
+    }
+
+    "deleteAll with not null constraint" >> new TestData {
+      val inter = foo.through << bar
+      val deleted = foo.through.deleteAll
+      deleted mustEqual List(bar)
+      foo.through.toList must beEmpty
+      Inter.find(inter.id) must beNone
+    }
+
+    "replace records" >> new TestData {
+      val baz2 = Baz("baz2").create
+      val baz3 = Baz("baz3").create
+      val inter = foo.throughOption << baz
+      foo.throughOption := List(baz2, baz3)
+      Inter.find(inter.id).map(_.bazId) must beSome(None)
+      foo.throughOption.toList mustEqual List(baz2, baz3)
+    }
+
+    "replace records with not null constraint" >> new TestData {
+      val bar2 = Bar("bar2").create
+      val bar3 = Bar("bar3").create
+      val inter = foo.through << bar
+      foo.through := List(bar2, bar3)
+      Inter.find(inter.id) must beNone
+      foo.through.toList mustEqual List(bar2, bar3)
+    }
+
     "implicit conversions" in new TestData {
       val inter = foo.through << bar
       foo.through.where(_.id === bar.id).toList mustEqual List(bar)
@@ -92,6 +147,29 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       foo.bars << bar
       foo.bars.toList mustEqual List(bar)
       bar.foos.toList mustEqual List(foo)
+    }
+
+    "removeAll" >> new TestData {
+      foo.bars << bar
+      foo.bars.removeAll mustEqual List(bar)
+      foo.bars.toList must beEmpty
+      Bar.find(bar.id) must beSome
+    }
+
+    "deleteAll" >> new TestData {
+      foo.bars << bar
+      foo.bars.deleteAll mustEqual List(bar)
+      foo.bars.toList must beEmpty
+      Bar.find(bar.id) must beNone
+    }
+
+    "replace records" >> new TestData {
+      val bar2 = Bar("bar2").create
+      val bar3 = Bar("bar3").create
+      foo.bars << bar
+      foo.bars := List(bar2, bar3)
+      foo.bars.toList mustEqual List(bar2, bar3)
+      Bar.find(bar.id) must beSome
     }
 
     "implicit conversions" >> new TestData {
