@@ -2,7 +2,8 @@
 
 scala-activerecord is an ORM library for Scala.
 
-This library is inspired by ActiveRecord of Ruby on Rails and helps to reduce your code.
+This library is inspired by ActiveRecord of Ruby on Rails.
+It is designed following the CoC(Convention over Configuration), DRY(Don't Repeat Yourself) principles.
 
 ## Minimal example
 
@@ -12,6 +13,7 @@ Model implementation:
 package models
 
 import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
 
 case class Person(name: String, age: Int) extends ActiveRecord
 
@@ -24,6 +26,7 @@ Schema definition:
 package models
 
 import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
 
 object Tables extends ActiveRecordTables {
   val people = table[Person]
@@ -55,11 +58,20 @@ object App extends App {
 
 Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 
+## Features
+
+* Auto connection management
+* Composable query operation
+* Callback
+* Validation
+* Association
+
 ## Documents and other resources
 
 * [Wiki](https://github.com/aselab/scala-activerecord/wiki)
 * [ScalaDoc](https://aselab.ci.cloudbees.com/job/scala-activerecord/javadoc/)
 * [Sample project](https://github.com/aselab/scala-activerecord-sample)
+* [CloudBees(CI)](https://aselab.ci.cloudbees.com/job/scala-activerecord/)
 
 ## License
 
