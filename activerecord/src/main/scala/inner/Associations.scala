@@ -117,7 +117,10 @@ trait Associations {
 
     def assign(m: T): T = assignConditions(m)
 
-    def associate(m: T): T = assign(m).update
+    def associate(m: T): T = inTransaction {
+      if (m.isNewRecord) m.save(true)
+      assign(m).update
+    }
 
     def <<(m: T): T = associate(m)
 
@@ -234,9 +237,8 @@ trait Associations {
       ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
     }
 
-    def associate(m: T): T = {
-      if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
-      assignConditions(m)
+    def associate(m: T): T = inTransaction {
+      if (m.isNewRecord) m.save(true)
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
       if (isLeftSide) {

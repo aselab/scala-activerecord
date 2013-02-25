@@ -78,7 +78,9 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
   "HasAndBelongsToManyAssociation" should {
     "associate non-persisted record" >> new TestData {
       val newBar = Bar("bar2")
-      foo.bars << newBar must throwA(ActiveRecordException.recordMustBeSaved)
+      foo.bars << newBar
+      newBar.isPersisted must beTrue
+      foo.bars.toList mustEqual List(newBar)
     }
 
     "associate to non-persisted record" >> new TestData {

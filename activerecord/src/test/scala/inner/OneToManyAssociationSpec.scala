@@ -87,6 +87,13 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       group.users.toList mustEqual List(user)
     }
 
+    "associate non-persisted record" >> new TestData {
+      val newUser = User("user2")
+      group.users.associate(newUser)
+      newUser.isPersisted must beTrue
+      group.users.toList mustEqual List(newUser)
+    }
+
     "removeAll" >> new TestData {
       val user2 = User("user2").create
       group.usersByOtherKey << user
