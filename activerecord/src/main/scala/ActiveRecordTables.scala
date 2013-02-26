@@ -51,14 +51,17 @@ trait ActiveRecordTables extends Schema {
   def foreignKeyFromClass(c: Class[_]): String =
     c.getSimpleName.camelize + "Id"
 
-  private def createTables = inTransaction {
+  private def createTables = transaction {
     val isCreated = all.headOption.exists{ t =>
-      val stat = Session.currentSession.connection.createStatement
+      val connection = Session.currentSession.connection
+      val stat = connection.createStatement
       try {
         stat.execute("select 1 from " + t.name)
         true
       } catch {
-        case e => false
+        case e =>
+          connection.rollback
+          false
       } finally {
         try { stat.close } catch { case e => }
       }

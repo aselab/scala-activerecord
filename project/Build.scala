@@ -4,7 +4,7 @@ import ScctPlugin._
 import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.2.0"
+  val _version = "0.2-SNAPSHOT"
 
   val defaultResolvers = Seq(
     Resolver.sonatypeRepo("releases"),
@@ -30,7 +30,7 @@ object ActiveRecordBuild extends Build {
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
       "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
     )},
-    testOptions in ScctTest += Tests.Argument("junitxml", "console"),
+    testOptions in Test ++= (if (Option(System.getProperty("ci")).isDefined) Seq(Tests.Argument("junitxml", "console")) else Nil),
     parallelExecution in Test := false,
     compileOrder in Compile := CompileOrder.JavaThenScala,
     publishTo <<= version { (v: String) =>
