@@ -7,6 +7,7 @@ object ActiveRecordBuild extends Build {
   val _version = "0.2-SNAPSHOT"
 
   val defaultResolvers = Seq(
+    Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     Classpaths.typesafeReleases
   )
@@ -14,7 +15,8 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = Defaults.defaultSettings ++ Seq(
     version := _version,
     organization := "com.github.aselab",
-    scalaVersion := "2.9.2",
+    scalaVersion := "2.10.0",
+    crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       "org.specs2" %% "specs2" % "1.12.3" % "test",
@@ -29,7 +31,6 @@ object ActiveRecordBuild extends Build {
       "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
     )},
     testOptions in ScctTest += Tests.Argument("junitxml", "console"),
-    crossPaths := false,
     parallelExecution in Test := false,
     compileOrder in Compile := CompileOrder.JavaThenScala,
     publishTo <<= version { (v: String) =>
@@ -52,15 +53,14 @@ object ActiveRecordBuild extends Build {
   ) ++ lsSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings ++ ScctPlugin.instrumentSettings
 
   lazy val root: Project = Project("root", file("."))
-    .settings(ScctPlugin.mergeReportSettings:_*)
+    .settings(defaultSettings)
     .aggregate(core, specs)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
-        "com.github.aselab" % "squeryl" % "0.9.6-SNAPSHOT",
-        "com.github.aselab" % "scala-activerecord-specs" % _version % "test",
+        "com.github.aselab" %% "squeryl" % "0.9.6-M1",
         "com.typesafe" % "config" % "1.0.0",
         "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
@@ -68,6 +68,7 @@ object ActiveRecordBuild extends Build {
         "commons-validator" % "commons-validator" % "1.4.0",
         "org.slf4j" % "slf4j-api" % "1.7.2"
       ),
+      unmanagedSourceDirectories in Test <++= Seq(scalaSource in Compile in specs).join,
       (description in LsKeys.lsync) :=
         "A Scala ORM library like ActiveRecord of Rails.",
       initialCommands in console in Test := """
