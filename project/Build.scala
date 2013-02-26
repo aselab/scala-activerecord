@@ -53,7 +53,7 @@ object ActiveRecordBuild extends Build {
   ) ++ lsSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings ++ ScctPlugin.instrumentSettings
 
   lazy val root: Project = Project("root", file("."))
-    .settings(defaultSettings)
+    .settings(defaultSettings: _*)
     .aggregate(core, specs)
 
   lazy val core: Project = Project("core", file("activerecord"),
