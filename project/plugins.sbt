@@ -5,7 +5,8 @@ resolvers ++= Seq(
   "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
   Classpaths.typesafeReleases,
   Resolver.url("sbt-plugin-releases",
-    new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
+    new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns),
+  "typesafe" at "http://repo.typesafe.com/typesafe/repo"
 )
 
 addSbtPlugin("me.lessis" % "ls-sbt" % "0.1.2")
