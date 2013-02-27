@@ -29,6 +29,6 @@ class ExpressionConversion(field: FieldInfo) {
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {
     new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2)))
   } catch {
-    case e => throw ActiveRecordException.unsupportedType(field.name)
+    case e: RuntimeException => throw ActiveRecordException.unsupportedType(field.name)
   }
 }

@@ -8,6 +8,8 @@ import java.util.TimeZone
 import com.jolbox.bonecp._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
+import scala.util.control.Exception.catching
+import reflections.ReflectionUtil.classToCompanion
 
 object Config {
   private var _conf: ActiveRecordConfig = _
@@ -35,11 +37,10 @@ trait ActiveRecordConfig {
   def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
-  lazy val schema = try {
-    reflections.ReflectionUtil.classToCompanion(schemaClass)
-      .asInstanceOf[ActiveRecordTables]
-  } catch {
-    case e => throw ActiveRecordException.cannotLoadSchema(schemaClass)
+  lazy val schema = catching(
+    classOf[ClassNotFoundException], classOf[ClassCastException]
+  ).withApply(e => throw ActiveRecordException.cannotLoadSchema(schemaClass)) {
+    classToCompanion(schemaClass).asInstanceOf[ActiveRecordTables]
   }
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
@@ -90,7 +91,7 @@ class DefaultConfig(
     try {
       Class.forName(driverClass)
     } catch {
-      case e => throw ActiveRecordException.missingDriver(driverClass)
+      case e: ClassNotFoundException => throw ActiveRecordException.missingDriver(driverClass)
     }
 
     val conf = new BoneCPConfig

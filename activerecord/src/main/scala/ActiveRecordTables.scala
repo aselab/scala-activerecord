@@ -123,7 +123,7 @@ trait ActiveRecordTables extends Schema {
     val c = newSession.connection
     try {
       if (c.getAutoCommit) c.setAutoCommit(false)
-    } catch { case e => }
+    } catch { case e: java.sql.SQLException => }
     sessionStack.push(oldSession -> newSession)
   }
 

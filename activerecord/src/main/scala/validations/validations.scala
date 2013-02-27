@@ -256,7 +256,8 @@ object Validator {
       val confirmationValue = try {
         model.getValue[Any](name)
       } catch {
-        case e => throw ActiveRecordException.notFoundConfirmationField(name)
+        case e: NoSuchMethodException =>
+          throw ActiveRecordException.notFoundConfirmationField(name)
       }
       if (value != confirmationValue) {
         errors.add(name, message("confirmation"), fieldName)

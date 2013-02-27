@@ -6,6 +6,11 @@ import ls.Plugin._
 object ActiveRecordBuild extends Build {
   val _version = "0.2-SNAPSHOT"
 
+  def specs2(key: String, version: String) =
+    "org.specs2" %% "specs2" % (
+       if (version.startsWith("2.10")) "1.14" else "1.12.3"
+     ) % key
+
   val defaultResolvers = Seq(
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
@@ -19,12 +24,12 @@ object ActiveRecordBuild extends Build {
     crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
-      "org.specs2" %% "specs2" % "1.12.3" % "test",
       "junit" % "junit" % "4.11" % "test",
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
       "com.h2database" % "h2" % "1.3.170" % "test",
       "ch.qos.logback" % "logback-classic" % "1.0.9" % "test"
     ),
+    libraryDependencies <+= scalaVersion(v => specs2("test", v)),
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
     scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
@@ -83,7 +88,7 @@ object ActiveRecordBuild extends Build {
   lazy val specs: Project = Project("specs", file("activerecord-specs"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-specs",
-      libraryDependencies += "org.specs2" %% "specs2" % "1.12.3" % "provided"
+      libraryDependencies <+= scalaVersion(v => specs2("provided", v))
     )
   ) dependsOn(core)
 

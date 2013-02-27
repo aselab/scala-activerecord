@@ -5,6 +5,26 @@ import org.squeryl.adapters._
 
 object ActiveRecordConfigSpec extends Specification {
   "DefaultConfig" should {
+    "schema" in {
+      def config(schemaClass: String) = new DefaultConfig(
+        overrideSettings = Map("schema" -> schemaClass)
+      )
+
+      "load schema class" in {
+        config("com.github.aselab.activerecord.models.TestTables").schema mustEqual models.TestTables
+      }
+
+      "load not schema class" in {
+        val schemaClass = "com.github.aselab.activerecord.models.User"
+        config(schemaClass).schema must throwA(ActiveRecordException.cannotLoadSchema(schemaClass))
+      }
+
+      "load not exists class" in {
+        val schemaClass = "nothing.ideal.Class"
+        config(schemaClass).schema must throwA(ActiveRecordException.cannotLoadSchema(schemaClass))
+      }
+    }
+
     "supported database" in {
       def config(driverName: String) = new DefaultConfig(
         overrideSettings = Map("driver" -> driverName)

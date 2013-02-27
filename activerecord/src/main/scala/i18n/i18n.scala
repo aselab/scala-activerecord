@@ -28,7 +28,7 @@ object DefaultTranslator extends Translator {
       MessageFormat.format(msg, args.map(_.asInstanceOf[AnyRef]):_*)
     )
   } catch {
-    case e => None
+    case e: MissingResourceException => None
   }
 }
 
