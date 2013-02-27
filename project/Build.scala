@@ -5,7 +5,6 @@ import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
   val _version = "0.2-SNAPSHOT"
-  val playVersion = "2.1.0"
 
   def specs2(key: String, version: String) =
     "org.specs2" %% "specs2" % (
@@ -96,6 +95,7 @@ object ActiveRecordBuild extends Build {
   lazy val play2: Project = Project("play2", file("activerecord-play2"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-play2",
+      resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
       libraryDependencies <++= (scalaVersion) { scalaVersion =>
         scalaVersion match {
           case "2.10.0" => {

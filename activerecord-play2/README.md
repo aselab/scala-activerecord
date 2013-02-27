@@ -2,6 +2,8 @@
 
 ## Usage
 
+### project/Build.scala
+
 Add the following settings in `project/Build.scala`
 
 ```scala
@@ -20,13 +22,15 @@ val main = play.Project(appName, appVersion, appDependencies).settings(
 )
 ```
 
+### conf/play.plugins
+
 Add the following settings in `conf/play.plugins`
 
 ```
 9999:com.github.aselab.activerecord.ActiveRecordPlugin
 ```
 
-`app/models/Tables.scala`
+### app/models/Tables.scala
 
 with mixin `com.github.aselab.activerecord.PlaySupport`.
 
@@ -41,7 +45,7 @@ object Tables extends ActiveRecordTables with PlaySupport {
 }
 ```
 
-`conf/application.conf` (Optional)
+### conf/application.conf (Optional)
 
 ```
 # Database configuration
