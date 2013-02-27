@@ -5,6 +5,7 @@ import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
   val _version = "0.2-SNAPSHOT"
+  val playVersion = "2.1.0"
 
   def specs2(key: String, version: String) =
     "org.specs2" %% "specs2" % (
@@ -59,7 +60,7 @@ object ActiveRecordBuild extends Build {
 
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
-    .aggregate(core, specs)
+    .aggregate(core, specs, play2)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
@@ -89,6 +90,29 @@ object ActiveRecordBuild extends Build {
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-specs",
       libraryDependencies <+= scalaVersion(v => specs2("provided", v))
+    )
+  ) dependsOn(core)
+
+  lazy val play2: Project = Project("play2", file("activerecord-play2"),
+    settings = defaultSettings ++ Seq(
+      name := "scala-activerecord-play2",
+      libraryDependencies <++= (scalaVersion) { scalaVersion =>
+        scalaVersion match {
+          case "2.10.0" => {
+            val playVersion = "2.1.0"
+            Seq(
+              "play" %% "play" % playVersion % "provided",
+              "play" %% "play-jdbc" % playVersion % "provided"
+            )
+          }
+          case _ => {
+            val playVersion = "2.0.4"
+            Seq(
+              "play" % "play_2.9.1" % playVersion % "provided"
+            )
+          }
+        }
+      }
     )
   ) dependsOn(core)
 
