@@ -59,7 +59,7 @@ object ActiveRecordBuild extends Build {
 
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
-    .aggregate(core, specs, play2)
+    .aggregate(core, specs, play2, scalatra)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
@@ -98,7 +98,7 @@ object ActiveRecordBuild extends Build {
       resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
       libraryDependencies <++= (scalaVersion) { scalaVersion =>
         scalaVersion match {
-          case "2.10.0" => {
+          case s if s.startsWith("2.10") => {
             val playVersion = "2.1.0"
             Seq(
               "play" %% "play" % playVersion % "provided",
@@ -108,11 +108,21 @@ object ActiveRecordBuild extends Build {
           case _ => {
             val playVersion = "2.0.4"
             Seq(
-              "play" % "play_2.9.1" % playVersion % "provided"
+              "play" %% "play" % playVersion % "provided"
             )
           }
         }
       }
+    )
+  ) dependsOn(core)
+
+  lazy val scalatra: Project = Project("scalatra", file("activerecord-scalatra"),
+    settings = defaultSettings ++ Seq(
+      name := "scala-activerecord-scalatra",
+      libraryDependencies ++= Seq(
+        "org.scalatra" %% "scalatra" % "2.2.0" % "provided",
+        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided" artifacts (Artifact("javax.servlet", "jar", "jar"))
+      )
     )
   ) dependsOn(core)
 
