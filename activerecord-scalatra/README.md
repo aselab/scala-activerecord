@@ -49,7 +49,7 @@ trait ApplicationController extends ScalatraKernel with DatabaseSupport
 
 class SomeController extends ScalatraServlet with ApplicationController {
   get("/") {
-    <h1>Hello, World</h1>
+    <h1>{"record count: " + SomeActiveRecordModel.count}</h1>
   }
 }
 ```
