@@ -29,7 +29,7 @@ trait CRUDable extends Saveable {
     beforeSave()
     if (onCreate) beforeCreate() else beforeUpdate()
 
-    val result = if (isNewRecord) doCreate() else doUpdate()
+    val result = if (onCreate) doCreate() else doUpdate()
 
     if (result) {
       if (onCreate) afterCreate() else afterUpdate()
