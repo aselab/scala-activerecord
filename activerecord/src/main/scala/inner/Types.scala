@@ -14,6 +14,8 @@ trait Types {
   val LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean
   type LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean
   type EqualityExpression = org.squeryl.dsl.ast.EqualityExpression
+  type OrderByExpression = org.squeryl.dsl.ast.OrderByExpression
+  type OrderByArg = org.squeryl.dsl.ast.OrderByArg
   type ExpressionNode = org.squeryl.dsl.ast.ExpressionNode
   type UpdateAssignment = org.squeryl.dsl.ast.UpdateAssignment
 }

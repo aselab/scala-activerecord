@@ -15,7 +15,8 @@ trait Relations {
     selector: JoinedType => S = {t: JoinedType => t._1},
     includeAssociations: List[T => Association[T, AR]] = Nil,
     pages: Option[(Int, Int)] = None,
-    isUnique: Boolean = false
+    isUnique: Boolean = false,
+    isReverse: Boolean = false
   )
 
   trait QuerySupport[T <: AR, S] {
@@ -25,12 +26,18 @@ trait Relations {
 
     val parameters: Parameters[T, JoinedType, S]
 
+    val manifest: Manifest[T]
+
+    lazy val companion: ActiveRecordBaseCompanion[_, T] =
+      classToARCompanion(manifest.erasure)
+
     // scalastyle:off
     def conditions = parameters.conditions
     def orders = parameters.orders
     def includeAssociations = parameters.includeAssociations
     def pages = parameters.pages
     def isUnique = parameters.isUnique
+    def isReverse = parameters.isReverse
     def selector = parameters.selector
     // scalastyle:on
 
@@ -42,9 +49,10 @@ trait Relations {
       selector: JoinedType => R = parameters.selector,
       includeAssociations: List[T => Association[T, AR]] = parameters.includeAssociations,
       pages: Option[(Int, Int)] = parameters.pages,
-      isUnique: Boolean = parameters.isUnique
+      isUnique: Boolean = parameters.isUnique,
+      isReverse: Boolean = parameters.isReverse
     ): Relation[T, R] = copyParams(
-      Parameters(conditions, orders, selector, includeAssociations, pages, isUnique)
+      Parameters(conditions, orders, selector, includeAssociations, pages, isUnique, isReverse)
     )
 
     protected implicit def relationToThisType[R](self: Relation[T, R]): this.type =
@@ -71,7 +79,8 @@ trait Relations {
     protected def whereState(m: JoinedType) =
       dsl.where(LogicalBoolean.and(conditions.map(_.apply(m))))
 
-    protected def ordersExpression(m: JoinedType) = orders.map(_.apply(m))
+    protected def ordersExpression(m: JoinedType) =
+      if (!isReverse) orders.map(_.apply(m)) else reverseOrder(m)
 
     protected def paginate[R](query: Query[R]) = {
       val q = if (isUnique) query.distinct else query
@@ -79,6 +88,26 @@ trait Relations {
         case (offset, count) => q.page(offset, count)
       }.getOrElse(q)
     }
+
+    private def toOrderByExpression(e: ExpressionNode) =
+      new OrderByExpression(new OrderByArg(e))
+
+    protected def reverseOrder(m: JoinedType): List[OrderByExpression] =
+      if (orders.isEmpty) {
+        List(new OrderByArg(companion.fieldInfo("id").toExpression(m._1.id)).desc)
+      } else {
+        orders.map(_.apply(m)).map{
+          case o: OrderByExpression => {
+            val orderByArg = o.getValue[OrderByArg]("a")
+            val isAsc = orderByArg.getValue[Boolean]("isAscending")
+            o.setValue("a", if (isAsc) orderByArg.desc else orderByArg.asc)
+            o
+          }
+          case e: ExpressionNode => toOrderByExpression(e).inverse
+        }
+      }
+
+    def reverse: this.type = copyParams(isReverse = !isReverse)
 
     protected def wrap[A <: TupleN, R](f: T => R): A => R = {m: A => f(m._1)}
 
@@ -121,10 +150,6 @@ trait Relations {
 
   trait Relation[T <: AR, S] extends QuerySupport[T, S] {
     val queryable: Queryable[T]
-    val manifest: Manifest[T]
-
-    lazy val companion: ActiveRecordBaseCompanion[_, T] =
-      classToARCompanion(manifest.erasure)
 
     private var _isLoaded = false
     def isLoaded: Boolean = _isLoaded
@@ -155,17 +180,23 @@ trait Relations {
 
     def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
 
-    def head: S = try {
-      headOption.get
+    private def getOrException(o: Option[S]) = try {
+      o.get
     } catch { case e: java.util.NoSuchElementException =>
       throw ActiveRecordException.recordNotFound
     }
+
+    def head: S = getOrException(headOption)
 
     def headOption: Option[S] = if (isLoaded) {
       cache.headOption
     } else {
       inTransaction { limit(1).toQuery.headOption }
     }
+
+    def last: S = getOrException(lastOption)
+
+    def lastOption: Option[S] = reverse.limit(1).toQuery.headOption
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -262,7 +293,7 @@ trait Relations {
       from(queryable){ m =>
         val t = Tuple1(m)
         val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(orders.map(_.apply(t)))
+        scope.select(selector(t)).orderBy(ordersExpression(t))
       }
     )
 
@@ -334,7 +365,7 @@ trait Relations {
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
         val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on(t))
+        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
       }
     )
   }
@@ -372,7 +403,7 @@ trait Relations {
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
         val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2)
+        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
       }
     )
   }
@@ -413,7 +444,7 @@ trait Relations {
         val t = (m, j1, j2, j3)
         val (on1, on2, on3) = on(t)
         val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(orders.map(_.apply(t))).on(on1, on2, on3)
+        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2, on3)
       }
     )
   }

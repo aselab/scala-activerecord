@@ -217,8 +217,14 @@ trait ReflectionUtil {
   }
 
   class Reflectable(o: Any) {
-    def getValue[T](name: String): T =
+    def getValue[T](name: String): T = try {
       o.getClass.getMethod(name).invoke(o).asInstanceOf[T]
+    } catch {
+      case e: Exception =>
+        val f = o.getClass.getDeclaredField(name)
+        f.setAccessible(true)
+        f.get(o).asInstanceOf[T]
+    }
 
     def setValue(name: String, value: Any): Unit = {
       def getField(c: Class[_], n: String): Field = try {

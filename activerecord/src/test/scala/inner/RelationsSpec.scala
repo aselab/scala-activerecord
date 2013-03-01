@@ -28,6 +28,18 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.headOption mustEqual PrimitiveModel.all.toList.headOption
     }
 
+    "#last" >> {
+      relation.last mustEqual PrimitiveModel.all.toList.last
+    }
+
+    "#last (Exception)" >> {
+      User.all.last must throwA[RecordNotFoundException]
+    }
+
+    "#lastOption" >> {
+      relation.lastOption mustEqual PrimitiveModel.all.toList.lastOption
+    }
+
     "#orderBy" >> {
       "single field" >> {
         relation.orderBy(m => m.int desc).toList mustEqual PrimitiveModel.all.toList.reverse
@@ -47,6 +59,36 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
 
       "use ExpressionNode" >> {
         relation.orderBy(_.int).toList mustEqual PrimitiveModel.all.toList
+      }
+    }
+
+    "#reverse" >> {
+      "empty order" >> {
+        relation.reverse.toList mustEqual PrimitiveModel.all.toList.reverse
+      }
+
+      "single field order" >> {
+        relation.orderBy(m => m.int desc).reverse.toList mustEqual PrimitiveModel.all.toList
+      }
+
+      "use ExpressionNode order" >> {
+        relation.orderBy(_.int).reverse.toList mustEqual PrimitiveModel.all.toList.reverse
+      }
+
+      "multiple fields" >> {
+        relation.orderBy(_.oint asc, _.int desc).reverse.toList mustEqual PrimitiveModel.all.toList.sortWith {
+          (m1, m2) => (m1.oint, m2.oint) match {
+            case (a, b) if a == b => m1.int > m2.int
+            case (Some(a), Some(b)) => a < b
+            case (None, Some(b)) => true
+            case (Some(a), None) => false
+            case _ => throw new Exception("")
+          }
+        }.reverse
+      }
+
+      "multiple reverse" >> {
+        relation.reverse.reverse.toList mustEqual PrimitiveModel.all.toList
       }
     }
 
