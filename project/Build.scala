@@ -108,7 +108,7 @@ object ActiveRecordBuild extends Build {
           case _ => {
             val playVersion = "2.0.4"
             Seq(
-              "play" %% "play" % playVersion % "provided"
+              "play" % "play_2.9.1" % playVersion % "provided"
             )
           }
         }
