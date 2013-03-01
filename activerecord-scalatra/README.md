@@ -9,8 +9,8 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 ```scala
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % "2.2.0",
-  "com.github.aselab" %% "scala-activerecord" % "0.2-SNAPSHOT",
-  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2-SNAPSHOT",
+  "com.github.aselab" %% "scala-activerecord" % "0.2.1",
+  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.1",
   "com.h2database" % "h2" % "1.3.170"  // See Supported databases
 )
 

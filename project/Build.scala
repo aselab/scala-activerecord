@@ -4,7 +4,7 @@ import ScctPlugin._
 import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.2-SNAPSHOT"
+  val _version = "0.2.1"
 
   def specs2(key: String, version: String) =
     "org.specs2" %% "specs2" % (
