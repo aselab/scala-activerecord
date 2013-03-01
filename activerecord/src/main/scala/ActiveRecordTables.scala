@@ -5,6 +5,7 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
 import mojolly.inflector.InflectorImports._
+import java.io.{PrintWriter, StringWriter}
 
 /**
  * Base class of database schema.
@@ -141,6 +142,12 @@ trait ActiveRecordTables extends Schema {
   def withRollback[T](f: => T): T = {
     startTransaction
     try { f } finally { rollback }
+  }
+
+  def ddl: String = inTransaction {
+    val out = new StringWriter
+    printDdl(new PrintWriter(out))
+    out.toString
   }
 
   def table[T <: AR]()(implicit m: Manifest[T]): Table[T] =
