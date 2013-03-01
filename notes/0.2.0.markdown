@@ -1,0 +1,5 @@
+* Added support for model validations
+* Reimplemented support for associations
+* Added support for testing
+* Improved query performance (avoid sub query on method chaining)
+* Added support for Scala 2.10

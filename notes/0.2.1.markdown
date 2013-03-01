@@ -1,0 +1,7 @@
+* Fixed a bug using PostgreSQL at initializing tables
+* Added ActiveRecordTables#ddl for dumping schema
+* Added reverse, last, lastOption methods to query interface
+* Added support for Play 2.x
+* Added support for Scalatra 2.2.0
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.2.0...0.2.1)
