@@ -11,6 +11,12 @@ trait Types {
   type SquerylOptimistic = org.squeryl.Optimistic
   type StaleUpdateException = org.squeryl.StaleUpdateException
 
+  type NonPrimitiveJdbcMapper[P, A, T] = org.squeryl.dsl.NonPrimitiveJdbcMapper[P, A, T]
+  type TTimestamp = org.squeryl.dsl.TTimestamp
+  type TOptionTimestamp = org.squeryl.dsl.TOptionTimestamp
+  type DeOptionizer[P1, A1, T1, A2 >: Option[A1] <: Option[A1], T2] =
+    org.squeryl.dsl.DeOptionizer[P1, A1, T1, A2, T2]
+  type TypedExpressionFactory[A, T] = org.squeryl.dsl.TypedExpressionFactory[A, T]
   val LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean
   type LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean
   type EqualityExpression = org.squeryl.dsl.ast.EqualityExpression

@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord.models
 
 import com.github.aselab.activerecord._
+import com.github.nscala_time.time.Imports._
 import experimental._
 import dsl._
 import inner._
@@ -24,6 +25,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
   val optimistics = table[OptimisticModel]
+  val jodatimeModels = table[JodaTimeModel]
 
   def createTestData = PrimitiveModel.forceInsertAll(
     (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
@@ -176,4 +178,8 @@ object AnnotationModel extends ActiveRecordCompanion[AnnotationModel]
 case class OptimisticModel(var field: String) extends ActiveRecord with Optimistic
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
+
+case class JodaTimeModel(datetime: DateTime, optDatetime: Option[DateTime] = None) extends ActiveRecord with Optimistic
+
+object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel]
 
