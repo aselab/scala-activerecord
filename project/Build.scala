@@ -31,6 +31,7 @@ object ActiveRecordBuild extends Build {
     ),
     libraryDependencies <+= scalaVersion(v => specs2("test", v)),
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
+    scalacOptions in Compile in doc += "-diagrams",
     scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
       "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
