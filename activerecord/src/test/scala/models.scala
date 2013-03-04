@@ -179,7 +179,7 @@ case class OptimisticModel(var field: String) extends ActiveRecord with Optimist
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
 
-case class JodaTimeModel(datetime: DateTime, optDatetime: Option[DateTime] = None) extends ActiveRecord with Optimistic
+case class JodaTimeModel(datetime: DateTime, optDatetime: Option[DateTime]) extends ActiveRecord
 
 object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel]
 

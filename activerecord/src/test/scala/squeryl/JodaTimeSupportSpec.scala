@@ -12,8 +12,8 @@ object JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
     val tomorrow = DateTime.tomorrow
 
     "save" >> {
-     JodaTimeModel(now, Option(tomorrow)).save
-      JodaTimeModel.toList mustEqual List(JodaTimeModel(now, Some(tomorrow)))
+      val d1 = JodaTimeModel(now, Option(tomorrow)).create
+      JodaTimeModel.toList mustEqual List(d1)
     }
 
     "where" >> {
