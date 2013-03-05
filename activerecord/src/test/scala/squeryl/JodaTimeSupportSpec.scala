@@ -29,7 +29,8 @@ object JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
       JodaTimeModel.where(_.optDatetime < DateTime.tomorrow).toList must contain(d1).only
       JodaTimeModel.where(_.localDate <= LocalDate.tomorrow + 1.month)
         .orderBy(_.localDate).toList must contain(d2, d1).only
-      JodaTimeModel.where(_.optLocalDate > LocalDate.tomorrow).toList must contain(d2, d3).only
+      JodaTimeModel.where(_.optLocalDate.between(today, today + 2.month))
+        .toList must contain(d1, d2).only
     }
   }
 }

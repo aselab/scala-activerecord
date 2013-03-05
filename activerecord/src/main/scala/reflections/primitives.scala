@@ -1,5 +1,7 @@
 package com.github.aselab.activerecord.reflections
 
+import org.joda.time.{LocalDate, DateTime}
+
 trait RegistrationManager[K, V] {
   protected val registrations: collection.mutable.Map[K, V]
 
@@ -19,6 +21,8 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
   val doubleHandler: T
   val dateHandler: T
   val timestampHandler: T
+  val localdateHandler: T
+  val datetimeHandler: T
   val uuidHandler: T
   val bigDecimalHandler: T
 
@@ -36,6 +40,8 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
     classOf[Double] -> doubleHandler,
     classOf[java.util.Date] -> dateHandler,
     classOf[java.sql.Timestamp] -> timestampHandler,
+    classOf[LocalDate] -> localdateHandler,
+    classOf[DateTime] -> datetimeHandler,
     classOf[java.util.UUID] -> uuidHandler,
     classOf[BigDecimal] -> bigDecimalHandler
   )

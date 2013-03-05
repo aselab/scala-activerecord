@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord.reflections
 
 import com.github.aselab.activerecord._
+import org.joda.time.{LocalDate, DateTime}
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
 import scala.reflect.Manifest
@@ -59,6 +60,8 @@ object ClassInfo {
     val doubleHandler = () => new java.lang.Double(0.0)
     val dateHandler = () => new java.util.Date(0)
     val timestampHandler = () => new java.sql.Timestamp(0)
+    val localdateHandler = () => LocalDate.fromDateFields(new java.util.Date(0))
+    val datetimeHandler = () => new DateTime(new java.sql.Timestamp(0))
     val uuidHandler = () => new java.util.UUID(0, 0)
     val bigDecimalHandler = () => BigDecimal(0)
     val nilHandler = () => Nil.asInstanceOf[AnyRef]

@@ -162,9 +162,7 @@ object reflectionsSpec extends Specification {
         "olong" -> classOf[Long],
         "ofloat" -> classOf[Float],
         "odouble" -> classOf[Double],
-        "obigDecimal" -> classOf[BigDecimal],
-        "otimestamp" -> classOf[java.sql.Timestamp],
-        "odate" -> classOf[java.util.Date]
+        "obigDecimal" -> classOf[BigDecimal]
       )
     }
 

@@ -18,16 +18,16 @@ object convertersSpec extends DatabaseSpecification {
       val converter = FormConverter.get(classOf[Date]).get
 
       "convert with the timezone setting when Config.timeZone is null" in {
-        val string = "2012-05-06T08:02:11.530Z"
-        val date = ISODateTimeFormat.dateTime.parseDateTime(string).toDate
+        val string = "2012-05-06"
+        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string).toDate
         converter.serialize(date) mustEqual string
         converter.deserialize(string) mustEqual date
       }
 
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
-        val string = "2012-06-16T18:23:51.133+09:00"
-        val date = ISODateTimeFormat.dateTime.parseDateTime(string).toDate
+        val string = "2012-06-16"
+        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string).toDate
         val serialized = converter.serialize(date)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null
@@ -41,16 +41,62 @@ object convertersSpec extends DatabaseSpecification {
       val converter = FormConverter.get(classOf[Timestamp]).get
 
       "convert with the timezone setting when Config.timeZone is null" in {
-        val string = "2012-05-06T08:02:11.530Z"
-        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        val string = "2012-05-06T08:02:11"
+        val t = new Timestamp(ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC).parseDateTime(string).millis)
         converter.serialize(t) mustEqual string
         converter.deserialize(string) mustEqual t
       }
 
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
-        val string = "2012-06-16T18:23:51.133+09:00"
-        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        val string = "2012-06-16T18:23:51"
+        val t = new Timestamp(ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.forID("Asia/Tokyo")).parseDateTime(string).millis)
+        val serialized = converter.serialize(t)
+        val deserialized = converter.deserialize(string)
+        Config.timeZone = null
+
+        serialized mustEqual string
+        deserialized mustEqual t
+      }
+    }
+
+    "LocalDate" in {
+      val converter = FormConverter.get(classOf[LocalDate]).get
+
+      "convert with the timezone setting when Config.timeZone is null" in {
+        val string = "2012-05-06"
+        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string)
+        converter.serialize(date) mustEqual string
+        converter.deserialize(string) mustEqual date
+      }
+
+      "convert with Config.timeZone" in {
+        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
+        val string = "2012-06-16"
+        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string)
+        val serialized = converter.serialize(date)
+        val deserialized = converter.deserialize(string)
+        Config.timeZone = null
+
+        serialized mustEqual string
+        deserialized mustEqual date
+      }
+    }
+
+    "DateTime" in {
+      val converter = FormConverter.get(classOf[DateTime]).get
+
+      "convert with the timezone setting when Config.timeZone is null" in {
+        val string = "2012-05-06T08:02:11"
+        val t = ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC).parseDateTime(string)
+        converter.serialize(t) mustEqual string
+        converter.deserialize(string) mustEqual t
+      }
+
+      "convert with Config.timeZone" in {
+        Config.timeZone = TimeZone.getTimeZone("America/New_York")
+        val string = "2012-06-16T18:23:51"
+        val t = ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.forID("America/New_York")).parseDateTime(string)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null

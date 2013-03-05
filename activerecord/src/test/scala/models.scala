@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord.models
 
 import com.github.aselab.activerecord._
-import com.github.nscala_time.time.Imports.{DateTime, LocalDate}
+import org.joda.time.{LocalDate, DateTime}
 import experimental._
 import dsl._
 import inner._
@@ -115,8 +115,6 @@ case class PrimitiveModel(
   var float: Float,
   var double: Double,
   var bigDecimal: BigDecimal,
-  var timestamp: Timestamp,
-  var date: Date,
   var uuid: UUID,
 
   var ostring: Option[String],
@@ -125,9 +123,7 @@ case class PrimitiveModel(
   var olong: Option[Long],
   var ofloat: Option[Float],
   var odouble: Option[Double],
-  var obigDecimal: Option[BigDecimal],
-  var otimestamp: Option[Timestamp],
-  var odate: Option[Date]
+  var obigDecimal: Option[BigDecimal]
 ) extends ActiveRecord
 
 object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
@@ -139,8 +135,6 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
     i.toFloat,
     i.toDouble,
     BigDecimal(i),
-    new Timestamp(i.toLong),
-    new Date(i.toLong * 1000 * 60 * 60 * 24),
     new UUID(i.toLong, i.toLong),
     Some("string" + i).filterNot(_ => none),
     Some(i % 2 == 1).filterNot(_ => none),
@@ -148,9 +142,7 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
     Some(i.toLong).filterNot(_ => none),
     Some(i.toFloat).filterNot(_ => none),
     Some(i.toDouble).filterNot(_ => none),
-    Some(BigDecimal(i)).filterNot(_ => none),
-    Some(new Timestamp(i.toLong)).filterNot(_ => none),
-    Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none)
+    Some(BigDecimal(i)).filterNot(_ => none)
   )
 }
 
