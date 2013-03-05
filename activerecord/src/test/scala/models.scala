@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord.models
 
 import com.github.aselab.activerecord._
-import com.github.nscala_time.time.Imports._
+import com.github.nscala_time.time.Imports.{DateTime, LocalDate}
 import experimental._
 import dsl._
 import inner._
@@ -179,7 +179,12 @@ case class OptimisticModel(var field: String) extends ActiveRecord with Optimist
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
 
-case class JodaTimeModel(datetime: DateTime, optDatetime: Option[DateTime]) extends ActiveRecord
+case class JodaTimeModel(
+  datetime: DateTime,
+  optDatetime: Option[DateTime],
+  localDate: LocalDate,
+  optLocalDate: Option[LocalDate]
+) extends ActiveRecord
 
 object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel]
 

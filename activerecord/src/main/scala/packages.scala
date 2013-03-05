@@ -4,7 +4,7 @@ import ActiveRecord._
 import reflections._
 
 object dsl extends org.squeryl.PrimitiveTypeMode
-  with squeryl.JodaTimeSupport
+  with squeryl.DateTimeSupport with squeryl.LocalDateSupport
   with inner.Annotations with inner.DSL with inner.Types
 
 package object aliases {

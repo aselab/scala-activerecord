@@ -12,7 +12,9 @@ trait Types {
   type StaleUpdateException = org.squeryl.StaleUpdateException
 
   type NonPrimitiveJdbcMapper[P, A, T] = org.squeryl.dsl.NonPrimitiveJdbcMapper[P, A, T]
+  type TDate = org.squeryl.dsl.TDate
   type TTimestamp = org.squeryl.dsl.TTimestamp
+  type TOptionDate = org.squeryl.dsl.TOptionDate
   type TOptionTimestamp = org.squeryl.dsl.TOptionTimestamp
   type DeOptionizer[P1, A1, T1, A2 >: Option[A1] <: Option[A1], T2] =
     org.squeryl.dsl.DeOptionizer[P1, A1, T1, A2, T2]
