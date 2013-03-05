@@ -1,39 +1,38 @@
 package com.github.aselab.activerecord
 
-import java.util.Date
-import java.sql.Timestamp
 import inner._
+import com.github.nscala_time.time.Imports._
 
 trait Timestamps extends CRUDable {
-  var createdAt: Timestamp = null
-  var updatedAt: Timestamp = null
+  var createdAt: DateTime = null
+  var updatedAt: DateTime = null
 
   abstract override protected def doCreate() = {
-    val now = new Timestamp(System.currentTimeMillis)
+    val now = DateTime.now
     createdAt = now
     updatedAt = now
     super.doCreate()
   }
 
   abstract override protected def doUpdate() = {
-    updatedAt = new Timestamp(System.currentTimeMillis)
+    updatedAt = DateTime.now
     super.doUpdate()
   }
 }
 
 trait Datestamps extends CRUDable {
-  var createdOn: Date = null
-  var updatedOn: Date = null
+  var createdOn: LocalDate = null
+  var updatedOn: LocalDate = null
 
   abstract override protected def doCreate() = {
-    val today = new Date
+    val today = LocalDate.now
     createdOn = today
     updatedOn = today
     super.doCreate()
   }
 
   abstract override protected def doUpdate() = {
-    updatedOn = new Date
+    updatedOn = LocalDate.now
     super.doUpdate()
   }
 }
