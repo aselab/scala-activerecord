@@ -2,6 +2,7 @@ package com.github.aselab.activerecord
 
 import ActiveRecord._
 import reflections._
+import org.joda.time.{LocalDate, DateTime}
 
 object dsl extends org.squeryl.PrimitiveTypeMode
   with squeryl.DateTimeSupport with squeryl.LocalDateSupport
@@ -27,6 +28,8 @@ package object support {
     case "java.sql.Timestamp" => classOf[java.sql.Timestamp]
     case "java.util.Date" => classOf[java.util.Date]
     case "java.util.UUID" => classOf[java.util.UUID]
+    case "org.joda.time.LocalDate" => classOf[LocalDate]
+    case "org.joda.time.DateTime" => classOf[DateTime]
   }
 
   def modelClass(implicit classLoader: ClassLoader = defaultLoader): PF =

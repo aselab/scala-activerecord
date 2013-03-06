@@ -49,26 +49,29 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
 
   val timestampHandler = new FormConverter[Timestamp] {
     override def serialize(v: Any): String =
-      new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateHourMinuteSecond)
+      new DateTime(v).withZone(DateTimeZone.UTC).toString(ISODateTimeFormat.dateHourMinuteSecond)
 
     def deserialize(s: String): Timestamp =
-      new Timestamp(ISODateTimeFormat.dateHourMinuteSecond.withZone(timezone).parseDateTime(s).millis)
+      new Timestamp(
+        ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC)
+          .parseDateTime(s).withZone(timezone).millis
+      )
   }
 
   val datetimeHandler = new FormConverter[DateTime] {
     override def serialize(v: Any): String =
-      new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateHourMinuteSecond)
+      new DateTime(v).withZone(DateTimeZone.UTC).toString(ISODateTimeFormat.dateHourMinuteSecond)
 
     def deserialize(s: String): DateTime =
-      ISODateTimeFormat.dateHourMinuteSecond.withZone(timezone).parseDateTime(s)
+      ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC).parseDateTime(s).withZone(timezone)
   }
 
   val dateHandler = new FormConverter[Date] {
     override def serialize(v: Any): String =
-      new DateTime(v).toLocalDate.toString(ISODateTimeFormat.date)
+      new LocalDate(v).toString(ISODateTimeFormat.date)
 
     def deserialize(s: String): Date =
-      ISODateTimeFormat.yearMonthDay.parseDateTime(s).toDate
+      ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(s).toDate
   }
 
   val localdateHandler = new FormConverter[LocalDate] {
@@ -76,7 +79,7 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
       new LocalDate(v).toString(ISODateTimeFormat.date)
 
     def deserialize(s: String): LocalDate =
-      ISODateTimeFormat.yearMonthDay.parseLocalDate(s)
+      ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(s).toLocalDate
   }
 
   val uuidHandler = new FormConverter[UUID] {

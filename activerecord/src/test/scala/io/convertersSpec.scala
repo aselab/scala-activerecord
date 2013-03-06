@@ -19,7 +19,7 @@ object convertersSpec extends DatabaseSpecification {
 
       "convert with the timezone setting when Config.timeZone is null" in {
         val string = "2012-05-06"
-        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string).toDate
+        val date = ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(string).toDate
         converter.serialize(date) mustEqual string
         converter.deserialize(string) mustEqual date
       }
@@ -27,7 +27,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
         val string = "2012-06-16"
-        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string).toDate
+        val date = ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(string).toDate
         val serialized = converter.serialize(date)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null
@@ -50,7 +50,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
         val string = "2012-06-16T18:23:51"
-        val t = new Timestamp(ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.forID("Asia/Tokyo")).parseDateTime(string).millis)
+        val t = new Timestamp(ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC).parseDateTime(string).withZone(DateTimeZone.forID("Asia/Tokyo")).millis)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null
@@ -65,7 +65,7 @@ object convertersSpec extends DatabaseSpecification {
 
       "convert with the timezone setting when Config.timeZone is null" in {
         val string = "2012-05-06"
-        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string)
+        val date = ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(string).toLocalDate
         converter.serialize(date) mustEqual string
         converter.deserialize(string) mustEqual date
       }
@@ -73,7 +73,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
         val string = "2012-06-16"
-        val date = ISODateTimeFormat.yearMonthDay.parseLocalDate(string)
+        val date = ISODateTimeFormat.yearMonthDay.withZone(DateTimeZone.UTC).parseDateTime(string).toLocalDate
         val serialized = converter.serialize(date)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null
@@ -96,7 +96,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with Config.timeZone" in {
         Config.timeZone = TimeZone.getTimeZone("America/New_York")
         val string = "2012-06-16T18:23:51"
-        val t = ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.forID("America/New_York")).parseDateTime(string)
+        val t = ISODateTimeFormat.dateHourMinuteSecond.withZone(DateTimeZone.UTC).parseDateTime(string).withZone(DateTimeZone.forID("America/New_York"))
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
         Config.timeZone = null

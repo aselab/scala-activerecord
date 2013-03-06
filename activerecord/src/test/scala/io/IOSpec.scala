@@ -5,7 +5,7 @@ import com.github.aselab.activerecord._
 import dsl._
 import models._
 import validations._
-import java.util.{Date, UUID}
+import java.util.{Date, UUID, TimeZone}
 import java.sql.Timestamp
 import org.joda.time.{LocalDate, DateTime}
 
@@ -63,6 +63,26 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "l2[0]" -> "11",
           "l2[1]" -> "22",
           "l2[2]" -> "33"
+        )
+      }
+
+      "date and options" in {
+        val m = DateModel.newModel(5)
+        m.toFormValues mustEqual Map(
+          "otimestamp" -> "1970-01-01T00:00:05",
+          "timestamp" -> "1970-01-01T00:00:05",
+          "odate" -> "1970-01-06",
+          "date" -> "1970-01-06"
+        )
+      }
+
+      "jodatime and options" in {
+        val m = JodaTimeModel.newModel(5)
+        m.toFormValues mustEqual Map(
+          "localDate" -> "1970-01-06",
+          "optLocalDate" -> "1970-01-06",
+          "datetime" -> "1970-01-01T00:00:05",
+          "optDatetime" -> "1970-01-01T00:00:05"
         )
       }
 
@@ -143,6 +163,30 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "uuid" -> "00000000-0000-0005-0000-000000000005"
         ))
         m must equalTo(PrimitiveModel.newModel(5))
+      }
+
+      "date types" in {
+        val m = DateModel.newInstance
+        m.assignFormValues(Map(
+          "otimestamp" -> "1970-01-01T00:00:05",
+          "timestamp" -> "1970-01-01T00:00:05",
+          "odate" -> "1970-01-06",
+          "date" -> "1970-01-06"
+        ))
+        m must equalTo(DateModel.newModel(5))
+      }
+
+      "jodatime types" in {
+        Config.timeZone = TimeZone.getDefault
+        val m = JodaTimeModel.newInstance
+        m.assignFormValues(Map(
+          "localDate" -> "1970-01-06",
+          "optLocalDate" -> "1970-01-06",
+          "datetime" -> "1970-01-01T00:00:05",
+          "optDatetime" -> "1970-01-01T00:00:05"
+        ))
+        Config.timeZone = null
+        m must equalTo(JodaTimeModel.newModel(5))
       }
 
       "list types" in {

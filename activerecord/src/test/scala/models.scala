@@ -25,11 +25,17 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
   val optimistics = table[OptimisticModel]
+  val datemodels = table[DateModel]
   val jodatimeModels = table[JodaTimeModel]
 
-  def createTestData = PrimitiveModel.forceInsertAll(
-    (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
-  )
+  def createTestData = {
+    PrimitiveModel.forceInsertAll(
+      (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
+    )
+    DateModel.forceInsertAll(
+      (1 to 100).map { i => DateModel.newModel(i, i > 50) }
+    )
+  }
 }
 
 case class User(name: String, isAdmin: Boolean = false) extends ActiveRecord {
@@ -146,6 +152,22 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
   )
 }
 
+case class DateModel(
+  var date: Date,
+  var timestamp: Timestamp,
+  var odate: Option[Date],
+  var otimestamp: Option[Timestamp]
+) extends ActiveRecord
+
+object DateModel extends ActiveRecordCompanion[DateModel] {
+  def newModel(i: Int, none: Boolean = false) = DateModel(
+    new Date(i.toLong * 1000 * 60 * 60 * 24),
+    new Timestamp(i.toLong * 1000),
+    Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none),
+    Some(new Timestamp(i.toLong * 1000)).filterNot(_ => none)
+  )
+}
+
 case class VersionModel(
   var string: String,
   var boolean: Boolean,
@@ -178,5 +200,12 @@ case class JodaTimeModel(
   optLocalDate: Option[LocalDate]
 ) extends ActiveRecord
 
-object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel]
+object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel] {
+  def newModel(i: Int, none: Boolean = false) = JodaTimeModel(
+    new DateTime(new Timestamp(i.toLong * 1000)),
+    Some(new DateTime(new Timestamp(i.toLong * 1000))).filterNot(_ => none),
+    new LocalDate(new Date(i.toLong * 1000 * 60 * 60 * 24)),
+    Some(new LocalDate(new Date(i.toLong * 1000 * 60 * 60 * 24))).filterNot(_ => none)
+  )
+}
 

@@ -132,6 +132,34 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
 
+      "Timestamp" >> {
+        val t = new Timestamp(44L * 1000)
+        val result = DateModel.findAllBy("timestamp", t)
+        result.toList must have size 1
+        result.head.timestamp mustEqual t
+      }
+
+      "Option[Timestamp]" >> {
+        val t = new Timestamp(44L * 1000)
+        val result = DateModel.findAllBy("otimestamp", t)
+        result.toList must have size 1
+        result.head.otimestamp must beSome(t)
+      }
+
+      "Date" >> {
+        val t = new Date(22L * 1000 * 60 * 60 * 24)
+        val result = DateModel.findAllBy("date", t)
+        result.toList must have size 1
+        result.head.date.toString mustEqual "1970-01-23"
+      }
+
+      "Option[Date]" >> {
+        val t = new Date(22L * 1000 * 60 * 60 * 24)
+        val result = DateModel.findAllBy("odate", t)
+        result.toList must have size 1
+        result.head.odate must beSome.which {_.toString == "1970-01-23"}
+      }
+
       "UUID" >> {
         val u = new UUID(11L, 11L)
         val result = PrimitiveModel.findAllBy("uuid", u)
