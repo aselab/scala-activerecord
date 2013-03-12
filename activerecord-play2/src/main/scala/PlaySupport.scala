@@ -9,6 +9,8 @@ import java.util.{Locale, TimeZone}
 class PlayConfig(
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
+  def classLoader = play.api.Play.application.classloader
+
   def getString(key: String, default: String): String =
     overrideSettings.get(key).map(_.toString).orElse(
       current.configuration.getString(key)

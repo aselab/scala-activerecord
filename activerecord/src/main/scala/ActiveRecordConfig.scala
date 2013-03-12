@@ -31,6 +31,7 @@ object Config {
   def timeZone: TimeZone = Option(_timeZone).getOrElse(conf.timeZone)
   def timeZone_=(value: TimeZone): Unit = _timeZone = value
   def logger: Logger = conf.logger
+  def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
 }
 
 trait ActiveRecordConfig {
@@ -57,6 +58,7 @@ trait ActiveRecordConfig {
   }
   def translator: i18n.Translator
   def timeZone: TimeZone
+  def classLoader: ClassLoader
 
   lazy val logger = LoggerFactory.getLogger("activerecord")
 }
@@ -86,6 +88,7 @@ class DefaultConfig(
   lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
+  def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader
 
   lazy val pool = {
     try {

@@ -175,7 +175,8 @@ case class ScalaSigInfo(clazz: Class[_]) {
 }
 
 trait ReflectionUtil {
-  def defaultLoader: ClassLoader = Thread.currentThread.getContextClassLoader
+  private def _defaultClassLoader = Thread.currentThread.getContextClassLoader
+  def defaultLoader: ClassLoader = Config.classLoader.getOrElse(_defaultClassLoader)
 
   def loadClass(name: String)(
     implicit classLoader: ClassLoader = defaultLoader
