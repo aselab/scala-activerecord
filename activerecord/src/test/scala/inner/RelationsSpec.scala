@@ -104,6 +104,36 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.count mustEqual(100)
     }
 
+    "#compute" >> {
+      relation.compute(m => max(m.id)) must beSome(100)
+      relation.compute(m => min(m.ofloat)) must beSome(1.0)
+      relation.compute(m => countDistinct(m.id)) mustEqual 100
+    }
+
+    "#max" >> {
+      relation.max(_.id) mustEqual 100
+      relation.max(_.ofloat) must beSome(50.0)
+      relation.max(_.string) mustEqual "string99"
+    }
+
+    "#min" >> {
+      relation.min(_.id) mustEqual 1
+      relation.min(_.ofloat) must beSome(1.0)
+      relation.min(_.string) mustEqual "string1"
+    }
+
+    "#average" >> {
+      relation.average(_.id) mustEqual 51.0
+      relation.average(_.oint) mustEqual 25.0
+      relation.average(_.float) mustEqual 50.5
+    }
+
+    "#sum" >> {
+      relation.sum(_.id) mustEqual 5050
+      relation.sum(_.oint) must beSome(1275)
+      relation.sum(_.float) mustEqual 5050.0
+    }
+
     "#select" >> {
       relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
     }

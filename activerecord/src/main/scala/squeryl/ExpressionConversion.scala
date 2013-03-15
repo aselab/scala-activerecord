@@ -10,7 +10,7 @@ import reflections._
 class ExpressionConversion(field: FieldInfo) {
   import ReflectionUtil._
 
-  def toExpression(value: Any): TypedExpression[_, _] = field match {
+  def toExpression(value: Any): dsl.TypedExpression[_, _] = field match {
     case f if f.is[String] => value.toOption[String]
     case f if f.is[Boolean] => value.toOption[Boolean]
     case f if f.is[Int] => value.toOption[Int]

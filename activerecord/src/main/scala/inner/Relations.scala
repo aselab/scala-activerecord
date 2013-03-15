@@ -281,13 +281,29 @@ trait Relations {
     queryable: Queryable[T]
   )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
     type JoinedType = Tuple1[T]
+    type FactoryAll[A] = TypedExpressionFactory[A, _]
+    type FactoryAny[A] = TypedExpressionFactory[A, Any]
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
       Relation1(params, queryable)
 
-    def nonNestQueryCount: Long = paginate(
+    def nonNestQueryCount: Long =
       from(queryable)(m => whereState(Tuple1(m)).compute(dsl.count))
-    )
+
+    def compute[T1, T2, B <% org.squeryl.dsl.TypedExpression[T1,T2]](e: T => B): T1 =
+      from(queryable)(m => whereState(Tuple1(m)).compute(e(m)))
+
+    def max[T2 >: TOption, T1 <: T2, A1](e: T => TypedExpression[A1,T1])
+      (implicit f: FactoryAll[A1]): A1 = compute(m => dsl.max(e(m))(f.asInstanceOf[FactoryAny[A1]]))
+
+    def min[T2 >: TOption, T1 <: T2, A1](e: T => TypedExpression[A1,T1])
+      (implicit f: FactoryAll[A1]): A1 = compute(m => dsl.min(e(m))(f.asInstanceOf[FactoryAny[A1]]))
+
+    def average[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1](e: T => TypedExpression[A1,T1])
+      (implicit f: FactoryAll[Double]): Double = compute(m => dsl.avg(e(m))(f.asInstanceOf[FactoryAny[Double]]))
+
+    def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1](e: T => TypedExpression[A1,T1])
+      (implicit f: FactoryAll[A1]): A1 = compute(m => dsl.sum(e(m))(f.asInstanceOf[FactoryAny[A1]]))
 
     def toQuery: Query[S] = paginate(
       from(queryable){ m =>
