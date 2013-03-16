@@ -117,6 +117,9 @@ trait Relations {
     def where(condition: T => LogicalBoolean): this.type =
       copyParams(conditions = conditions :+ wrap(condition))
 
+    def not(condition: T => LogicalBoolean): this.type =
+      copyParams(conditions = conditions :+ wrap(condition.andThen(dsl.not)))
+
     def orderBy(conditions: (T => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.map(wrap))
 

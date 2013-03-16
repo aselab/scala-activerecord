@@ -138,6 +138,10 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.select(m => (m.id, m.string)).toList mustEqual PrimitiveModel.all.toList.map(m => (m.id, m.string))
     }
 
+    "#not" >> {
+      PrimitiveModel.not(_.id.~ > 20).toList mustEqual PrimitiveModel.where(m => dsl.not(m.id.~ > 20)).toList
+    }
+
     "#distinct" >> {
       PrimitiveModel.newModel(1).save
       PrimitiveModel.where(_.string === "string1").select(_.string).distinct.count mustEqual 1
