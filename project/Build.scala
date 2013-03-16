@@ -21,7 +21,7 @@ object ActiveRecordBuild extends Build {
     version := _version,
     organization := "com.github.aselab",
     scalaVersion := "2.10.1",
-    crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1"),
+    crossScalaVersions := Seq("2.10.1", "2.9.2", "2.9.1"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.11" % "test",
@@ -31,11 +31,10 @@ object ActiveRecordBuild extends Build {
     ),
     libraryDependencies <+= scalaVersion(v => specs2("test", v)),
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
-    scalacOptions in Compile in doc += "-diagrams",
-    scalacOptions in Compile in doc <++= (baseDirectory).map {base => Seq(
+    scalacOptions in Compile in doc <++= (baseDirectory, scalaVersion).map { (base, version) => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
       "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
-    )},
+    ) ++ (if (version.startsWith("2.10")) Seq("-diagrams") else Nil) },
     testOptions in Test ++= (if (Option(System.getProperty("ci")).isDefined) Seq(Tests.Argument("junitxml", "console")) else Nil),
     parallelExecution in Test := false,
     compileOrder in Compile := CompileOrder.JavaThenScala,
