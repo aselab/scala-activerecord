@@ -111,27 +111,27 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
     }
 
     "#max" >> {
-      relation.max(_.id) mustEqual 100
+      relation.max(_.id) must beSome(100)
       relation.max(_.ofloat) must beSome(50.0)
-      relation.max(_.string) mustEqual "string99"
+      relation.max(_.string) must beSome("string99")
     }
 
     "#min" >> {
-      relation.min(_.id) mustEqual 1
+      relation.min(_.id) must beSome(1)
       relation.min(_.ofloat) must beSome(1.0)
-      relation.min(_.string) mustEqual "string1"
+      relation.min(_.string) must beSome("string1")
     }
 
     "#average" >> {
-      relation.average(_.id) mustEqual 51.0
-      relation.average(_.oint) mustEqual 25.0
-      relation.average(_.float) mustEqual 50.5
+      relation.average(_.id) must beSome(51.0)
+      relation.average(_.oint) must beSome(25.0)
+      relation.average(_.float) must beSome(50.5)
     }
 
     "#sum" >> {
-      relation.sum(_.id) mustEqual 5050
+      relation.sum(_.id) must beSome(5050)
       relation.sum(_.oint) must beSome(1275)
-      relation.sum(_.float) mustEqual 5050.0
+      relation.sum(_.float) must beSome(5050.0)
     }
 
     "#select" >> {
