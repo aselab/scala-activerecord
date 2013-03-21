@@ -30,6 +30,7 @@ object ActiveRecordBuild extends Build {
       "ch.qos.logback" % "logback-classic" % "1.0.9" % "test"
     ),
     libraryDependencies <+= scalaVersion(v => specs2("test", v)),
+    javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
     scalacOptions in Compile in doc <++= (baseDirectory, scalaVersion).map { (base, version) => Seq(
       "-sourcepath", base.getAbsolutePath, "-doc-source-url",
