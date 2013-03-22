@@ -6,6 +6,10 @@ import reflections._
 object dsl extends org.squeryl.PrimitiveTypeMode
   with inner.Annotations with inner.DSL with inner.Types
 
+package views {
+  object dsl extends org.squeryl.PrimitiveTypeMode with inner.DSL
+}
+
 package object aliases {
   type AR = ActiveRecordBase[_]
   type CKey = dsl.CompositeKey2[Long, Long]
