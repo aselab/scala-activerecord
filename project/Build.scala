@@ -60,6 +60,7 @@ object ActiveRecordBuild extends Build {
 
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
+    .settings(publish := {})
     .aggregate(core, specs, play2, scalatra)
 
   lazy val core: Project = Project("core", file("activerecord"),
