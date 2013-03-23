@@ -39,7 +39,7 @@ object ActiveRecordConfigSpec extends Specification {
       }
 
       "mysql driver" in {
-        config("com.mysql.jdbc.Driver").adapter must haveClass[MySQLAdapter]
+        config("com.mysql.jdbc.Driver").adapter must beAnInstanceOf[MySQLAdapter]
       }
 
       "oracle driver" in {

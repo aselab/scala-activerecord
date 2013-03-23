@@ -57,7 +57,7 @@ trait ActiveRecordTables extends Schema {
       val connection = Session.currentSession.connection
       val stat = connection.createStatement
       try {
-        stat.execute("select 1 from " + t.name)
+        stat.execute("select 1 from " + Config.adapter.quoteIdentifier(t.name))
         true
       } catch {
         case e =>
