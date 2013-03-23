@@ -47,7 +47,9 @@ trait ActiveRecordConfig {
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
     case "org.postgresql.Driver" => new PostgreSqlAdapter
-    case "com.mysql.jdbc.Driver" => new MySQLAdapter
+    case "com.mysql.jdbc.Driver" => new MySQLAdapter {
+      override def quoteIdentifier(s: String) = "`%s`".format(s)
+    }
     case "oracle.jdbc.OracleDriver" => new OracleAdapter
     case "org.apache.derby.jdbc.EmbeddedDriver" => new DerbyAdapter
     case driver => throw ActiveRecordException.unsupportedDriver(driver)
