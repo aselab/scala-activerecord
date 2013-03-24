@@ -157,6 +157,9 @@ trait Relations {
   trait Relation[T <: AR, S] extends QuerySupport[T, S] {
     val queryable: Queryable[T]
 
+    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]) =
+      f.asInstanceOf[TypedExpressionFactory[A, Any]]
+
     private var _isLoaded = false
     def isLoaded: Boolean = _isLoaded
 
@@ -279,32 +282,8 @@ trait Relations {
       toQuery(t => whereScope(t).compute(dsl.count))
     }
 
-    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R]
-
-    def toQuery: Query[S] = paginate(toQuery(t =>
-      whereScope(t).select(selector(t)).orderBy(ordersExpression(t))
-    ))
-
-    def toSql: String = inTransaction { toQuery.statement }
-  }
-
-  case class Relation1[T <: AR, S](
-    parameters: Parameters[T, Tuple1[T], S],
-    queryable: Queryable[T]
-  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
-    type JoinedType = Tuple1[T]
-
-    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]) =
-      f.asInstanceOf[TypedExpressionFactory[A, Any]]
-
-    protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
-      Relation1(params, queryable)
-
-    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
-      from(queryable)(m => f(Tuple1(m)))
-
     def compute[T1](e: T => TypedExpression[T1, _]): T1 =
-      from(queryable)(m => whereScope(Tuple1(m)).compute(e(m)))
+      toQuery(t => whereScope(t).compute(e(t._1)))
 
     def max[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
@@ -323,6 +302,27 @@ trait Relations {
       (e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.sum(e(m))(f))
+
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R]
+
+    def toQuery: Query[S] = paginate(toQuery(t =>
+      whereScope(t).select(selector(t)).orderBy(ordersExpression(t))
+    ))
+
+    def toSql: String = inTransaction { toQuery.statement }
+  }
+
+  case class Relation1[T <: AR, S](
+    parameters: Parameters[T, Tuple1[T], S],
+    queryable: Queryable[T]
+  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+    type JoinedType = Tuple1[T]
+
+    protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
+      Relation1(params, queryable)
+
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
+      from(queryable)(m => f(Tuple1(m)))
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
@@ -383,6 +383,9 @@ trait Relations {
     def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
+    def compute[T1](e: (T, J1) => TypedExpression[T1, _]): T1 =
+      toQuery(t => whereScope(t).compute(e.tupled(t)))
+
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
@@ -410,6 +413,9 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
+
+    def compute[T1](e: (T, J1, J2) => TypedExpression[T1, _]): T1 =
+      toQuery(t => whereScope(t).compute(e.tupled(t)))
 
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
@@ -440,6 +446,9 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1, J2, J3) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
+
+    def compute[T1](e: (T, J1, J2, J3) => TypedExpression[T1, _]): T1 =
+      toQuery(t => whereScope(t).compute(e.tupled(t)))
 
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2, joinTable3) {(m, j1, j2, j3) =>

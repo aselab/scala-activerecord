@@ -110,6 +110,20 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.compute(m => countDistinct(m.id)) mustEqual 100
     }
 
+    "#compute with joined relation" >> {
+      PrimitiveModel.limit(2).foreach {m =>
+        m.int = 50
+        m.save
+      }
+
+      val joined = relation.where(_.id === 50).joins[PrimitiveModel](
+        (m1, m2) => m1.int === m2.int
+      )
+
+      joined.compute(m => countDistinct(m.int)) mustEqual 1
+      joined.compute((m1, m2) => avg(m2.int)) must beSome(50)
+    }
+
     "#max" >> {
       relation.max(_.id) must beSome(100)
       relation.max(_.ofloat) must beSome(50.0)
