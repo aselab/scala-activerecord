@@ -5,6 +5,7 @@ trait Types {
   type Table[T] = org.squeryl.Table[T]
   type Query[T] = org.squeryl.Query[T]
   type Queryable[T] = org.squeryl.Queryable[T]
+  type QueryYield[T] = org.squeryl.dsl.QueryYield[T]
   type KeyedEntity[T] = org.squeryl.KeyedEntity[T]
   type KeyedEntityDef[T, K] = org.squeryl.KeyedEntityDef[T, K]
   type CompositeKey2[T1, T2] = org.squeryl.dsl.CompositeKey2[T1, T2]

@@ -76,8 +76,11 @@ trait Relations {
       a1: Inc[A1], a2: Inc[A2], a3: Inc[A3], a4: Inc[A4]
     ): this.type = _includes(a1, a2, a3, a4)
 
-    protected def whereState(m: JoinedType) =
+    protected def whereScope(m: JoinedType) = if (conditions.isEmpty) {
+      dsl
+    } else {
       dsl.where(LogicalBoolean.and(conditions.map(_.apply(m))))
+    }
 
     protected def ordersExpression(m: JoinedType) =
       if (!isReverse) orders.map(_.apply(m)) else reverseOrder(m)
@@ -270,11 +273,17 @@ trait Relations {
       where(condition).limit(1).count != 0
     }
 
-    def count: Long = if (isUnique) toQuery.Count else nonNestQueryCount
+    def count: Long = if (isUnique) {
+      toQuery.Count
+    } else {
+      toQuery(t => whereScope(t).compute(dsl.count))
+    }
 
-    protected def nonNestQueryCount: Long
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R]
 
-    def toQuery: Query[S]
+    def toQuery: Query[S] = paginate(toQuery(t =>
+      whereScope(t).select(selector(t)).orderBy(ordersExpression(t))
+    ))
 
     def toSql: String = inTransaction { toQuery.statement }
   }
@@ -291,11 +300,11 @@ trait Relations {
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
       Relation1(params, queryable)
 
-    def nonNestQueryCount: Long =
-      from(queryable)(m => whereState(Tuple1(m)).compute(dsl.count))
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
+      from(queryable)(m => f(Tuple1(m)))
 
     def compute[T1](e: T => TypedExpression[T1, _]): T1 =
-      from(queryable)(m => whereState(Tuple1(m)).compute(e(m)))
+      from(queryable)(m => whereScope(Tuple1(m)).compute(e(m)))
 
     def max[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
@@ -314,14 +323,6 @@ trait Relations {
       (e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.sum(e(m))(f))
-
-    def toQuery: Query[S] = paginate(
-      from(queryable){ m =>
-        val t = Tuple1(m)
-        val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(ordersExpression(t))
-      }
-    )
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: Manifest[J]): Relation2[T, J, S] = {
@@ -382,18 +383,11 @@ trait Relations {
     def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
-    def nonNestQueryCount: Long = paginate(join(queryable, joinTable) {(m, j1) =>
-      val t = (m, j1)
-      whereState(t).compute(dsl.count).on(on(t))
-    })
-
-    def toQuery: Query[S] = paginate(
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
-        val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on(t))
+        f(t).on(on(t))
       }
-    )
   }
 
   case class Relation3[T <: AR, J1 <: AR, J2 <: AR, S](
@@ -417,21 +411,12 @@ trait Relations {
     def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
-    def nonNestQueryCount: Long = paginate(join(queryable, joinTable1, joinTable2) {
-      (m, j1, j2) =>
-        val t = (m, j1, j2)
-        val (on1, on2) = on(t)
-        whereState(t).compute(dsl.count).on(on1, on2)
-    })
-
-    def toQuery: Query[S] = paginate(
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
         val t = (m, j1, j2)
         val (on1, on2) = on(t)
-        val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2)
+        f(t).on(on1, on2)
       }
-    )
   }
 
   case class Relation4[T <: AR, J1 <: AR, J2 <: AR, J3 <: AR, S](
@@ -456,22 +441,11 @@ trait Relations {
     def orderBy(conditions: ((T, J1, J2, J3) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
-    def nonNestQueryCount: Long = paginate(
-      join(queryable, joinTable1, joinTable2, joinTable3) {
-        (m, j1, j2, j3) =>
-          val t = (m, j1, j2, j3)
-          val (on1, on2, on3) = on(t)
-          whereState(t).compute(dsl.count).on(on1, on2, on3)
-      }
-    )
-
-    def toQuery: Query[S] = paginate(
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2, joinTable3) {(m, j1, j2, j3) =>
         val t = (m, j1, j2, j3)
         val (on1, on2, on3) = on(t)
-        val scope = if (conditions.isEmpty) dsl else whereState(t)
-        scope.select(selector(t)).orderBy(ordersExpression(t)).on(on1, on2, on3)
+        f(t).on(on1, on2, on3)
       }
-    )
   }
 }
