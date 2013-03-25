@@ -1,0 +1,7 @@
+* Fixed a bug using async action in Play2.x
+* Added #not method to query interface
+* Added aggregate functions #compute, #max, #min, #avg, #sum
+* Added support for Java 1.6
+* Table names are now escaped in MySQL and PostgreSQL
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.2.1...0.2.2)
