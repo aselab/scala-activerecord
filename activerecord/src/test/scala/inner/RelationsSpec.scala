@@ -136,10 +136,10 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       relation.min(_.string) must beSome("string1")
     }
 
-    "#average" >> {
-      relation.average(_.id) must beSome(51.0)
-      relation.average(_.oint) must beSome(25.0)
-      relation.average(_.float) must beSome(50.5)
+    "#avg" >> {
+      relation.avg(_.id) must beSome(51.0)
+      relation.avg(_.oint) must beSome(25.0)
+      relation.avg(_.float) must beSome(50.5)
     }
 
     "#sum" >> {

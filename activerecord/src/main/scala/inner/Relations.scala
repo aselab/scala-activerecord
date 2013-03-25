@@ -285,11 +285,11 @@ trait Relations {
     def compute[T1](e: T => TypedExpression[T1, _]): T1 =
       toQuery(t => whereScope(t).compute(e(t._1)))
 
-    def max[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.max(e(m))(f))
 
-    def min[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.min(e(m))(f))
 
@@ -297,6 +297,16 @@ trait Relations {
       (e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.avg(e(m))(f))
+
+    def max[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+      (implicit f: TypedExpressionFactory[A2, T2]): A2 = maximum(e)(f)
+
+    def min[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+      (implicit f: TypedExpressionFactory[A2, T2]): A2 = minimum(e)(f)
+
+    def avg[T2 >: TOptionFloat, T1 <: T2, A1, A2]
+      (e: T => TypedExpression[A1, T1])
+      (implicit f: TypedExpressionFactory[A2, T2]): A2 = average(e)(f)
 
     def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1, A2]
       (e: T => TypedExpression[A1, T1])
