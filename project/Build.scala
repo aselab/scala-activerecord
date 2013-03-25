@@ -4,7 +4,8 @@ import ScctPlugin._
 import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.2-SNAPSHOT"
+  val _version = "0.2.2"
+  val isRelease = System.getProperty("release") == "true"
 
   def specs2(key: String, version: String) =
     "org.specs2" %% "specs2" % (
@@ -18,10 +19,10 @@ object ActiveRecordBuild extends Build {
   )
 
   val defaultSettings = Defaults.defaultSettings ++ Seq(
-    version := _version,
+    version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
     scalaVersion := "2.10.1",
-    crossScalaVersions := Seq("2.10.1", "2.9.2", "2.9.1"),
+    crossScalaVersions := Seq("2.10.1", "2.9.2"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.11" % "test",
@@ -60,7 +61,7 @@ object ActiveRecordBuild extends Build {
 
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
-    .settings(publish := {})
+    .settings(publish := {}, publishLocal := {})
     .aggregate(core, specs, play2, scalatra)
 
   lazy val core: Project = Project("core", file("activerecord"),
