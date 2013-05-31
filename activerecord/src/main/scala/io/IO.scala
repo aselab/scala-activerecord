@@ -64,7 +64,7 @@ trait IO extends Validatable { this: ProductModel =>
             }
           }
         } catch {
-          case e =>
+          case e: Throwable =>
             this.errors.add(name, Validator.ERROR_PREFIX + "invalid")
             None
         }

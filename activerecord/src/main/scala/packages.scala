@@ -43,7 +43,7 @@ package object support {
       def isDefinedAt(s: String): Boolean = try {
         c.isAssignableFrom(ReflectionUtil.loadClass(s))
       } catch {
-        case e: ClassNotFoundException => false
+        case e: Throwable => false
       }
     }
 

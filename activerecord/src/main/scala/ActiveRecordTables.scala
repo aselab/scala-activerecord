@@ -60,11 +60,11 @@ trait ActiveRecordTables extends Schema {
         stat.execute("select 1 from " + Config.adapter.quoteIdentifier(t.name))
         true
       } catch {
-        case e =>
+        case e: Throwable =>
           connection.rollback
           false
       } finally {
-        try { stat.close } catch { case e => }
+        try { stat.close } catch { case e: Throwable => }
       }
     }
 

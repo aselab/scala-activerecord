@@ -82,7 +82,7 @@ object ClassInfo {
         () => try {
           const.newInstance(facts.map(_.apply):_*).asInstanceOf[AnyRef]
         } catch {
-          case e => throw ActiveRecordException.cannotCreateInstance(
+          case e: Throwable => throw ActiveRecordException.cannotCreateInstance(
             clazz.getName, e.getMessage)
         }
       }
