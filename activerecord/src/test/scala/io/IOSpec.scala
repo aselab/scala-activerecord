@@ -169,6 +169,32 @@ object IOSpec extends DatabaseSpecification with Mockito {
         m must equalTo(ListModel(List("aa", "bb", "cc"), List(11, 22, 33)))
       }
 
+      "complex model" in {
+        val m = new ComplexModel
+        m.assignFormValues(Map(
+          "int" -> "3",
+          "nest[int]" -> "2",
+          "nest[list][l1][0]" -> "c",
+          "nest[list][l1][1]" -> "d",
+          "nest[list][l2][0]" -> "3",
+          "nest[list][l2][1]" -> "4",
+          "nestlist[0][int]" -> "2",
+          "nestlist[0][list][l1][0]" -> "c",
+          "nestlist[0][list][l1][1]" -> "d",
+          "nestlist[0][list][l2][0]" -> "3",
+          "nestlist[0][list][l2][1]" -> "4",
+          "nestlist[1][int]" -> "2",
+          "nestlist[1][list][l1][0]" -> "c",
+          "nestlist[1][list][l1][1]" -> "d",
+          "nestlist[1][list][l2][0]" -> "3",
+          "nestlist[1][list][l2][1]" -> "4"
+        ))
+        val l1 = List("c", "d")
+        val l2 = List(3, 4)
+        val nest = NestModel(2, ListModel(l1, l2))
+        m must equalTo(ComplexModel(3, nest, List(nest, nest)))
+      }
+
       "Validation error is added when form value is invalid" in {
         val m = ListModel.newInstance
         m.assignFormValues(Map(

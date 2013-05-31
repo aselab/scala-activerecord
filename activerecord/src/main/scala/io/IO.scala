@@ -50,18 +50,33 @@ trait IO extends Validatable { this: ProductModel =>
   def assignFormValues(data: Map[String, String]): Unit = {
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
-        val converter = FormConverter.get(info.fieldType).getOrElse(
+        def converter = FormConverter.get(info.fieldType).getOrElse(
           throw ActiveRecordException.unsupportedType(name)
         )
+
+        def deserialize(data: Map[String, String], key: String) = if (info.isModel) {
+          val companion = classToCompanion(info.fieldType).asInstanceOf[FormSupport[IO]]
+          val map = data.collect {
+            case (k, v) if k.startsWith(key + "[") => (k.replaceFirst(key + """\[(\w+)\]""", "$1"), v)
+          }
+          if (!(info.isOption && map.nonEmpty)) Some(companion.bind(map, false)) else None
+        } else {
+          data.get(key).collect {
+            case v if !(info.isOption && v.isEmpty) => converter.deserialize(v)
+          }
+        }
+
         try {
           if (info.isSeq) {
-            val keys = Stream.from(0).map("%s[%d]".format(name, _)).takeWhile(data.isDefinedAt)
-            Option(name -> keys.map(key => converter.deserialize(data(key))).toList)
+            val dataList = Stream.from(0).map(i => data.collect {
+              case (k, v) if k.startsWith("%s[%d]".format(name, i)) =>
+                (k.replaceFirst("""%s\[(%d)\]""".format(name, i), "$1"), v)
+            }.toMap).takeWhile(_.nonEmpty)
+            Some(name -> dataList.zipWithIndex.flatMap {
+              case (d, i) => deserialize(d, i.toString)
+            }.toList)
           } else {
-            data.get(name).collect {
-              case v if !(info.isOption && v.isEmpty) =>
-                name -> converter.deserialize(v)
-            }
+            deserialize(data, name).map(name -> _)
           }
         } catch {
           case e: Throwable =>
@@ -75,10 +90,10 @@ trait IO extends Validatable { this: ProductModel =>
 trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
-  def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
+  def bind(data: Map[String, String], validate: Boolean = true)(implicit source: T = self.newInstance): T = {
     source.clearErrors
     source.assignFormValues(data)
-    source.validate(false)
+    if (validate) source.validate(clear = false)
     source
   }
 

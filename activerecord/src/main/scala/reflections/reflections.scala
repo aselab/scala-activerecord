@@ -106,6 +106,7 @@ case class FieldInfo(
   lazy val isRequired = hasAnnotation[Required]
   lazy val isIgnored = hasAnnotation[Ignore]
   lazy val isUnique = hasAnnotation[Unique]
+  lazy val isModel = classOf[inner.ProductModel].isAssignableFrom(fieldType)
 
   def getAnnotation[T](implicit m: Manifest[T]): T =
     annotationMap(m.erasure).asInstanceOf[T]
