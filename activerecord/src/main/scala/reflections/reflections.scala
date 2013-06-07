@@ -57,9 +57,9 @@ object ClassInfo {
     val longHandler = () => new java.lang.Long(0)
     val floatHandler = () => new java.lang.Float(0)
     val doubleHandler = () => new java.lang.Double(0.0)
-    val dateHandler = () => new java.util.Date(0)
-    val timestampHandler = () => new java.sql.Timestamp(0)
-    val uuidHandler = () => new java.util.UUID(0, 0)
+    val dateHandler = () => new java.util.Date()
+    val timestampHandler = () => new java.sql.Timestamp(System.currentTimeMillis)
+    val uuidHandler = () => java.util.UUID.randomUUID()
     val bigDecimalHandler = () => BigDecimal(0)
     val nilHandler = () => Nil.asInstanceOf[AnyRef]
 

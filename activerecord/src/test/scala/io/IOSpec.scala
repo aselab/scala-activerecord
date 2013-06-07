@@ -267,8 +267,9 @@ object IOSpec extends DatabaseSpecification with Mockito {
   "FormSupport" should {
     "bind" in {
       "with no source" in {
-        PrimitiveModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100")) mustEqual
-          PrimitiveModel.newInstance.copy(string = "string", int = 100)
+        val m = PrimitiveModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100"))
+        m mustEqual PrimitiveModel.newInstance.copy(string = "string",
+          int = 100, date = m.date, timestamp = m.timestamp, uuid = m.uuid)
       }
 
       "with source" in {
