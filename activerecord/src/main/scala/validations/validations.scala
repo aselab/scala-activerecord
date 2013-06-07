@@ -53,6 +53,10 @@ trait Validatable extends Saveable {
   @dsl.Ignore
   val errors = new Errors(getClass)
 
+  @dsl.Transient
+  @dsl.Ignore
+  private var _validated = false
+
   def globalErrors: Seq[ValidationError] = errors.global
   def fieldErrors: Seq[ValidationError] = errors.filterNot(_.isGlobal).toSeq
 
@@ -60,22 +64,25 @@ trait Validatable extends Saveable {
 
   def saveWithoutValidation(): Boolean = super.save
 
-  def validate(): Boolean = validate(true)
-
-  def validate(clear: Boolean): Boolean = {
-    if (clear) errors.clear
-    beforeValidation()
-    doValidate()
+  def validate(): Boolean = {
+    if (!_validated) {
+      beforeValidation()
+      doValidate()
+      _validated = true
+    }
     errors.isEmpty
   }
 
-  def isValid: Boolean = errors.isEmpty
+  def isValid: Boolean = validate
 
   def hasErrors: Boolean = !isValid
 
   def hasError(name: String): Boolean = errors.get(name).nonEmpty
 
-  def clearErrors(): Unit = errors.clear
+  def clearErrors(): Unit = {
+    errors.clear
+    _validated = false
+  }
 
   protected def doValidate(): Unit = {}
 

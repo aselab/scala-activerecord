@@ -278,9 +278,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
 
         PrimitiveModel.bind(data)(source) mustEqual source
 
-        there was one(source).clearErrors andThen
-          one(source).assignFormValues(data) andThen
-          one(source).validate(false)
+        there was one(source).assignFormValues(data)
       }
     }
 

@@ -59,7 +59,7 @@ trait IO extends Validatable { this: ProductModel =>
           val map = data.collect {
             case (k, v) if k.startsWith(key + "[") => (k.replaceFirst(key + """\[(\w+)\]""", "$1"), v)
           }
-          if (!(info.isOption && map.nonEmpty)) Some(companion.bind(map, false)) else None
+          if (!(info.isOption && map.nonEmpty)) Some(companion.bind(map)) else None
         } else {
           data.get(key).collect {
             case v if !(info.isOption && v.isEmpty) => converter.deserialize(v)
@@ -90,10 +90,8 @@ trait IO extends Validatable { this: ProductModel =>
 trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
-  def bind(data: Map[String, String], validate: Boolean = true)(implicit source: T = self.newInstance): T = {
-    source.clearErrors
+  def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
     source.assignFormValues(data)
-    if (validate) source.validate(clear = false)
     source
   }
 

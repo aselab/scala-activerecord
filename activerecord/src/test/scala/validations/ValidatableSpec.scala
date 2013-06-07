@@ -81,7 +81,14 @@ object ValidatableSpec extends DatabaseSpecification {
       "save" in {
         val m = new ValidatableModel(Nil)
         m.save must beTrue
-        m.calledMethods must contain("beforeValidation", "doValidate", "save").only
+        m.calledMethods mustEqual List("beforeValidation", "doValidate", "save")
+      }
+
+      "validate twice" in {
+        val m = new ValidatableModel(Nil)
+        m.validate must beTrue
+        m.validate must beTrue
+        m.calledMethods mustEqual List("beforeValidation", "doValidate")
       }
     }
 
@@ -94,7 +101,19 @@ object ValidatableSpec extends DatabaseSpecification {
       "save" in {
         val m = new ValidatableModel(Seq("error"))
         m.save must beFalse
-        m.calledMethods must contain("beforeValidation", "doValidate").only
+        m.calledMethods mustEqual List("beforeValidation", "doValidate")
+      }
+
+      "validate twice" in {
+        val m = new ValidatableModel(Seq("error"))
+        m.errors.add("manual error")
+        m.validate must beFalse
+        m.validate must beFalse
+        m.calledMethods mustEqual List("beforeValidation", "doValidate")
+        m.errors.toList mustEqual List(
+          ValidationError(m.getClass, "", "manual error"),
+          ValidationError(m.getClass, "", "error")
+        )
       }
     }
   }
