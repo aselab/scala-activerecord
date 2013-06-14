@@ -106,6 +106,14 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       Inter.find(inter.id) must beNone
     }
 
+    "append records" >> new TestData {
+      val bar2 = Bar("bar2").create
+      val bar3 = Bar("bar3").create
+      val inter = foo.through << bar
+      foo.through ++= Seq(bar2, bar3)
+      foo.through.toList must contain(bar, bar2, bar3)
+    }
+
     "replace records" >> new TestData {
       val baz2 = Baz("baz2").create
       val baz3 = Baz("baz3").create
@@ -161,6 +169,14 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       foo.bars.deleteAll mustEqual List(bar)
       foo.bars.toList must beEmpty
       Bar.find(bar.id) must beNone
+    }
+
+    "append records" >> new TestData {
+      val bar2 = Bar("bar2").create
+      val bar3 = Bar("bar3").create
+      foo.bars << bar
+      foo.bars ++= Seq(bar2, bar3)
+      foo.bars.toList must contain(bar, bar2, bar3)
     }
 
     "replace records" >> new TestData {

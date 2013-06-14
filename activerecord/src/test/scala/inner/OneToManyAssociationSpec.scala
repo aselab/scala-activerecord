@@ -97,7 +97,7 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
     "removeAll" >> new TestData {
       val user2 = User("user2").create
       group.usersByOtherKey << user
-      group.usersByOtherKey << user2
+      group.usersByOtherKey += user2
       val removed = group.usersByOtherKey.removeAll
       removed mustEqual List(user, user2)
       removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
@@ -112,13 +112,20 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
     "deleteAll" >> new TestData {
       val user2 = User("user2").create
       val user3 = User("user3").create
-      group.users << user
-      group.users << user2
+      group.users << Seq(user, user2)
       group.users.deleteAll mustEqual List(user, user2)
       group.users must beEmpty
       User.exists(_.id === user.id) must beFalse
       User.exists(_.id === user2.id) must beFalse
       User.exists(_.id === user3.id) must beTrue
+    }
+
+    "append records" >> new TestData {
+      val user2 = User("user2").create
+      val user3 = User("user3").create
+      group.users << user
+      group.users ++= Seq(user2, user3)
+      group.users.toList must contain(user, user2, user3)
     }
 
     "replace records" >> new TestData {
