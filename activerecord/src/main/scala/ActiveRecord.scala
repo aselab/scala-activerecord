@@ -19,18 +19,24 @@ trait ActiveRecordBase[T] extends ProductModel with CRUDable
 
   override def save(): Boolean = save(false)
 
-  def save(throws: Boolean): Boolean =
-    super.save || (throws && (throw ActiveRecordException.saveFailed(errors)))
-
-  def create(): this.type = if (isNewRecord) {
-    save()
-    return this
-  } else {
-    throw ActiveRecordException.notImplemented
+  def save(throws: Boolean = false, validate: Boolean = true): Boolean = {
+    val result = if (validate) super.save else super.saveWithoutValidation
+    result || (throws && (throw ActiveRecordException.saveFailed(errors)))
   }
 
-  def update(): this.type = {
-    save()
+  def create:this.type  = create(true)
+  def create(validate: Boolean): this.type = {
+    if (isNewRecord) {
+      save(true, validate)
+      this
+    } else {
+      throw ActiveRecordException.notImplemented
+    }
+  }
+
+  def update:this.type  = update(true)
+  def update(validate: Boolean): this.type = {
+    save(true, validate)
     this
   }
 
