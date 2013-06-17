@@ -106,7 +106,7 @@ case class FieldInfo(
   lazy val isRequired = hasAnnotation[Required]
   lazy val isIgnored = hasAnnotation[Ignore]
   lazy val isUnique = hasAnnotation[Unique]
-  lazy val isModel = classOf[inner.ProductModel].isAssignableFrom(fieldType)
+  lazy val isModel = ReflectionUtil.isModel(fieldType)
 
   def getAnnotation[T](implicit m: Manifest[T]): T =
     annotationMap(m.erasure).asInstanceOf[T]
@@ -144,7 +144,7 @@ object FieldInfo {
         fieldInfo(genericType).copy(isOption = true)
       case c if isSeq(c) =>
         fieldInfo(genericType).copy(isSeq = true)
-      case c if support.allClasses(c.getClassLoader).isDefinedAt(c.getName) =>
+      case c if ClassInfo.factories.isDefinedAt(c) || isModel(c) =>
         FieldInfo(field.getName, c, false, false, field.getAnnotations.toSeq)
       case c => notSupported
     }
@@ -267,6 +267,7 @@ trait ReflectionUtil {
 
   def isSeq(clazz: Class[_]): Boolean = classOf[Seq[_]].isAssignableFrom(clazz)
   def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
+  def isModel(clazz: Class[_]): Boolean = classOf[inner.ProductModel].isAssignableFrom(clazz)
 }
 
 object ReflectionUtil extends ReflectionUtil

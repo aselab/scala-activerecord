@@ -39,4 +39,6 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
     classOf[java.util.UUID] -> uuidHandler,
     classOf[BigDecimal] -> bigDecimalHandler
   )
+
+  def isDefinedAt(c: Class[_]): Boolean = registrations.isDefinedAt(c)
 }

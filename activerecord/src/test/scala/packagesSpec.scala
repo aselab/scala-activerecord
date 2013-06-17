@@ -3,8 +3,8 @@ package com.github.aselab.activerecord
 import org.specs2.mutable._
 
 object supportSpec extends Specification {
-  "allClasses" should {
-    val f = support.allClasses.apply _
+  "primitiveClasses" should {
+    val f = support.primitiveClasses.apply _
 
     "String" in {
       f("java.lang.String") == classOf[String] must beTrue
@@ -56,12 +56,8 @@ object supportSpec extends Specification {
       f("java.util.UUID") == classOf[java.util.UUID] must beTrue
     }
 
-    "User defined model class" in {
-      f("com.github.aselab.activerecord.models.User") == classOf[models.User] must beTrue
-    }
-
     "unsupported class" in {
-      support.allClasses.isDefinedAt("com.github.aselab.activerecord.models.SeqModel") must beFalse
+      support.primitiveClasses.isDefinedAt("com.github.aselab.activerecord.models.SeqModel") must beFalse
     }
 
   }

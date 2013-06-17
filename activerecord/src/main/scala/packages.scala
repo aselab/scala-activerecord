@@ -31,22 +31,4 @@ package object support {
     case "java.util.Date" => classOf[java.util.Date]
     case "java.util.UUID" => classOf[java.util.UUID]
   }
-
-  def modelClass(implicit classLoader: ClassLoader = defaultLoader): PF =
-    new PF {
-      val c = classOf[inner.ProductModel]
-
-      def apply(s: String): Class[_] = s match {
-        case s if isDefinedAt(s) => ReflectionUtil.loadClass(s)
-      }
-
-      def isDefinedAt(s: String): Boolean = try {
-        c.isAssignableFrom(ReflectionUtil.loadClass(s))
-      } catch {
-        case e: Throwable => false
-      }
-    }
-
-  def allClasses(implicit classLoader: ClassLoader = defaultLoader): PF =
-    primitiveClasses.orElse(modelClass)
 }
