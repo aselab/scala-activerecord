@@ -217,9 +217,9 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
 
         val List(g1, g2) = Group.where(_.name like "group%").includes(_.users).toList
         g1.users.isLoaded must beTrue
-        g1.users.cache must contain(user1, user2).only
+        g1.users.cache must contain(anyOf(user1, user2))
         g2.users.isLoaded must beTrue
-        g2.users.cache must contain(user3).only
+        g2.users.cache must contain(anyOf(user3))
       }
 
       "multiple associations" >> {
@@ -232,11 +232,11 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
 
         val List(g1, g2) = Group.where(_.name like "group%").includes(_.users, _.adminUsers).toList
         g1.users.isLoaded must beTrue
-        g1.users.cache must contain(user1).only
+        g1.users.cache must contain(anyOf(user1))
         g2.users.isLoaded must beTrue
-        g2.users.cache must contain(user2, user3, user4).only
+        g2.users.cache must contain(anyOf(user2, user3, user4))
         g2.adminUsers.isLoaded must beTrue
-        g2.adminUsers.cache must contain(user2, user4).only
+        g2.adminUsers.cache must contain(anyOf(user2, user4))
       }
 
       "BelongsTo association" >> {
@@ -247,7 +247,7 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
 
         val users = group1.users.where(_.name like "user%").includes(_.group).toList
         users.map(_.group.isLoaded).forall(_ == true) must beTrue
-        users.map(_.group.toOption).flatten must contain(group1, group1).only
+        users.map(_.group.toOption).flatten must contain(anyOf(group1, group1))
       }
 
       "HABTM association" >> {
@@ -259,8 +259,8 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
         val List(f1, f2) = Foo.where(_.name like "foo%").includes(_.bars).toList
         f1.bars.isLoaded must beTrue
         f2.bars.isLoaded must beTrue
-        f1.bars.cache must contain(bar1, bar2).only
-        f2.bars.cache must contain(bar3).only
+        f1.bars.cache must contain(anyOf(bar1, bar2))
+        f2.bars.cache must contain(anyOf(bar3))
       }
 
       "HasManyThrough association" >> {

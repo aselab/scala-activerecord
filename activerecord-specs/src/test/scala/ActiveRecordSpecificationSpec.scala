@@ -27,11 +27,11 @@ object Model1Spec extends ActiveRecordSpecification {
   )
 
   "ActiveRecordSpecification" should {
-    "run.mode is test" << {
+    "run.mode is test" >> {
       System.getProperty("run.mode") mustEqual "test"
     }
 
-    "can override config" << {
+    "can override config" >> {
       Model1(1).create
       Model1.count mustEqual 1
     }
@@ -47,7 +47,7 @@ object Model2Spec extends ActiveRecordSpecification {
   )
 
   "ActiveRecordSpecification" should {
-    "can override config" << {
+    "can override config" >> {
       Model2(1).create
       Model2.count mustEqual 1
     }

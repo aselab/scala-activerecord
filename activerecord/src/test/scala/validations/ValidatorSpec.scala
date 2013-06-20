@@ -149,13 +149,13 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if length is shorter than min value" in {
         val m = Model("a")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minLength", 2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minLength", 2))
       }
 
       "invalid if length is longer than max value" in {
         val m = Model("aaaaa")
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxLength", 4)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxLength", 4))
       }
 
       "annotation message" in {
@@ -200,13 +200,13 @@ object ValidatorSpec extends Specification with Mockito {
       "invalid if value is less than min value" in {
         val m = Model(-2.01)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minValue", -2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.minValue", -2))
       }
 
       "invalid if value is greater than max value" in {
         val m = Model(2.01)
         validate(validator, a, m)
-        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxValue", 2)).only
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.maxValue", 2))
       }
 
       "annotation message" in {

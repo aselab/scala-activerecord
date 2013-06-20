@@ -33,7 +33,7 @@ object ErrorsSpec extends DatabaseSpecification with Mockito {
       val minLengthError = ValidationError(userClass, "name", "minLength", 10)
 
       "iterator contains added errors" in {
-        errors must contain(requiredError, minLengthError)
+        errors must contain(anyOf(requiredError, minLengthError))
       }
 
       "exists(fieldName) returns whether the error exists or not" in {
@@ -42,12 +42,12 @@ object ErrorsSpec extends DatabaseSpecification with Mockito {
       }
 
       "get(fieldName) returns errors on fieldName" in {
-        errors.get("name") must contain(requiredError, minLengthError)
+        errors.get("name") must contain(anyOf(requiredError, minLengthError))
         errors.get("other") must beEmpty
       }
 
       "apply is the same as get" in {
-        errors("name") must contain(requiredError, minLengthError)
+        errors("name") must contain(anyOf(requiredError, minLengthError))
         errors("other") must beEmpty
       }
 

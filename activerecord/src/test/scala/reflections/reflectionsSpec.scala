@@ -149,13 +149,13 @@ object reflectionsSpec extends Specification {
 
     "includes superclass's fields" in {
       val c = new ClassInfo(classOf[ExtendedModel])
-      c.fieldInfo.keys must contain("string", "int", "estring", "eint").only
+      c.fieldInfo.keys must contain(anyOf("string", "int", "estring", "eint"))
     }
   }
 
   "ScalaSigInfo#genericTypes" should {
     "detect generic primitive types of Option field" in {
-      ScalaSigInfo(classOf[models.PrimitiveModel]).genericTypes must contain(
+      ScalaSigInfo(classOf[models.PrimitiveModel]).genericTypes must havePairs(
         "ostring" -> classOf[String],
         "oboolean" -> classOf[Boolean],
         "oint" -> classOf[Int],
@@ -169,7 +169,7 @@ object reflectionsSpec extends Specification {
     }
 
     "detect generic primitive types of Seq field" in {
-      ScalaSigInfo(classOf[models.SeqModel]).genericTypes must contain(
+      ScalaSigInfo(classOf[models.SeqModel]).genericTypes must havePairs(
         "list" -> classOf[Int],
         "seq" -> classOf[Double]
       )

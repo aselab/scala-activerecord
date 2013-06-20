@@ -9,7 +9,7 @@ object ActiveRecordBuild extends Build {
 
   def specs2(key: String, version: String) =
     "org.specs2" %% "specs2" % (
-       if (version.startsWith("2.10")) "1.14" else "1.12.3"
+       if (version.startsWith("2.10")) "2.0" else "1.12.3"
      ) % key
 
   val defaultResolvers = Seq(

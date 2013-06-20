@@ -35,26 +35,26 @@ object ValidatableSpec extends DatabaseSpecification {
       val mc = m.getClass
 
       "errors" in {
-        m.errors must contain(
+        m.errors must contain(anyOf(
           ValidationError(mc, "", "global error1"),
           ValidationError(mc, "", "global error2"),
           ValidationError(mc, "s", "field error1"),
           ValidationError(mc, "i", "field error2")
-        ).only
+        ))
       }
 
       "globalErrors" in {
-        m.globalErrors must contain(
+        m.globalErrors must contain(anyOf(
           ValidationError(mc, "", "global error1"),
           ValidationError(mc, "", "global error2")
-        ).only
+        ))
       }
 
       "fieldErrors" in {
-        m.fieldErrors must contain(
+        m.fieldErrors must contain(anyOf(
           ValidationError(mc, "s", "field error1"),
           ValidationError(mc, "i", "field error2")
-        ).only
+        ))
       }
 
       "hasErrors" in {

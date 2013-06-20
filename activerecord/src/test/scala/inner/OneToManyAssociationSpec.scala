@@ -125,7 +125,7 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       val user3 = User("user3").create
       group.users << user
       group.users ++= Seq(user2, user3)
-      group.users.toList must contain(user, user2, user3)
+      group.users.toList must contain(anyOf(user, user2, user3))
     }
 
     "replace records" >> new TestData {

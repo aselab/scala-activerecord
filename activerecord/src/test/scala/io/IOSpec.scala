@@ -216,7 +216,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "l2[1]" -> "bbb"
         ))
         m must equalTo(ListModel(List("aaa", "bbb"), Nil))
-        m.errors must contain(ValidationError(classOf[ListModel], "l2", "activerecord.errors.invalid")).only
+        m.errors must contain(anyOf(ValidationError(classOf[ListModel], "l2", "activerecord.errors.invalid")))
       }
     }
 
@@ -279,13 +279,13 @@ object IOSpec extends DatabaseSpecification with Mockito {
       val nestModel = NestModel.create(listModel, ("", "global error2"), ("c", "field error3"))
       val listModelClass = listModel.getClass
       val nestModelClass = nestModel.getClass
-      nestModel.formErrors must contain(
+      nestModel.formErrors must contain(anyOf(
         ValidationError(nestModelClass, "list", "global error1"),
         ValidationError(listModelClass, "list[a]", "field error1"),
         ValidationError(listModelClass, "list[b]", "field error2"),
         ValidationError(nestModelClass, "", "global error2"),
         ValidationError(nestModelClass, "c", "field error3")
-      ).only
+      ))
     }
 
     "formErrors(ComplexModel)" in {
@@ -301,7 +301,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
       val listModelClass = listModel1.getClass
       val nestModelClass = nestModel1.getClass
       val complexModelClass = complexModel.getClass
-      complexModel.formErrors must contain(
+      complexModel.formErrors must contain(anyOf(
         ValidationError(nestModelClass, "nest[list]", "global error1"),
         ValidationError(listModelClass, "nest[list][a]", "field error1"),
         ValidationError(listModelClass, "nest[list][b]", "field error2"),
@@ -319,7 +319,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
         ValidationError(nestModelClass, "nestlist[1][i]", "field error9"),
         ValidationError(complexModelClass, "", "global error7"),
         ValidationError(complexModelClass, "j", "field error10")
-      ).only
+      ))
     }
   }
 
