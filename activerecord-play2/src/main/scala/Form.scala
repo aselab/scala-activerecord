@@ -4,6 +4,7 @@ import aliases._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
+import _root_.views.html.{helper => playhelper}
 
 class ActiveRecordFormatter[T <: AR](
   companion: ActiveRecordBaseCompanion[_, T], source: Option[T])
@@ -14,7 +15,7 @@ class ActiveRecordFormatter[T <: AR](
     if (m.validate) {
       Right(m)
     } else {
-      Left(m.errors.map(e => FormError(e.key, e.error, e.args.toSeq)).toSeq)
+      Left(m.formErrors.map(e => FormError(e.key, e.error, e.args.toSeq)).toSeq)
     }
   }
 
@@ -22,6 +23,8 @@ class ActiveRecordFormatter[T <: AR](
 }
 
 trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
+  lazy val helper = new PlayHelper(self)
+
   def mapping(source: Option[T] = None) =
     of(new ActiveRecordFormatter[T](self, source))
 
@@ -31,5 +34,25 @@ trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
   }
 
   def form = Form(mapping(), Map(), Nil, None)
+}
+
+class PlayHelper[T <: AR](companion: ActiveRecordBaseCompanion[_, T]) {
+  private def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
+    options.flatMap {
+      case ('required, true) => Seq('_class -> "required")
+      case ('label, v) => Seq('_label ->  v)
+      case ('example, v) => Seq((Symbol("data-title"), v), ('class, "with-text-helper"))
+      case v => Seq(v)
+    }
+  }
+
+  def inputText(field: Field, options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+    playhelper.inputText(field, inputOptions(field, options.toSeq):_*)
+
+  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+    playhelper.select(field, fields, inputOptions(field, options.toSeq):_*)
+
+  def textarea(field: Field, options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+    playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
 }
 
