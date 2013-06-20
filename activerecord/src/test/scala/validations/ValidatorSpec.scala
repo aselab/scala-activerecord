@@ -26,7 +26,7 @@ object ValidatorSpec extends Specification with Mockito {
   def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable with Value) =
     validator.validateWith(m.value, a, m, "value")
 
-  case class Model(value: Any, isNewRecord: Boolean = true) extends Validatable {
+  case class Model(value: Any, isNewRecord: Boolean = true) extends Validatable with inner.ProductModel {
     var valueConfirmation = value
     var other = value
   }

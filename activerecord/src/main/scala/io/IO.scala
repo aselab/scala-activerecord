@@ -26,12 +26,11 @@ trait IO extends Validatable { this: ProductModel =>
 
     toMap.flatMap { case (k, v) =>
       val info = _companion.fieldInfo(k)
-      val key = prefix.map("%s[%s]".format(_, k)).getOrElse(k)
+      val key = prefix.map(FormUtil.join(_, k)).getOrElse(k)
 
       if (info.isSeq) {
         v.asInstanceOf[Seq[_]].zipWithIndex.flatMap { case (value, index) =>
-          val k = "%s[%d]".format(key, index)
-          serialize(info.fieldType, value, k)
+          serialize(info.fieldType, value, FormUtil.join(key, index))
         }
       } else {
         serialize(info.fieldType, v, key)
@@ -57,7 +56,7 @@ trait IO extends Validatable { this: ProductModel =>
         def deserialize(data: Map[String, String], key: String) = if (info.isModel) {
           val companion = classToCompanion(info.fieldType).asInstanceOf[FormSupport[IO]]
           val map = data.collect {
-            case (k, v) if k.startsWith(key + "[") => (k.replaceFirst(key + """\[(\w+)\]""", "$1"), v)
+            case (k, v) if k.startsWith(key + "[") => FormUtil.shift(k) -> v
           }
           if (!(info.isOption && map.nonEmpty)) Some(companion.bind(map)) else None
         } else {
@@ -69,8 +68,7 @@ trait IO extends Validatable { this: ProductModel =>
         try {
           if (info.isSeq) {
             val dataList = Stream.from(0).map(i => data.collect {
-              case (k, v) if k.startsWith("%s[%d]".format(name, i)) =>
-                (k.replaceFirst("""%s\[(%d)\]""".format(name, i), "$1"), v)
+              case (k, v) if k.startsWith("%s[%d]".format(name, i)) => FormUtil.shift(k) -> v
             }.toMap).takeWhile(_.nonEmpty)
             Some(name -> dataList.zipWithIndex.flatMap {
               case (d, i) => deserialize(d, i.toString)
@@ -85,6 +83,31 @@ trait IO extends Validatable { this: ProductModel =>
         }
     })
   }
+
+  def formErrors: Seq[ValidationError] = {
+    val nestErrors = _companion.validatableFields.flatMap { f =>
+      f.toSeq[IO](this).zipWithIndex.flatMap { case (m, i) =>
+        m.formErrors.map {
+          case e if e.isGlobal => e.copy(model = this.getClass, key = f.name + e.key)
+          case e if f.isSeq => e.copy(key = FormUtil.join(f.name, i, e.key))
+          case e => e.copy(key = FormUtil.join(f.name, e.key))
+        }
+      }
+    }
+    errors.toSeq ++ nestErrors
+  }
+}
+
+object FormUtil {
+  /** a[b][c] => b[c] */
+  def shift(s: String): String = s.replaceFirst("""[^\[]+\[([^\[\]]+)\]""", "$1")
+
+  /** a[b][c] => a, b, c */
+  def split(s: String): Seq[String] = s.replaceAll("""\[([^\[\]]+)\]""", ",$1").split(",")
+
+  /** a, b, c[d] => a[b][c][d] */
+  def join(a: String, b: Any*) =
+    a + b.flatMap(s => split(s.toString)).map("[%s]".format(_)).mkString
 }
 
 trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>

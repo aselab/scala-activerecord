@@ -119,6 +119,14 @@ case class FieldInfo(
   def setValue(model: Any, value: Any) {
     model.setValue(name, if (isOption) value.toOption else value)
   }
+
+  def toSeq[T](model: Any): Seq[T] = if (isSeq) {
+    model.getValue[Seq[T]](name)
+  } else if (isOption) {
+    model.getValue[Option[T]](name).toSeq
+  } else {
+    Option(model.getValue[T](name)).toSeq
+  }
 }
 
 object FieldInfo {

@@ -11,7 +11,13 @@ import java.sql.Timestamp
 object IOSpec extends DatabaseSpecification with Mockito {
 
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord
-  object ListModel extends ActiveRecordCompanion[ListModel]
+  object ListModel extends ActiveRecordCompanion[ListModel] {
+    def create(addErrors: (String, String)*) = {
+      val l = ListModel(Nil, Nil)
+      addErrors.foreach{ case (k, v) => l.errors.add(k, v) }
+      l
+    }
+  }
 
   case class NestModel(
     int: Int,
@@ -19,7 +25,13 @@ object IOSpec extends DatabaseSpecification with Mockito {
   ) extends ActiveRecord {
     def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
   }
-  object NestModel extends ActiveRecordCompanion[NestModel]
+  object NestModel extends ActiveRecordCompanion[NestModel] {
+    def create(l: ListModel, addErrors: (String, String)*) = {
+      val n = NestModel(0, l)
+      addErrors.foreach{ case (k, v) => n.errors.add(k, v) }
+      n
+    }
+  }
 
   case class ComplexModel(
     int: Int,
@@ -260,8 +272,76 @@ object IOSpec extends DatabaseSpecification with Mockito {
         Map("name" -> "user1", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1"))),
         Map("name" -> "user2", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1")))
       ))
-
     }.pendingUntilFixed
+
+    "formErrors" in {
+      val listModel = ListModel.create(("", "global error1"), ("a", "field error1"), ("b", "field error2"))
+      val nestModel = NestModel.create(listModel, ("", "global error2"), ("c", "field error3"))
+      val listModelClass = listModel.getClass
+      val nestModelClass = nestModel.getClass
+      nestModel.formErrors must contain(
+        ValidationError(nestModelClass, "list", "global error1"),
+        ValidationError(listModelClass, "list[a]", "field error1"),
+        ValidationError(listModelClass, "list[b]", "field error2"),
+        ValidationError(nestModelClass, "", "global error2"),
+        ValidationError(nestModelClass, "c", "field error3")
+      ).only
+    }
+
+    "formErrors(ComplexModel)" in {
+      val listModel1 = ListModel.create(("", "global error1"), ("a", "field error1"), ("b", "field error2"))
+      val listModel2 = ListModel.create(("", "global error2"), ("c", "field error3"), ("d", "field error4"))
+      val listModel3 = ListModel.create(("", "global error3"), ("e", "field error5"), ("f", "field error6"))
+      val nestModel1 = NestModel.create(listModel1, ("", "global error4"), ("g", "field error7"))
+      val nestModel2 = NestModel.create(listModel2, ("", "global error5"), ("h", "field error8"))
+      val nestModel3 = NestModel.create(listModel3, ("", "global error6"), ("i", "field error9"))
+      val complexModel  = ComplexModel(1, nestModel1, List(nestModel2, nestModel3))
+      complexModel.errors.add("global error7")
+      complexModel.errors.add("j", "field error10")
+      val listModelClass = listModel1.getClass
+      val nestModelClass = nestModel1.getClass
+      val complexModelClass = complexModel.getClass
+      complexModel.formErrors must contain(
+        ValidationError(nestModelClass, "nest[list]", "global error1"),
+        ValidationError(listModelClass, "nest[list][a]", "field error1"),
+        ValidationError(listModelClass, "nest[list][b]", "field error2"),
+        ValidationError(nestModelClass, "nestlist[0][list]", "global error2"),
+        ValidationError(listModelClass, "nestlist[0][list][c]", "field error3"),
+        ValidationError(listModelClass, "nestlist[0][list][d]", "field error4"),
+        ValidationError(nestModelClass, "nestlist[1][list]", "global error3"),
+        ValidationError(listModelClass, "nestlist[1][list][e]", "field error5"),
+        ValidationError(listModelClass, "nestlist[1][list][f]", "field error6"),
+        ValidationError(complexModelClass, "nest", "global error4"),
+        ValidationError(nestModelClass, "nest[g]", "field error7"),
+        ValidationError(complexModelClass, "nestlist", "global error5"),
+        ValidationError(nestModelClass, "nestlist[0][h]", "field error8"),
+        ValidationError(complexModelClass, "nestlist", "global error6"),
+        ValidationError(nestModelClass, "nestlist[1][i]", "field error9"),
+        ValidationError(complexModelClass, "", "global error7"),
+        ValidationError(complexModelClass, "j", "field error10")
+      ).only
+    }
+  }
+
+  "FormUtil" should {
+    "shift" in {
+      FormUtil.shift("a[b][c]") mustEqual "b[c]"
+      FormUtil.shift("a[b][c][d]") mustEqual "b[c][d]"
+      FormUtil.shift("a[b]") mustEqual "b"
+      FormUtil.shift("a") mustEqual "a"
+    }
+
+    "split" in {
+      FormUtil.split("a[b]") mustEqual Seq("a", "b")
+      FormUtil.split("a[b][c][d]") mustEqual Seq("a", "b", "c", "d")
+    }
+
+    "join" in {
+      FormUtil.join("a", "b") mustEqual "a[b]"
+      FormUtil.join("a", "b", "c") mustEqual "a[b][c]"
+      FormUtil.join("a", "b", "c", "d") mustEqual "a[b][c][d]"
+      FormUtil.join("a", "b", "c[d]") mustEqual "a[b][c][d]"
+    }
   }
 
   "FormSupport" should {

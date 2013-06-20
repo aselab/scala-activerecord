@@ -2,6 +2,7 @@ package com.github.aselab.activerecord.validations
 
 import com.github.aselab.activerecord._
 import inner._
+import reflections._
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
@@ -48,7 +49,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
     iterator.toSeq.map(_.translation)
 }
 
-trait Validatable extends Saveable {
+trait Validatable extends Saveable { self: ProductModel =>
   @dsl.Transient
   @dsl.Ignore
   val errors = new Errors(getClass)
@@ -106,6 +107,9 @@ case class ValidationError(
   }
 
   override def toString: String = translation(Locale.getDefault)
+
+  def copy(model: Class[_] = this.model, key: String = this.key, error: String = this.error) =
+    ValidationError(model, key, error, this.args:_*)
 }
 
 abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T]) {
@@ -305,7 +309,9 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
 
   abstract override def doValidate(): Unit = {
     _companion.fieldInfo.foreach {
-      case (name, _) =>
+      case (name, info) if classOf[Validatable].isAssignableFrom(info.fieldType) =>
+        info.toSeq[Validatable](this).map(_.validate)
+      case (name, info) =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
           (self.getValue[Any](name) match {
