@@ -149,7 +149,7 @@ object reflectionsSpec extends Specification {
 
     "includes superclass's fields" in {
       val c = new ClassInfo(classOf[ExtendedModel])
-      c.fieldInfo.keys must contain(anyOf("string", "int", "estring", "eint"))
+      c.fieldInfo.keys must contain(exactly("string", "int", "estring", "eint"))
     }
   }
 

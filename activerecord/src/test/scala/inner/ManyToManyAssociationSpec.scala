@@ -111,7 +111,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       val bar3 = Bar("bar3").create
       val inter = foo.through << bar
       foo.through ++= Seq(bar2, bar3)
-      foo.through.toList must contain(anyOf(bar, bar2, bar3))
+      foo.through.toList must contain(exactly(bar, bar2, bar3))
     }
 
     "replace records" >> new TestData {
@@ -176,7 +176,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       val bar3 = Bar("bar3").create
       foo.bars << bar
       foo.bars ++= Seq(bar2, bar3)
-      foo.bars.toList must contain(anyOf(bar, bar2, bar3))
+      foo.bars.toList must contain(exactly(bar, bar2, bar3))
     }
 
     "replace records" >> new TestData {
