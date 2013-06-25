@@ -96,6 +96,8 @@ trait IO extends Validatable { this: ProductModel =>
     }
     errors.toSeq ++ nestErrors
   }
+
+  override def validate() = super.validate && formErrors.isEmpty
 }
 
 object FormUtil {
