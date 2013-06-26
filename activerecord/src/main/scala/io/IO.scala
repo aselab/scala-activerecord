@@ -105,7 +105,7 @@ object FormUtil {
   def shift(s: String): String = s.replaceFirst("""[^\[]+\[([^\[\]]+)\]""", "$1")
 
   /** a[b][c] => a, b, c */
-  def split(s: String): Seq[String] = s.replaceAll("""\[([^\[\]]+)\]""", ",$1").split(",")
+  def split(s: String): Seq[String] = s.replaceAll("""\[([^\[\]]*)\]""", ",$1").split(",")
 
   /** a, b, c[d] => a[b][c][d] */
   def join(a: String, b: Any*) =
@@ -114,6 +114,24 @@ object FormUtil {
 
 trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>
   import ReflectionUtil._
+
+  type C = ProductModelCompanion[ProductModel with IO] with FormSupport[ProductModel with IO]
+
+  def isRequired(name: String): Boolean = {
+    def inner(c: C, names: Seq[String]): Boolean = {
+      (names.headOption, names.tail) match {
+        case (Some(name), tail) =>
+          c.fieldInfo.get(name).map { info =>
+            if (tail.isEmpty)
+              info.isRequired
+            else
+              inner(classToCompanion(info.fieldType).asInstanceOf[C], tail)
+          }.getOrElse(false)
+        case _ => false
+      }
+    }
+    inner(this.asInstanceOf[C], FormUtil.split(name).filterNot(s => s.isEmpty || s.matches("^[0-9]+$")))
+  }
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
     source.assignFormValues(data)

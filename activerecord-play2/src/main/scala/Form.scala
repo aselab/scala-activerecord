@@ -23,7 +23,8 @@ class ActiveRecordFormatter[T <: AR](
 }
 
 trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
-  lazy val helper = new PlayHelper(self)
+  lazy val defaultHelper = new PlayHelper(self)
+  def helper = defaultHelper
 
   def mapping(source: Option[T] = None) =
     of(new ActiveRecordFormatter[T](self, source))
@@ -37,11 +38,13 @@ trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
 }
 
 class PlayHelper[T <: AR](companion: ActiveRecordBaseCompanion[_, T]) {
-  private def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
-    options.flatMap {
+  protected def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
+    val isRequired = options.collectFirst{ case ('required, v) => v }
+      .getOrElse(companion.isRequired(field.name))
+    (('required -> isRequired) +: options).toMap.toSeq.flatMap {
       case ('required, true) => Seq('_class -> "required")
+      case ('required, false) => Nil
       case ('label, v) => Seq('_label ->  v)
-      case ('example, v) => Seq((Symbol("data-title"), v), ('class, "with-text-helper"))
       case v => Seq(v)
     }
   }

@@ -20,7 +20,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
   }
 
   case class NestModel(
-    int: Int,
+    @Required int: Int,
     list: ListModel
   ) extends ActiveRecord {
     def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
@@ -34,7 +34,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
   }
 
   case class ComplexModel(
-    int: Int,
+    @Required int: Int,
     nest: NestModel,
     nestlist: List[NestModel]
   ) extends ActiveRecord {
@@ -360,6 +360,8 @@ object IOSpec extends DatabaseSpecification with Mockito {
     "split" in {
       FormUtil.split("a[b]") mustEqual Seq("a", "b")
       FormUtil.split("a[b][c][d]") mustEqual Seq("a", "b", "c", "d")
+      FormUtil.split("a[]") mustEqual Seq("a")
+      FormUtil.split("a[][b]") mustEqual Seq("a", "", "b")
     }
 
     "join" in {
@@ -393,6 +395,16 @@ object IOSpec extends DatabaseSpecification with Mockito {
       val data = Map("aaa" -> "aaa", "bbb" -> "bbb")
       m.toFormValues returns data
       PrimitiveModel.unbind(m) mustEqual data
+    }
+
+    "isRequired" in {
+      ComplexModel.isRequired("int") must beTrue
+      ComplexModel.isRequired("nest[int]") must beTrue
+      ComplexModel.isRequired("nestlist[0][int]") must beTrue
+      ComplexModel.isRequired("nest[list]") must beFalse
+      ComplexModel.isRequired("nestlist[0][list]") must beFalse
+      ComplexModel.isRequired("foo") must beFalse
+      ComplexModel.isRequired("nestlist[][int]") must beTrue
     }
   }
 }
