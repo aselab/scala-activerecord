@@ -1,7 +1,5 @@
 import sbt._
 import Keys._
-import ScctPlugin._
-import ls.Plugin._
 
 object ActiveRecordBuild extends Build {
   val _version = "0.2.2"
@@ -49,15 +47,12 @@ object ActiveRecordBuild extends Build {
     },
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    (LsKeys.tags in LsKeys.lsync) := Seq("orm", "db", "database"),
-    (externalResolvers in LsKeys.lsync) := defaultResolvers,
     pomIncludeRepository := { _ => false },
     pomExtra := pomXml,
-    parallelExecution in ScctTest := false,
     shellPrompt := {
       (state: State) => Project.extract(state).currentProject.id + "> "
     }
-  ) ++ lsSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings ++ ScctPlugin.instrumentSettings
+  ) ++ org.scalastyle.sbt.ScalastylePlugin.Settings
 
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
@@ -77,8 +72,6 @@ object ActiveRecordBuild extends Build {
         "org.slf4j" % "slf4j-api" % "1.7.2"
       ),
       unmanagedSourceDirectories in Test <++= Seq(scalaSource in Compile in specs).join,
-      (description in LsKeys.lsync) :=
-        "A Scala ORM library like ActiveRecord of Rails.",
       initialCommands in console in Test := """
       import com.github.aselab.activerecord._
       import com.github.aselab.activerecord.dsl._

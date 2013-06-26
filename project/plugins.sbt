@@ -8,10 +8,6 @@ resolvers ++= Seq(
     new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
 )
 
-addSbtPlugin("me.lessis" % "ls-sbt" % "0.1.2")
-
-addSbtPlugin("reaktor" % "sbt-scct" % "0.2-SNAPSHOT")
-
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.2.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.7")
