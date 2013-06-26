@@ -321,6 +321,32 @@ object IOSpec extends DatabaseSpecification with Mockito {
         ValidationError(complexModelClass, "j", "field error10")
       ))
     }
+
+    "validate success" in {
+      "validate" in {
+        val m = new ComplexModel
+        m.validate must beTrue
+      }
+    }
+
+    "validate failure" in {
+      "errors in basemodel" in {
+        val m = new ComplexModel
+        m.errors.add("error")
+        m.validate must beFalse
+      }
+
+      "errors in nestmodel" in {
+        val listModel1 = ListModel.create()
+        val listModel2 = ListModel.create()
+        val listModel3 = ListModel.create()
+        val nestModel1 = NestModel.create(listModel1, ("", "error"))
+        val nestModel2 = NestModel.create(listModel2)
+        val nestModel3 = NestModel.create(listModel3)
+        val m = ComplexModel(1, nestModel1, List(nestModel2, nestModel3))
+        m.validate must beFalse
+      }
+    }
   }
 
   "FormUtil" should {

@@ -14,7 +14,7 @@ object ValidatableSpec extends DatabaseSpecification {
     val isNewRecord = true
   }
 
-  case class ValidatableModel(e: Seq[String]) extends SaveableImpl with io.IO with ProductModel {
+  case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable with ProductModel {
     override def doValidate {
       e.foreach(errors.add)
       calledMethods :+= "doValidate"
