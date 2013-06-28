@@ -4,7 +4,16 @@ import ActiveRecord._
 import reflections._
 
 object dsl extends org.squeryl.PrimitiveTypeMode
-  with inner.Annotations with inner.DSL with inner.Types
+  with inner.Annotations with inner.DSL with inner.Types {
+
+  def registerMapper[P](mapper: TypedExpressionFactory[P, _]) {
+    val m = super.getClass.getMethod("register", classOf[org.squeryl.dsl.NonPrimitiveJdbcMapper[_, _, _]])
+    m.setAccessible(true)
+    m.invoke(this, mapper)
+  }
+}
+
+// object dsl extends dsl
 
 package views {
   object dsl extends org.squeryl.PrimitiveTypeMode with inner.DSL
