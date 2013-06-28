@@ -6,7 +6,7 @@ import java.util.Date
 import java.sql.Timestamp
 import org.squeryl.dsl._
 
-abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTypeMode)(implicit m: Manifest[A]) {
+abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTypeMode)(implicit m1: Manifest[A], m2: Manifest[B]) {
   def fromJdbc(t: A): B
   def toJdbc(t: B): A
   def defaultValue: B
@@ -23,7 +23,7 @@ abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTy
     val deOptionizer = jdbcMapper.asInstanceOf[TypedExpressionFactory[B, MT] with JdbcMapper[A, B]]
   }
 
-  implicit val jdbcMapper = m.erasure match {
+  implicit val jdbcMapper = m1.erasure match {
     case c if c == classOf[String] => new JdbcConverter[TString](dsl.stringTEF)
     case c if c == classOf[Date] => new JdbcConverter[TDate](dsl.dateTEF)
     case c if c == classOf[Timestamp] => new JdbcConverter[TTimestamp](dsl.timestampTEF)
@@ -34,7 +34,7 @@ abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTy
     case c if c == classOf[BigDecimal] => new JdbcConverter[TBigDecimal](dsl.bigDecimalTEF)
   }
 
-  implicit val optionJdbcMapper = m.erasure match {
+  implicit val optionJdbcMapper = m1.erasure match {
     case c if c == classOf[String] => new OptionConverter[String, TString, TOptionString]
     case c if c == classOf[Date] => new OptionConverter[Date, TDate, TOptionDate]
     case c if c == classOf[Timestamp] => new OptionConverter[Timestamp, TTimestamp, TOptionTimestamp]
@@ -45,7 +45,7 @@ abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTy
     case c if c == classOf[BigDecimal] => new OptionConverter[BigDecimal, TDouble, TOptionBigDecimal]
   }
 
-  Option(formConverter).foreach(f => FormConverter.register(m.erasure, f))
-  ClassInfo.factories.register(m.erasure, {() => defaultValue.asInstanceOf[AnyRef]})
+  Option(formConverter).foreach(f => FormConverter.register(m2.erasure, f))
+  ClassInfo.factories.register(m2.erasure, {() => defaultValue.asInstanceOf[AnyRef]})
 }
 
