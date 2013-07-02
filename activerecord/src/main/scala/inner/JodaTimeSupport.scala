@@ -21,7 +21,7 @@ trait JodaTimeSupport { self: org.squeryl.PrimitiveTypeMode =>
     def defaultValue = DateTime.now
   }
 
-  implicit def jodaTimeToTE(s: DateTime) = jodaTimeMapper.jdbcMapper.create(s)
-  implicit def optionJodaTimeToTE(s: Option[DateTime]) = jodaTimeMapper.optionJdbcMapper.create(s)
+  implicit def jodaTimeToTE(s: DateTime) = jodaTimeMapper.timestamp.create(s)
+  implicit def optionJodaTimeToTE(s: Option[DateTime]) = jodaTimeMapper.timestampOption.create(s)
 }
 

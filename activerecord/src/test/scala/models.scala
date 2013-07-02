@@ -6,6 +6,7 @@ import dsl._
 import inner._
 import java.sql.Timestamp
 import java.util.{Date, UUID, TimeZone}
+import com.github.nscala_time.time.Imports._
 
 object TestTables extends ActiveRecordTables with VersionTable {
   val primitiveModels = table[PrimitiveModel]
@@ -24,6 +25,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
   val optimistics = table[OptimisticModel]
+  val datetimes = table[DateTimeModel]
 
   def createTestData = PrimitiveModel.forceInsertAll(
     (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
@@ -177,3 +179,6 @@ case class OptimisticModel(var field: String) extends ActiveRecord with Optimist
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
 
+case class DateTimeModel(datetime: DateTime) extends ActiveRecord
+
+object DateTimeModel extends ActiveRecordCompanion[DateTimeModel]
