@@ -27,9 +27,7 @@ object PrimaryKeyTables extends ActiveRecordTables {
 }
 
 object PrimaryKeySpec extends ActiveRecordSpecification {
-  override val config = Map(
-    "schema" -> "com.github.aselab.activerecord.samples.PrimaryKeyTables"
-  )
+  def schema = PrimaryKeyTables
 
   "primary key type" should {
     "uuid" >> {

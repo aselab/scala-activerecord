@@ -38,6 +38,7 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
 
   def config: Map[String, String] = Map()
 
-  lazy val schema: ActiveRecordTables = new DefaultConfig(overrideSettings = config).schema
+  def schema: ActiveRecordTables
+  //lazy val schema: ActiveRecordTables = new DefaultConfig(overrideSettings = config).schema
 }
 

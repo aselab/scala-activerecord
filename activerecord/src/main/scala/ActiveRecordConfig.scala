@@ -19,9 +19,10 @@ object Config {
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
-  def schema: ActiveRecordTables = conf.schema
-  def connection: java.sql.Connection = conf.connection
-  def adapter: DatabaseAdapter = conf.adapter
+  def schema(companion: ActiveRecordBaseCompanion[_, _]): ActiveRecordTables = {
+    val clazz = companion.classInfo.clazz
+    tables.getOrElse(clazz, throw ActiveRecordException.tableNotFound(clazz.toString))
+  }
 
   def cleanup: Unit = conf.cleanup
 
@@ -32,17 +33,17 @@ object Config {
   def timeZone_=(value: TimeZone): Unit = _timeZone = value
   def logger: Logger = conf.logger
   def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
+
+  private val tables = collection.mutable.Map.empty[Class[_], ActiveRecordTables]
+  def registerSchema(s: ActiveRecordTables) = {
+    conf = s.config
+    s.all.foreach(t => tables.update(t.posoMetaData.clasz, s))
+  }
 }
 
 trait ActiveRecordConfig {
-  def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
-  lazy val schema = catching(
-    classOf[ClassNotFoundException], classOf[ClassCastException]
-  ).withApply(e => throw ActiveRecordException.cannotLoadSchema(schemaClass)) {
-    classToCompanion(schemaClass).asInstanceOf[ActiveRecordTables]
-  }
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
@@ -66,28 +67,35 @@ trait ActiveRecordConfig {
 }
 
 class DefaultConfig(
+  schema: ActiveRecordTables,
   config: Config = ConfigFactory.load(),
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
   val env = System.getProperty("run.mode", "dev")
+  val _prefix = schema.getClass.getName.dropRight(1)
+  def prefix(key: String) = _prefix + "." + key
 
-  def get[T](key: String): Option[T] = overrideSettings.get(key).map(_.asInstanceOf[T])
-  def get[T](key: String, getter: String => T): Option[T] = try {
-    Option(getter(env + "." + key))
-  } catch {
-    case e: ConfigException.Missing => None
+  def get[T](key: String): Option[T] = overrideSettings.get(prefix(key)).orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+  def get[T](key: String, getter: String => T): Option[T] = {
+    def inner(k: String) = try {
+      Option(getter(k))
+    } catch {
+      case e: ConfigException.Missing => None
+    }
+    val k = env + "." + key
+    inner(prefix(k)).orElse(inner(k))
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
 
-  lazy val schemaClass = getString("schema").getOrElse("models.Tables")
-  lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
-  lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
-  lazy val username = getString("username")
-  lazy val password = getString("password")
-  lazy val partitionCount = getInt("partitionCount")
-  lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
-  lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
+
+  lazy val driverClass = get[String]("driver").getOrElse("org.h2.Driver")
+  lazy val jdbcurl = get[String]("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
+  lazy val username = get[String]("username")
+  lazy val password = get[String]("password")
+  lazy val partitionCount = get[Int]("partitionCount")
+  lazy val maxConnectionsPerPartition = get[Int]("maxConnectionsPerPartition")
+  lazy val minConnectionsPerPartition = get[Int]("minConnectionsPerPartition")
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
   def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader

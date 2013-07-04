@@ -322,7 +322,7 @@ trait Associations {
   trait AssociationSupport { self: AR =>
     protected def belongsTo[T <: AR]
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
-        belongsTo[T](Config.schema.foreignKeyFromClass(m.erasure))
+        belongsTo[T](Config.schema(self.recordCompanion).foreignKeyFromClass(m.erasure))
           .asInstanceOf[BelongsToAssociation[this.type, T]]
 
     protected def belongsTo[T <: AR](foreignKey: String)
@@ -337,7 +337,7 @@ trait Associations {
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(self.getClass))
+          Config.schema(self.recordCompanion).foreignKeyFromClass(self.getClass))
         new HasManyAssociation[this.type, T](self, conditions, key)
       }
 
@@ -347,7 +347,7 @@ trait Associations {
       foreignKey: String = null
     )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
       val key = Option(foreignKey).getOrElse(
-        Config.schema.foreignKeyFromClass(m1.erasure))
+        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.erasure))
 
       new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
     }
@@ -363,7 +363,7 @@ trait Associations {
       (conditions: Map[String, Any])
       (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
     {
-      val name = Config.schema.tableNameFromClasses(self.getClass, m.erasure)
+      val name = Config.schema(self.recordCompanion).tableNameFromClasses(self.getClass, m.erasure)
       val companion = new IntermediateRecordCompanion {
         val tableName = name
       }

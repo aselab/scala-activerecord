@@ -12,6 +12,7 @@ package views {
 
 package object aliases {
   type AR = ActiveRecordBase[_]
+  type ARC = ActiveRecordBaseCompanion[_, _]
   type CKey = dsl.CompositeKey2[Long, Long]
 }
 

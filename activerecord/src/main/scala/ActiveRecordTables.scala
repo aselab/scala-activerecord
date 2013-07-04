@@ -32,6 +32,16 @@ trait ActiveRecordTables extends Schema {
     }.toMap ++ map
   }
 
+  def inTransaction[T](f: => T): T = {
+    setFactory
+    dsl.inTransaction(f)
+  }
+
+  def transaction[T](f: => T): T = {
+    setFactory
+    dsl.transaction(f)
+  }
+
   def getTable[T](name: String): Table[T] = {
     tableMap.getOrElse(name, throw ActiveRecordException.tableNotFound(name))
       .asInstanceOf[Table[T]]
@@ -57,7 +67,7 @@ trait ActiveRecordTables extends Schema {
       val connection = Session.currentSession.connection
       val stat = connection.createStatement
       try {
-        stat.execute("select 1 from " + Config.adapter.quoteIdentifier(t.name))
+        stat.execute("select 1 from " + config.adapter.quoteIdentifier(t.name))
         true
       } catch {
         case e: Throwable =>
@@ -76,8 +86,9 @@ trait ActiveRecordTables extends Schema {
   /** load configuration and then setup database and session */
   def initialize(config: Map[String, Any]) {
     if (!_initialized) {
-      Config.conf = loadConfig(config)
-      SessionFactory.concreteFactory = Some(() => session)
+      loadConfig(config)
+      Config.registerSchema(this)
+      setFactory
       createTables
     }
 
@@ -97,17 +108,24 @@ trait ActiveRecordTables extends Schema {
     _initialized = false
   }
 
-  def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    new DefaultConfig(overrideSettings = config)
+  private var configOption: Option[ActiveRecordConfig] = None
+  def config = configOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def loadConfig(config: Map[String, Any]): ActiveRecordConfig = {
+    val c = new DefaultConfig(this, overrideSettings = config)
+    configOption = Some(c)
+    c
+  }
 
   def session: Session = {
-    val s = Session.create(Config.connection, Config.adapter)
+    val s = Session.create(config.connection, config.adapter)
     s.setLogger(Config.logger.debug)
     s
   }
 
+  def setFactory = SessionFactory.concreteFactory = Some(() => session)
+
   /** drop and create table */
-  def reset: Unit = inTransaction {
+  def reset: Unit = this.inTransaction {
     drop
     create
   }

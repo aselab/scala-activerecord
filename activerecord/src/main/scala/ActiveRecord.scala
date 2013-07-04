@@ -103,7 +103,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   protected def self: this.type = this
 
   /** database schema */
-  lazy val schema = Config.schema
+  lazy val schema = Config.schema(this)
 
   /**
    * corresponding database table
