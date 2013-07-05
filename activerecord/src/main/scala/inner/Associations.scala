@@ -55,7 +55,7 @@ trait Associations {
 
     def removeAll(): List[T]
 
-    def deleteAll(): List[T] = inTransaction {
+    def deleteAll(): List[T] = companion.inTransaction {
       val result = relation.toList
       result.foreach(_.delete)
       relation.cache = Nil
@@ -123,14 +123,14 @@ trait Associations {
 
     def assign(m: T): T = assignConditions(m)
 
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = companion.inTransaction {
       if (m.isNewRecord) m.save(throws = true)
       assign(m).update
     }
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = inTransaction {
+    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -138,12 +138,12 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = inTransaction {
+    def :=(list: Traversable[T]): List[T] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
@@ -200,7 +200,7 @@ trait Associations {
 
     def <<(m: T): I = associate(m)
 
-    def <<(list: Traversable[T]): List[I] = inTransaction {
+    def <<(list: Traversable[T]): List[I] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -208,17 +208,17 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[I] = this << list
 
-    def :=(list: Traversable[T]): List[I] = inTransaction {
+    def :=(list: Traversable[T]): List[I] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList
       relation.cache.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
-      
+
       val result = relation.toList
       through.relation.foreach {r =>
         r.setValue(foreignKey, None)
@@ -228,7 +228,7 @@ trait Associations {
       result
     }
 
-    override def deleteAll(): List[T] = inTransaction {
+    override def deleteAll(): List[T] = companion.inTransaction {
       val result = super.deleteAll
       if (hasConstraint) through.deleteAll else removeAll
       relation.cache = Nil
@@ -279,7 +279,7 @@ trait Associations {
       ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
     }
 
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = companion.inTransaction {
       if (m.isNewRecord) m.save(throws = true)
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
@@ -296,7 +296,7 @@ trait Associations {
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = inTransaction {
+    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -304,12 +304,12 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = inTransaction {
+    def :=(list: Traversable[T]): List[T] = companion.inTransaction {
       removeAll
       relation.cache = list.toList.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       val result = relation.toList
       interCompanion.forceDelete(inter =>
         owner.id === (if (isLeftSide) inter.leftId else inter.rightId)

@@ -113,6 +113,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     schema.getTable(name)
   }
 
+  def inTransaction[T](f: => T): T = schema.inTransaction(f)
+
+  def transaction[T](f: => T): T = schema.transaction(f)
+
   /**
    * all search.
    */

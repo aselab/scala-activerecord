@@ -6,6 +6,7 @@ import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
 import mojolly.inflector.InflectorImports._
 import java.io.{PrintWriter, StringWriter}
+import reflections.ReflectionUtil._
 
 /**
  * Base class of database schema.
@@ -189,4 +190,9 @@ trait ActiveRecordTables extends Schema {
     }:_*))
     t
   }
+}
+
+object ActiveRecordTables {
+  def find(schemaName: String)(implicit classLoader: ClassLoader = defaultLoader): ActiveRecordTables =
+    classToCompanion(schemaName).asInstanceOf[ActiveRecordTables]
 }

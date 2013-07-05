@@ -1,16 +1,17 @@
 package com.github.aselab.activerecord
 
 import play.api._
+import Play.current
 
 class ActiveRecordPlugin(app: Application) extends Plugin {
-  lazy val activeRecordTables = new PlayConfig().schema
+  lazy val activeRecordTables = Config.loadSchemas("activerecord.schemas", current.configuration.underlying, Play.application.classloader)
 
   override def onStart() {
-    activeRecordTables.initialize
+    activeRecordTables.foreach(_.initialize)
   }
 
   override def onStop() {
-    activeRecordTables.cleanup
+    activeRecordTables.foreach(_.cleanup)
   }
 }
 

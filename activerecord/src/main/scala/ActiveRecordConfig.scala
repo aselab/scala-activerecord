@@ -9,7 +9,8 @@ import com.jolbox.bonecp._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
-import reflections.ReflectionUtil.classToCompanion
+import reflections.ReflectionUtil._
+import scala.collection.JavaConversions._
 
 object Config {
   private var _conf: ActiveRecordConfig = _
@@ -39,6 +40,9 @@ object Config {
     conf = s.config
     s.all.foreach(t => tables.update(t.posoMetaData.clasz, s))
   }
+
+  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load, classLoader: ClassLoader = defaultLoader) =
+    config.getStringList(key).map(ActiveRecordTables.find)
 }
 
 trait ActiveRecordConfig {
@@ -75,7 +79,10 @@ class DefaultConfig(
   val _prefix = schema.getClass.getName.dropRight(1)
   def prefix(key: String) = _prefix + "." + key
 
-  def get[T](key: String): Option[T] = overrideSettings.get(prefix(key)).orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+  def get[T](key: String): Option[T] = {
+    logger.debug(prefix(key))
+    overrideSettings.get(prefix(key)).orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+  }
   def get[T](key: String, getter: String => T): Option[T] = {
     def inner(k: String) = try {
       Option(getter(k))
@@ -87,7 +94,6 @@ class DefaultConfig(
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
-
 
   lazy val driverClass = get[String]("driver").getOrElse("org.h2.Driver")
   lazy val jdbcurl = get[String]("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
