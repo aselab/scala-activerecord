@@ -7,20 +7,27 @@ import play.api.Play.current
 import java.util.{Locale, TimeZone}
 
 class PlayConfig(
+  schema: ActiveRecordTables,
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
+  val _prefix = schema.getClass.getName.dropRight(1)
+  def prefix(key: String) = "db.activerecord." + _prefix + "." + key
+
   def classLoader = play.api.Play.application.classloader
 
-  def getString(key: String, default: String): String =
-    overrideSettings.get(key).map(_.toString).orElse(
-      current.configuration.getString(key)
-    ).getOrElse(default)
+  def getString(key: String): Option[String] =
+    overrideSettings.get(prefix(key)).map(_.toString).orElse(
+      current.configuration.getString(prefix(key))
+    )
 
-  def connection: Connection =
+  def connection: Connection = try {
+    play.api.db.DB.getConnection("activerecord." + _prefix)
+  } catch { case e: Throwable   =>
     play.api.db.DB.getConnection("activerecord")
+  }
 
   lazy val adapter: DatabaseAdapter =
-    adapter(getString("db.activerecord.driver", "org.h2.Driver"))
+    adapter(getString(prefix("driver")).orElse(getString("driver")).getOrElse("org.h2.Driver"))
 
   def translator: i18n.Translator = PlayTranslator
 
@@ -42,5 +49,5 @@ object PlayTranslator extends i18n.Translator {
 
 trait PlaySupport { self: ActiveRecordTables =>
   override def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
-    new PlayConfig(c)
+    new PlayConfig(self, c)
 }

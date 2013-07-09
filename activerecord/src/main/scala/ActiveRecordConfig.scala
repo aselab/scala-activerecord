@@ -79,10 +79,22 @@ class DefaultConfig(
   val _prefix = schema.getClass.getName.dropRight(1)
   def prefix(key: String) = _prefix + "." + key
 
+  logger.debug("----- Loading config: %s (mode: %s) -----".format(_prefix, env))
+
+  private def debug[T](key: String, value: Option[T], default: String = "(not found)") =
+    logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
+
   def get[T](key: String): Option[T] = {
-    logger.debug(prefix(key))
-    overrideSettings.get(prefix(key)).orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+    if (overrideSettings.isEmpty) return None
+    val keyWithPrefix = prefix(key)
+    val valueWithPrefix = overrideSettings.get(keyWithPrefix)
+    debug(keyWithPrefix + " (overrideSettings)", valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(key + " (overrideSettings)", overrideSettings.get(key))
+    }
+    valueWithPrefix.orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
   }
+
   def get[T](key: String, getter: String => T): Option[T] = {
     def inner(k: String) = try {
       Option(getter(k))
@@ -90,18 +102,24 @@ class DefaultConfig(
       case e: ConfigException.Missing => None
     }
     val k = env + "." + key
-    inner(prefix(k)).orElse(inner(k))
+    val keyWithPrefix = prefix(k)
+    val valueWithPrefix = inner(keyWithPrefix)
+    debug(keyWithPrefix, valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(k, inner(k))
+    }
+    valueWithPrefix.orElse(inner(k))
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
 
-  lazy val driverClass = get[String]("driver").getOrElse("org.h2.Driver")
-  lazy val jdbcurl = get[String]("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
-  lazy val username = get[String]("username")
-  lazy val password = get[String]("password")
-  lazy val partitionCount = get[Int]("partitionCount")
-  lazy val maxConnectionsPerPartition = get[Int]("maxConnectionsPerPartition")
-  lazy val minConnectionsPerPartition = get[Int]("minConnectionsPerPartition")
+  lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
+  lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
+  lazy val username = getString("username")
+  lazy val password = getString("password")
+  lazy val partitionCount = getInt("partitionCount")
+  lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
+  lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
   def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader
@@ -120,8 +138,19 @@ class DefaultConfig(
     partitionCount.foreach(conf.setPartitionCount)
     maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
     minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
+    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix, env))
+    settings.foreach{ case (k, v) => debug(k, v, "") }
     new BoneCP(conf)
   }
+
+  lazy val settings = List(
+    "driver" -> Some(driverClass),
+    "jdbcurl" -> Some(jdbcurl),
+    "username" -> username,
+    "password" -> password,
+    "maxConnectionsPerPartition" -> maxConnectionsPerPartition,
+    "minConnectionsPerPartition" -> minConnectionsPerPartition
+  )
 
   override def cleanup: Unit = {
     super.cleanup
