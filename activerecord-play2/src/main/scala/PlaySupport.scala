@@ -16,9 +16,6 @@ class PlayConfig(
       current.configuration.getString(key)
     ).getOrElse(default)
 
-  def schemaClass: String =
-    getString("activerecord.schema", "models.Tables")
-
   def connection: Connection =
     play.api.db.DB.getConnection("activerecord")
 
@@ -44,6 +41,6 @@ object PlayTranslator extends i18n.Translator {
 }
 
 trait PlaySupport { self: ActiveRecordTables =>
-  override def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    new PlayConfig(config)
+  override def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
+    new PlayConfig(c)
 }

@@ -87,7 +87,7 @@ trait ActiveRecordTables extends Schema {
   /** load configuration and then setup database and session */
   def initialize(config: Map[String, Any]) {
     if (!_initialized) {
-      loadConfig(config)
+      configOption = Some(loadConfig(config))
       Config.registerSchema(this)
       setFactory
       createTables
@@ -111,11 +111,8 @@ trait ActiveRecordTables extends Schema {
 
   private var configOption: Option[ActiveRecordConfig] = None
   def config = configOption.getOrElse(throw ActiveRecordException.notInitialized)
-  def loadConfig(config: Map[String, Any]): ActiveRecordConfig = {
-    val c = new DefaultConfig(this, overrideSettings = config)
-    configOption = Some(c)
-    c
-  }
+  def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
+    new DefaultConfig(this, overrideSettings = c)
 
   def session: Session = {
     val s = Session.create(config.connection, config.adapter)
