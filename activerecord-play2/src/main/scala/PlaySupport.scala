@@ -10,8 +10,11 @@ class PlayConfig(
   schema: ActiveRecordTables,
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
-  val _prefix = schema.getClass.getName.dropRight(1)
-  def prefix(key: String) = "db.activerecord." + _prefix + "." + key
+  lazy val schemaName = schema.getClass.getName.dropRight(1)
+  lazy val _prefix = current.configuration.getString("schema." + schemaName).getOrElse("activerecord")
+
+  def prefix(key: String) =
+    "db." + _prefix + "." + key
 
   def classLoader = play.api.Play.application.classloader
 
@@ -20,14 +23,21 @@ class PlayConfig(
       current.configuration.getString(prefix(key))
     )
 
-  def connection: Connection = try {
-    play.api.db.DB.getConnection("activerecord." + _prefix)
-  } catch { case e: Throwable   =>
-    play.api.db.DB.getConnection("activerecord")
+  private def debug(key: String): Unit =
+    debug(key, current.configuration.getString(key))
+
+  def connection: Connection =
+    play.api.db.DB.getConnection(_prefix)
+
+  override def log = {
+    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix,  play.api.Play.application.mode))
+    logger.debug("\tSchema class: " + schemaName)
+    List(prefix("url"), prefix("driver"), prefix("user")).foreach(debug)
   }
 
-  lazy val adapter: DatabaseAdapter =
+  lazy val adapter: DatabaseAdapter = {
     adapter(getString(prefix("driver")).orElse(getString("driver")).getOrElse("org.h2.Driver"))
+  }
 
   def translator: i18n.Translator = PlayTranslator
 

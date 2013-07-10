@@ -41,13 +41,20 @@ object Config {
     s.all.foreach(t => tables.update(t.posoMetaData.clasz, s))
   }
 
-  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load, classLoader: ClassLoader = defaultLoader) =
+  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load) =
     config.getStringList(key).map(ActiveRecordTables.find)
 }
 
 trait ActiveRecordConfig {
   def connection: Connection
   def adapter: DatabaseAdapter
+
+  protected def debug[T](key: String, value: Option[T], default: String = "(not found)") {
+    logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
+  }
+
+  def log = {}
+  log
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
@@ -75,14 +82,11 @@ class DefaultConfig(
   config: Config = ConfigFactory.load(),
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
-  val env = System.getProperty("run.mode", "dev")
-  val _prefix = schema.getClass.getName.dropRight(1)
+  lazy val env = System.getProperty("run.mode", "dev")
+  lazy val _prefix = schema.getClass.getName.dropRight(1)
   def prefix(key: String) = _prefix + "." + key
 
   logger.debug("----- Loading config: %s (mode: %s) -----".format(_prefix, env))
-
-  private def debug[T](key: String, value: Option[T], default: String = "(not found)") =
-    logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
 
   def get[T](key: String): Option[T] = {
     if (overrideSettings.isEmpty) return None
@@ -138,16 +142,18 @@ class DefaultConfig(
     partitionCount.foreach(conf.setPartitionCount)
     maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
     minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
+    new BoneCP(conf)
+  }
+
+  override def log = {
     logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix, env))
     settings.foreach{ case (k, v) => debug(k, v, "") }
-    new BoneCP(conf)
   }
 
   lazy val settings = List(
     "driver" -> Some(driverClass),
     "jdbcurl" -> Some(jdbcurl),
     "username" -> username,
-    "password" -> password,
     "maxConnectionsPerPartition" -> maxConnectionsPerPartition,
     "minConnectionsPerPartition" -> minConnectionsPerPartition
   )
