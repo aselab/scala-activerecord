@@ -52,23 +52,31 @@ trait ActiveRecordTables extends Schema {
   def foreignKeyFromClass(c: Class[_]): String =
     c.getSimpleName.camelize + "Id"
 
-  private def createTables = transaction {
-    val isCreated = all.headOption.exists{ t =>
-      val connection = Session.currentSession.connection
-      val stat = connection.createStatement
+  protected def execute(sql: String, logging: Boolean = true) {
+    if (logging) Config.logger.debug(sql)
+    val connection = Session.currentSession.connection
+    val s = connection.createStatement
+    try {
+      s.execute(sql)
+    } catch {
+      case e: java.sql.SQLException =>
+        connection.rollback
+        throw ActiveRecordException("error executing " + sql + "\n" + e)
+    } finally {
+      s.close
+    }
+  }
+
+  private[activerecord] def isCreated: Boolean = inTransaction {
+    all.headOption.exists{ t =>
       try {
-        stat.execute("select 1 from " + Config.adapter.quoteIdentifier(t.name))
+        val name = Config.adapter.quoteName(t.prefixedName)
+        execute("select 1 from " + name, false)
         true
       } catch {
-        case e: Throwable =>
-          connection.rollback
-          false
-      } finally {
-        try { stat.close } catch { case e: Throwable => }
+        case e: Throwable => false
       }
     }
-
-    if (!isCreated) create
   }
 
   private var _initialized = false
@@ -78,7 +86,7 @@ trait ActiveRecordTables extends Schema {
     if (!_initialized) {
       Config.conf = loadConfig(config)
       SessionFactory.concreteFactory = Some(() => session)
-      createTables
+      transaction { if (!isCreated) create }
     }
 
     _initialized = true
