@@ -19,6 +19,8 @@ object Config {
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
+  def autoCreate: Boolean = conf.autoCreate
+  def autoDrop: Boolean = conf.autoDrop
   def schema: ActiveRecordTables = conf.schema
   def connection: java.sql.Connection = conf.connection
   def adapter: DatabaseAdapter = conf.adapter
@@ -35,6 +37,8 @@ object Config {
 }
 
 trait ActiveRecordConfig {
+  def autoCreate: Boolean
+  def autoDrop: Boolean
   def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
@@ -79,7 +83,10 @@ class DefaultConfig(
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
+  def getBoolean(key: String): Option[Boolean] = get[Boolean](key).orElse(get(key, config.getBoolean))
 
+  lazy val autoCreate = getBoolean("autoCreate").getOrElse(true)
+  lazy val autoDrop = getBoolean("autoDrop").getOrElse(false)
   lazy val schemaClass = getString("schema").getOrElse("models.Tables")
   lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
   lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")

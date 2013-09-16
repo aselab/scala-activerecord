@@ -16,6 +16,14 @@ class PlayConfig(
       current.configuration.getString(key)
     ).getOrElse(default)
 
+  def getBoolean(key: String, default: Boolean): Boolean =
+    overrideSettings.get(key).map(_.asInstanceOf[Boolean]).orElse(
+      current.configuration.getBoolean(key)
+    ).getOrElse(default)
+
+  def autoCreate: Boolean = getBoolean("activerecord.autoCreate", true)
+  def autoDrop: Boolean = getBoolean("activerecord.autoDrop", false)
+
   def schemaClass: String =
     getString("activerecord.schema", "models.Tables")
 

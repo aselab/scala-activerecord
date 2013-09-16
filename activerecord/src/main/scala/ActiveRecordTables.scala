@@ -86,7 +86,7 @@ trait ActiveRecordTables extends Schema {
     if (!_initialized) {
       Config.conf = loadConfig(config)
       SessionFactory.concreteFactory = Some(() => session)
-      transaction { if (!isCreated) create }
+      if (Config.autoCreate) transaction { if (!isCreated) create }
     }
 
     _initialized = true
@@ -102,6 +102,7 @@ trait ActiveRecordTables extends Schema {
   /** cleanup database resources */
   def cleanup: Unit = {
     Config.cleanup
+    if (Config.autoDrop) transaction { drop }
     _initialized = false
   }
 
