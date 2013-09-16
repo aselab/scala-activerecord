@@ -29,7 +29,7 @@ trait Associations {
       companion.fieldInfo.getOrElse(name, throw ActiveRecordException.notFoundField(name))
   }
 
-  trait CollectionAssociation[O <: AR, T <: AR] extends Association[O, T] {
+  trait OwnersAssociation[O <: AR, T <: AR] extends Association[O, T] {
     val allConditions: Map[String, Any]
 
     protected def hasConstraint: Boolean
@@ -52,7 +52,9 @@ trait Associations {
       }
       m
     }
+  }
 
+  trait CollectionAssociation[O <: AR, T <: AR] extends OwnersAssociation[O, T]{
     def removeAll(): List[T]
 
     def deleteAll(): List[T] = inTransaction {
@@ -98,6 +100,61 @@ trait Associations {
     def associate(m: T): T = assign(m).update
 
     def :=(m: T): T = assign(m)
+  }
+
+  class HasOneAssociation[O <: AR, T <: AR](
+    val owner: O, conditions: Map[String, Any], val foreignKey: String
+  )(implicit val manifest: Manifest[T]) extends OwnersAssociation[O, T] {
+    val allConditions = conditions + (foreignKey -> owner.id)
+
+    protected lazy val hasConstraint = !fieldInfo(foreignKey).isOption
+
+    lazy val relation1: Relation1[T, T] = source.where(condition).limit(1)
+
+    def relation: Relation[T, T] = relation1
+
+    def toOption: Option[T] = relation.headOption
+
+    def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      val ids = sources.map(_.id)
+      val field = fieldInfo(foreignKey)
+
+      val r = source.where(conditionFactory(conditions)).where(
+        m => field.toInExpression(m.getValue(foreignKey), ids)).toQuery.toList
+      r.groupBy(_.getOption[Any](foreignKey).orNull)
+    }
+
+    def associate(m: T): T = inTransaction {
+      val old = source.where(condition)
+      if (hasConstraint) delete else remove
+      if (m.isNewRecord) m.save(throws = true)
+      assignConditions(m).update
+      relation.cache = List(m)
+      m
+    }
+
+    def :=(m: T): T = associate(m)
+
+    def remove: Option[T] = {
+      if (hasConstraint) {
+        throw ActiveRecordException.notNullConstraint(foreignKey)
+      }
+      val result = toOption
+      result.foreach {r =>
+        r.setValue(foreignKey, None)
+        r.save(throws = true)
+      }
+      relation.cache = Nil
+      result
+    }
+
+    def delete: Option[T] = {
+      val result = toOption
+      result.foreach(_.delete)
+      relation.cache = Nil
+      result
+    }
   }
 
   class HasManyAssociation[O <: AR, T <: AR](
@@ -328,6 +385,18 @@ trait Associations {
     protected def belongsTo[T <: AR](foreignKey: String)
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
         new BelongsToAssociation[this.type, T](self, foreignKey)
+
+    protected def hasOne[T <: AR]
+      (implicit m: Manifest[T]): HasOneAssociation[this.type, T] =
+        hasOne[T]().asInstanceOf[HasOneAssociation[this.type, T]]
+
+    protected def hasOne[T <: AR]
+      (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
+      (implicit m: Manifest[T]): HasOneAssociation[this.type, T] = {
+        val key = Option(foreignKey).getOrElse(
+          Config.schema.foreignKeyFromClass(self.getClass))
+        new HasOneAssociation[this.type, T](self, conditions, key)
+      }
 
     protected def hasMany[T <: AR]
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] =
