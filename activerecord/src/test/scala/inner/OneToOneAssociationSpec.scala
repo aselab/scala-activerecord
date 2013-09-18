@@ -11,6 +11,9 @@ package onetoone {
 
     lazy val group = belongsTo[Group]
     lazy val groupByOtherKey = belongsTo[Group](foreignKey = "otherKey")
+    lazy val profile = hasOne[Profile]
+    lazy val address = hasOneThrough[Address, Profile](profile)
+    lazy val optionAddress = hasOneThrough[Address, Profile](profile, foreignKey = "optionAddressId")
   }
 
   case class Group(name: String) extends ActiveRecord {
@@ -18,17 +21,33 @@ package onetoone {
     lazy val userByOtherKey = hasOne[User](foreignKey = "otherKey")
   }
 
+  case class Profile(userId: Option[Long], optionAddressId: Option[Long]) extends ActiveRecord {
+    val addressId: Long = optionAddressId.getOrElse(0)
+    lazy val user = belongsTo[User]
+    lazy val address = belongsTo[Address]
+  }
+
+  case class Address(country: String, city: String) extends ActiveRecord {
+    lazy val profile = hasOne[Profile]
+  }
+
   object User extends ActiveRecordCompanion[User]
   object Group extends ActiveRecordCompanion[Group]
+  object Profile extends ActiveRecordCompanion[Profile]
+  object Address extends ActiveRecordCompanion[Address]
 
   object Tables extends ActiveRecordTables {
     val users = table[User]
     val groups = table[Group]
+    val profiles = table[Profile]
+    val addresses = table[Address]
   }
 
   trait TestData extends Scope {
     val user = User("user1").create
     val group = Group("group1").create
+    val address = Address("Japan", "Tokyo").create
+    val profile = Profile(Some(user.id), Some(address.id)).create
   }
 }
 
@@ -93,4 +112,46 @@ object OneToOneAssociationSpec extends DatabaseSpecification {
     }
   }
 
+  "HasOneThroughAssociation" should {
+    "associate persisted record" >> new TestData {
+      val newAddress = Address("aaa", "bbb").create
+      user.address := newAddress
+      Profile.exists(_.id === profile.id) must beFalse
+      Address.exists(_.id === address.id) must beFalse
+      user.address.toOption must beSome(newAddress)
+    }
+
+    "associate non-persisted record" >> new TestData {
+      val newAddress = Address("aaa", "bbb")
+      user.address.associate(newAddress) must throwA(ActiveRecordException.recordMustBeSaved)
+    }
+
+    "remove with not null constraint" >> new TestData {
+      user.address.remove must throwA(ActiveRecordException.notNullConstraint("addressId"))
+    }
+
+    "remove" >> new TestData {
+      val removed = user.optionAddress.remove
+      removed must beSome(address)
+      Profile.exists(_.id === profile.id) must beTrue
+      Address.exists(_.id === address.id) must beTrue
+      user.optionAddress.toOption must beNone
+    }
+
+    "delete with not null constraint" >> new TestData {
+      val deleted = user.address.delete
+      deleted must beSome(address)
+      Profile.exists(_.id === profile.id) must beFalse
+      Address.exists(_.id === address.id) must beFalse
+      user.address.toOption must beNone
+    }
+
+    "delete" >> new TestData {
+      val deleted = user.optionAddress.delete
+      deleted must beSome(address)
+      Profile.exists(_.id === profile.id) must beTrue
+      Address.exists(_.id === address.id) must beFalse
+      user.optionAddress.toOption must beNone
+    }
+  }
 }

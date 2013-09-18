@@ -54,6 +54,19 @@ trait Associations {
     }
   }
 
+  trait SingularAssociation[O <: AR, T <: AR] extends OwnersAssociation[O, T] {
+    def toOption: Option[T] = relation.headOption
+
+    def remove(): Option[T]
+
+    def delete(): Option[T] = inTransaction {
+      val result = toOption
+      result.foreach(_.delete)
+      relation.cache = Nil
+      result
+    }
+  }
+
   trait CollectionAssociation[O <: AR, T <: AR] extends OwnersAssociation[O, T]{
     def removeAll(): List[T]
 
@@ -104,7 +117,7 @@ trait Associations {
 
   class HasOneAssociation[O <: AR, T <: AR](
     val owner: O, conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends OwnersAssociation[O, T] {
+  )(implicit val manifest: Manifest[T]) extends SingularAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
     protected lazy val hasConstraint = !fieldInfo(foreignKey).isOption
@@ -112,8 +125,6 @@ trait Associations {
     lazy val relation1: Relation1[T, T] = source.where(condition).limit(1)
 
     def relation: Relation[T, T] = relation1
-
-    def toOption: Option[T] = relation.headOption
 
     def eagerLoad[S <: AR](sources: List[S])
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
@@ -126,7 +137,6 @@ trait Associations {
     }
 
     def associate(m: T): T = inTransaction {
-      val old = source.where(condition)
       if (hasConstraint) delete else remove
       if (m.isNewRecord) m.save(throws = true)
       assignConditions(m).update
@@ -136,7 +146,7 @@ trait Associations {
 
     def :=(m: T): T = associate(m)
 
-    def remove: Option[T] = {
+    def remove(): Option[T] = inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
@@ -148,11 +158,71 @@ trait Associations {
       relation.cache = Nil
       result
     }
+  }
 
-    def delete: Option[T] = {
+  class HasOneThroughAssociation[O <: AR, T <: AR, I <: AR](
+    val owner: O, val through: SingularAssociation[O, I],
+    conditions: Map[String, Any], val foreignKey: String
+  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends SingularAssociation[O, T] {
+    val allConditions = conditions
+
+    private lazy val idFieldInfo = fieldInfo("id")
+
+    protected lazy val hasConstraint = !through.fieldInfo(foreignKey).isOption
+
+    private def joinedRelation = source.joins[I]((m, inter) =>
+      idFieldInfo.toEqualityExpression(m.id, inter.getValue[Any](foreignKey))
+    ).where(condition).limit(1)
+
+    lazy val relation2: Relation2[T, I, T] =
+      joinedRelation.where((m, inter) => through.condition(inter))
+
+    def relation: Relation[T, T] = relation2
+
+    def eagerLoad[S <: AR](sources: List[S])
+      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      val idMap = through.eagerLoad(sources).map {
+        case (id, inters) => (id, inters.flatMap(_.getOption[Any](foreignKey)))
+      }
+      val ids = idMap.values.flatten.toList.distinct
+
+      val recordMap = source.where(m => idFieldInfo.toInExpression(m.id, ids))
+        .toList.map(m => (m.id, m)).toMap
+      idMap.map {case (id, ids) => (id, ids.map(recordMap))}
+    }
+
+    def associate(m: T): I = inTransaction {
+      if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
+      if (hasConstraint) delete else remove
+      assignConditions(m).update
+      relation.cache = List(m)
+      val inter = through.build
+      through.fieldInfo(foreignKey).setValue(inter, m.id)
+      inter.save(throws = true)
+      through.relation.cache = List(inter)
+      inter
+    }
+
+    def :=(m: T): I = associate(m)
+
+    def remove(): Option[T] = inTransaction {
+      if (hasConstraint) {
+        throw ActiveRecordException.notNullConstraint(foreignKey)
+      }
+      
       val result = toOption
-      result.foreach(_.delete)
+      through.relation.foreach {r =>
+        r.setValue(foreignKey, None)
+        r.save(throws = true)
+      }
+      through.relation.cache = Nil
       relation.cache = Nil
+      result
+    }
+
+    override def delete(): Option[T] = inTransaction {
+      val result = super.delete
+      if (hasConstraint) through.delete else remove
       result
     }
   }
@@ -397,6 +467,17 @@ trait Associations {
           Config.schema.foreignKeyFromClass(self.getClass))
         new HasOneAssociation[this.type, T](self, conditions, key)
       }
+
+    protected def hasOneThrough[T <: AR, I <: AR](
+      through: SingularAssociation[this.type, I],
+      conditions: Map[String, Any] = Map.empty,
+      foreignKey: String = null
+    )(implicit m1: Manifest[T], m2: Manifest[I]): HasOneThroughAssociation[this.type, T, I] = {
+      val key = Option(foreignKey).getOrElse(
+        Config.schema.foreignKeyFromClass(m1.erasure))
+
+      new HasOneThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
+    }
 
     protected def hasMany[T <: AR]
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] =
