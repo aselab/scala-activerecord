@@ -20,6 +20,8 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val foos = table[Foo]
   val bars = table[Bar]
   val bazs = table[Baz]
+  val profiles = table[Profile]
+  val addresses = table[Address]
 
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
@@ -35,6 +37,8 @@ case class User(name: String, isAdmin: Boolean = false) extends ActiveRecord {
   lazy val group = belongsTo[Group]
   lazy val memberships = hasMany[ProjectMembership]
   lazy val projects = hasManyThrough[Project, ProjectMembership](memberships)
+  lazy val profile = hasOne[Profile]
+  lazy val address = hasOneThrough[Address, Profile](profile)
 }
 
 case class Group(name: String) extends ActiveRecord {
@@ -85,6 +89,15 @@ case class Baz(name: String) extends ActiveRecord {
   lazy val foos = hasAndBelongsToMany[Foo]
 }
 
+case class Profile(userId: Option[Long], addressId: Long) extends ActiveRecord {
+  lazy val user = belongsTo[User]
+  lazy val address = belongsTo[Address]
+}
+
+case class Address(country: String, city: String) extends ActiveRecord {
+  lazy val profile = hasOne[Profile]
+}
+
 object User extends ActiveRecordCompanion[User]
 object Group extends ActiveRecordCompanion[Group]
 object Project extends ActiveRecordCompanion[Project]
@@ -97,6 +110,9 @@ object ProjectMembership extends ActiveRecordCompanion[ProjectMembership]
 object Foo extends ActiveRecordCompanion[Foo]
 object Bar extends ActiveRecordCompanion[Bar]
 object Baz extends ActiveRecordCompanion[Baz]
+
+object Profile extends ActiveRecordCompanion[Profile]
+object Address extends ActiveRecordCompanion[Address]
 
 case class TimestampsModel(name: String) extends ActiveRecord with Timestamps
 object TimestampsModel extends ActiveRecordCompanion[TimestampsModel]

@@ -291,6 +291,33 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
         p1.groups.cache mustEqual List(group1, group2)
         p2.groups.cache must beEmpty
       }
+
+      "HasOne association" >> {
+        val (user1, user2) = (User("user1").create, User("user2").create)
+        val (address1, address2) = (Address("Japan", "city1").create, Address("Japan", "city2").create)
+        user1.address := address1
+        user2.address := address2
+        val (profile1, profile2) = (user1.profile.get, user2.profile.get)
+
+        val List(u1, u2) = User.where(_.name like "user%").includes(_.profile).toList
+        List(u1, u2).forall(u => u.profile.isLoaded) must beTrue
+
+        u1.profile.cache mustEqual List(profile1)
+        u2.profile.cache mustEqual List(profile2)
+      }
+
+      "HasOneThrough association" >> {
+        val (user1, user2) = (User("user1").create, User("user2").create)
+        val (address1, address2) = (Address("Japan", "city1").create, Address("Japan", "city2").create)
+        user1.address := address1
+        user2.address := address2
+
+        val List(u1, u2) = User.where(_.name like "user%").includes(_.address).toList
+        List(u1, u2).forall(u => u.address.isLoaded) must beTrue
+
+        u1.address.cache mustEqual List(address1)
+        u2.address.cache mustEqual List(address2)
+      }
     }
   }
 }
