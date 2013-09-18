@@ -48,6 +48,12 @@ trait DSL extends IterableConversion {
   implicit def belongsToAssociationToRecord[T <: AR]
     (association: BelongsToAssociation[_, T]): T = association.relation.head
 
+  implicit def singularAssociationToOption[T <: AR]
+    (association: SingularAssociation[_, T]): Option[T] = association.toOption
+
+  implicit def singularAssociationToRecord[T <: AR]
+    (association: SingularAssociation[_, T]): T = association.relation.head
+
   implicit def associationToRelation1[T <: AR]
     (association: {def relation1: Relation1[T, T]}) = association.relation1
 

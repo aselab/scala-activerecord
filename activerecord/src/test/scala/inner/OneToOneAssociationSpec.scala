@@ -108,7 +108,10 @@ object OneToOneAssociationSpec extends DatabaseSpecification {
     }
 
     "implicit conversions" >> new TestData {
-      pending
+      group.user := user
+      val u: Option[User] = group.user
+      u must beSome(user)
+      group.user.name mustEqual user.name
     }
   }
 
@@ -152,6 +155,12 @@ object OneToOneAssociationSpec extends DatabaseSpecification {
       Profile.exists(_.id === profile.id) must beTrue
       Address.exists(_.id === address.id) must beFalse
       user.optionAddress.toOption must beNone
+    }
+
+    "implicit conversions" >> new TestData {
+      val a: Option[Address] = user.address
+      a must beSome(address)
+      user.address.country mustEqual address.country
     }
   }
 }
