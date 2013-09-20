@@ -4,7 +4,11 @@ import aliases._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
+import play.api.i18n._
+import play.api.templates.Html
 import _root_.views.html.{helper => playhelper}
+import _root_.views.html.helper._
+
 
 class ActiveRecordFormatter[T <: AR](
   companion: ActiveRecordBaseCompanion[_, T], source: Option[T])
@@ -23,8 +27,7 @@ class ActiveRecordFormatter[T <: AR](
 }
 
 trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
-  lazy val defaultHelper = new PlayHelper(self)
-  def helper = defaultHelper
+  lazy val helper = new PlayHelper(self)
 
   def mapping(source: Option[T] = None) =
     of(new ActiveRecordFormatter[T](self, source))
@@ -49,13 +52,32 @@ class PlayHelper[T <: AR](companion: ActiveRecordBaseCompanion[_, T]) {
     }
   }
 
-  def inputText(field: Field, options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+  def inputText(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
     playhelper.inputText(field, inputOptions(field, options.toSeq):_*)
 
-  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+  def inputPassword(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
+    playhelper.inputPassword(field, inputOptions(field, options.toSeq):_*)
+
+  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
     playhelper.select(field, fields, inputOptions(field, options.toSeq):_*)
 
-  def textarea(field: Field, options: (Symbol, Any)*)(implicit lang: play.api.i18n.Lang) =
+  def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
     playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
+
+  implicit def fieldConstructor(implicit m: Manifest[T]) = new FieldConstructor {
+    def apply(elements: FieldElements) = {
+      val error = if (elements.hasErrors) "error" else ""
+      Html(<div class={"control-group %s %s".format(elements.args.get('_class).getOrElse(""), error)} 
+        id={elements.args.get('_id).map(_.toString).getOrElse(elements.id + "_field")}>
+        <label class="control-label" for={elements.id}>{Config.translator.field(m.erasure, elements.field.name)(elements.lang.toLocale)}</label>
+        <div class="controls">
+          {xml.Unparsed(elements.input.body)}
+          {if (elements.errors.length > 0) {
+              <span class="help-inline">{elements.errors(elements.lang).mkString(", ")}</span>
+          }}
+        </div>
+      </div>.toString)
+    }
+  }
 }
 
