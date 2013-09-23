@@ -45,7 +45,7 @@ object Tables extends ActiveRecordTables with PlaySupport {
 }
 ```
 
-### conf/application.conf (Optional)
+### conf/application.conf
 
 ```
 # Database configuration
