@@ -11,7 +11,6 @@ object ActiveRecordBuild extends Build {
      ) % key
 
   val defaultResolvers = Seq(
-    Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     Classpaths.typesafeReleases
   )
@@ -115,6 +114,7 @@ object ActiveRecordBuild extends Build {
   lazy val scalatra: Project = Project("scalatra", file("activerecord-scalatra"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-scalatra",
+      resolvers += "Akka Repo" at "http://repo.akka.io/repository",
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.2.0" % "provided",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided" artifacts (Artifact("javax.servlet", "jar", "jar"))

@@ -4,21 +4,14 @@
 
 ### project/Build.scala
 
-Add the following settings in `project/Build.scala`
+Add the following settings in `build.sbt` or `project/Build.scala`
 
 ```scala
-val appDependencies = Seq(
-  "com.github.aselab" %% "scala-activerecord" % "0.2.2",
-  "com.github.aselab" %% "scala-activerecord-play2" % "0.2.2",
+libraryDependencies ++= Seq(
+  "com.github.aselab" %% "scala-activerecord" % "0.2.3",
+  "com.github.aselab" %% "scala-activerecord-play2" % "0.2.3",
   jdbc,
   "com.h2database" % "h2" % "1.3.170"  // See Supported databases
-)
-
-val main = play.Project(appName, appVersion, appDependencies).settings(
-  // Add your own project settings here
-  resolvers ++= Seq(
-    Resolver.sonatypeRepo("releases")
-  )
 )
 ```
 
@@ -32,7 +25,7 @@ Add the following settings in `conf/play.plugins`
 
 ### app/models/Tables.scala
 
-with mixin `com.github.aselab.activerecord.PlaySupport`.
+Extend `ActiveRecordTables` with `com.github.aselab.activerecord.PlaySupport`.
 
 ```scala
 package models
@@ -62,3 +55,39 @@ db.activerecord.password=""
 activerecord.schema=models.Tables
 ```
 
+### PlayFormSupport(Optional)
+
+`com.github.aselab.activerecord.PlayFormSupport` provides `play.api.data.Form` and several view helpers.
+
+Extends your model's companion objects with PlayFormSupport.
+
+```scala
+package models
+
+import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
+
+case class Person(@Required name: String) extends ActiveRecord
+object Person extends ActiveRecordCompanion[Person] with PlayFormSupport[Person]
+```
+
+In the controllers:
+
+```scala
+def create = Action { implicit request =>
+  Person.form.bindFromRequest.fold(
+    errors => ...,
+    person => ...
+  )
+}
+
+def update(id: Long) = Action { implicit request =>
+  Person.find(id) match {
+    case Some(person) => Person.form(person).bindFromRequest.fold(
+      errors => ...,
+      person => ...
+    )
+    case None => NotFound
+  }
+}
+```

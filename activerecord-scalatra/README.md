@@ -9,19 +9,15 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 ```scala
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % "2.2.0",
-  "com.github.aselab" %% "scala-activerecord" % "0.2.2",
-  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.2",
+  "com.github.aselab" %% "scala-activerecord" % "0.2.3",
+  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.2.3",
   "com.h2database" % "h2" % "1.3.170"  // See Supported databases
-)
-
-resolvers ++= Seq(
-  Resolver.sonatypeRepo("releases")
 )
 ```
 
 ### app/models/Tables.scala
 
-with mixin `com.github.aselab.activerecord.ScalatraSupport`.
+Extend `ActiveRecordTables` with `com.github.aselab.activerecord.ScalatraSupport`.
 
 ```scala
 package models
@@ -37,7 +33,7 @@ object Tables extends ActiveRecordTables with ScalatraSupport {
 
 ### DatabaseSupport for controller
 
-With mixin `com.github.aselab.activerecord.scalatra.DatabaseSupport` to `ScalatraKernel`
+Extend `ScalatraKernel` with `com.github.aselab.activerecord.scalatra.DatabaseSupport`
 
 ```scala
 package controllers
