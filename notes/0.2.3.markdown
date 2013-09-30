@@ -1,0 +1,9 @@
+* Fixed a bug on prefixed tables (#31)
+* Fixed a bug on checking existence of tables (#32)
+* Added ability to skip validations and throw errors on save
+* Added ability to append records to associations
+* Added autoCreate and autoDrop settings ([document](https://github.com/aselab/scala-activerecord/wiki/Database-Settings#configuration-items))
+* Added support for one-to-one associations ([document](https://github.com/aselab/scala-activerecord/wiki/Associations#one-to-one))
+* Added PlayFormSupport ([document](https://github.com/aselab/scala-activerecord/tree/master/activerecord-play2#playformsupportoptional))
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.2.2...0.2.3)
