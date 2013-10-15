@@ -1,3 +1,5 @@
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.3.2")
 
-scalacOptions ++= Seq("-deprecation", "-unchecked")
+libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
+
+scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature")

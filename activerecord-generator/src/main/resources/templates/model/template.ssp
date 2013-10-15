@@ -1,0 +1,21 @@
+<%@ val packageName: String %>
+<%@ val modelName: String %>
+<%@ val fields: Seq[com.github.aselab.activerecord.generator.ModelInfo] %>
+<% val imports = fields.flatMap(_.imports).distinct %>
+package ${packageName}
+
+import com.github.aselab.activerecord._
+#if (imports.nonEmpty)
+${imports.map("import %s".format(_)).mkString("\n")}
+#end
+
+/**
+ * ${modelName} model.
+ *
+ * ${fields.map(_.param).mkString("\n * ")}
+ */
+case class ${modelName} (
+  ${fields.mkString(",\n  ")}
+) extends ActiveRecord
+
+object ${modelName} extends ActiveRecordCompanion[${modelName}]

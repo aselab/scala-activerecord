@@ -38,6 +38,7 @@ object ActiveRecordBuild extends Build {
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
       "com.h2database" % "h2" % "1.3.170" % "test",
       "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
+      "junit" % "junit" % "4.11" % "test",
       specs2("test").value
     ),
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -61,7 +62,7 @@ object ActiveRecordBuild extends Build {
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
-    .aggregate(core, specs, play2, scalatra)
+    .aggregate(core, specs, play2, scalatra, generator)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
@@ -73,8 +74,7 @@ object ActiveRecordBuild extends Build {
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
         "com.github.nscala-time" %% "nscala-time" % "0.2.0",
         "commons-validator" % "commons-validator" % "1.4.0",
-        "org.slf4j" % "slf4j-api" % "1.7.2",
-        "junit" % "junit" % "4.11" % "test"
+        "org.slf4j" % "slf4j-api" % "1.7.2"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
@@ -119,6 +119,21 @@ object ActiveRecordBuild extends Build {
       )
     )
   ).dependsOn(core)
+
+  lazy val generator = Project("generator", file("activerecord-generator"),
+    settings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++ Seq(
+      name := "scala-activerecord-generator",
+      sbtPlugin := true,
+      libraryDependencies ++= Seq(
+        "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
+        "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
+      ),
+      crossScalaVersions := Seq("2.10.2"),
+      ScriptedPlugin.scriptedBufferLog := false,
+      ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
+      watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
+    )
+  )
 
   val pomXml =
     <url>https://github.com/aselab/scala-activerecord</url>
