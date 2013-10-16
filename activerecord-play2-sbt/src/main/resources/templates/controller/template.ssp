@@ -1,0 +1,69 @@
+<%@ val packageName: String %>
+<%@ val controllerName: String %>
+<%@ val modelName: String %>
+<%@ val instanceName: String %>
+package ${packageName}
+
+import play.api.mvc._
+import play.api.data._
+import play.api.data.Forms._
+
+import models._
+import views.html.{${instanceName} => view}
+import com.github.aselab.activerecord.dsl._
+
+object ${controllerName} extends Controller {
+
+  def index = Action {
+    Ok(view.index(${modelName}.all.toList))
+  }
+
+  def show(id: Long) = Action {
+    ${modelName}.find(id) match {
+      case Some(${instanceName}) => Ok(view.show(${instanceName}))
+      case _ => NotFound
+    }
+  }
+
+  def newPage = Action { implicit request =>
+    Ok(view.edit(${modelName}.form, routes.${controllerName}.create, "Create", "${modelName} create"))
+  }
+
+  def create = Action { implicit request =>
+    ${modelName}.form.bindFromRequest.fold(
+      errors => BadRequest(view.edit(errors, routes.${controllerName}.create, "Create", "${modelName} create")), {
+      ${instanceName} =>
+        transaction { ${instanceName}.save }
+        Redirect(routes.${controllerName}.show(${instanceName}.id))
+    })
+  }
+
+  def edit(id: Long) = Action { implicit request =>
+    ${modelName}.find(id) match {
+      case Some(${instanceName}) => Ok(view.edit(${modelName}.form(${instanceName}), routes.${controllerName}.update(id), "Update", "${modelName} edit"))
+      case _ => NotFound
+    }
+  }
+
+  def update(id: Long) = Action { implicit request =>
+    ${modelName}.find(id) match {
+      case Some(${instanceName}) =>
+        ${modelName}.form(${instanceName}).bindFromRequest.fold(
+          errors => BadRequest(view.edit(errors, routes.${controllerName}.update(id), "Update", "${modelName} edit")), {
+          ${instanceName} =>
+            transaction { ${instanceName}.save }
+            Redirect(routes.${controllerName}.index)
+        })
+      case _ => NotFound
+    }
+  }
+
+  def delete(id: Long) = Action {
+    ${modelName}.find(id) match {
+      case Some(${instanceName}) =>
+        transaction { ${instanceName}.delete }
+        Ok
+      case _ => NotFound
+    }
+  }
+}

@@ -71,7 +71,7 @@ object ActiveRecordBuild extends Build {
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
-    .aggregate(core, specs, play2, scalatra, generator, scalatraSbt)
+    .aggregate(core, specs, play2, scalatra, generator, play2Sbt, scalatraSbt)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
@@ -138,6 +138,12 @@ object ActiveRecordBuild extends Build {
       )
     )
   )
+
+  lazy val play2Sbt = Project("play2-sbt", file("activerecord-play2-sbt"),
+    settings = pluginSettings ++ Seq(
+      name := "scala-activerecord-play2-sbt"
+    )
+  ).dependsOn(generator)
 
   lazy val scalatraSbt = Project("scalatra-sbt", file("activerecord-scalatra-sbt"),
     settings = pluginSettings ++ Seq(

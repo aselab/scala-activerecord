@@ -1,0 +1,36 @@
+@(user: models.User)
+
+@main("User info") {
+  <ul class="breadcrumb">
+   <li>
+     <a href="/">Home</a><span class="divider">/</span>
+   </li>
+   <li>
+   <a href="@routes.Users.index">User</a><span class="divider">/</span>
+   </li>
+   <li class="active">@user.login</li>
+  </ul>
+
+  <h1>User</h1>
+  <hr/>
+  <div class="span8">
+    <p>
+      <b>Login</b><br/>
+      <pre>@user.login</pre>
+    </p>
+    <p>
+      <b>Name</b><br/>
+      <pre>@user.name</pre>
+    </p>
+    <p>
+      <b>Email</b><br/>
+      <pre>@user.email</pre>
+    </p>
+
+    <div class="form-actions">
+      <a href="@routes.Users.index" class="btn">Back</a>
+      <a href="@routes.Users.edit(user.id)" class="btn">Edit</a>
+      <a href="#" data-redirect="@routes.Users.index" data-target="@routes.Users.delete(user.id)" class="btn btn-danger">Delete</a>
+    </div>
+  </div>
+}

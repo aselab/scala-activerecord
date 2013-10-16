@@ -1,0 +1,10 @@
+<%@ val uri: String %>
+<%@ val controllerName: String %>
+GET     /${uri}                       controllers.${controllerName}.index
+GET     /${uri}/new                   controllers.${controllerName}.newPage
+GET     /${uri}/:id                   controllers.${controllerName}.show(id: Long)
+POST    /${uri}                       controllers.${controllerName}.create
+GET     /${uri}/:id/edit              controllers.${controllerName}.edit(id: Long)
+POST    /${uri}/:id                   controllers.${controllerName}.update(id: Long)
+DELETE  /${uri}/:id                   controllers.${controllerName}.delete(id: Long)
+
