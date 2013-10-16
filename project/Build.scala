@@ -68,7 +68,7 @@ object ActiveRecordBuild extends Build {
       watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
     )
 
-  lazy val root: Project = Project("root", file("."))
+  lazy val root = project.in(file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
     .aggregate(core, specs, play2, scalatra, generator, play2Sbt, scalatraSbt)
@@ -95,60 +95,48 @@ object ActiveRecordBuild extends Build {
     )
   )
 
-  lazy val specs: Project = Project("specs", file("activerecord-specs"),
-    settings = defaultSettings ++ Seq(
-      name := "scala-activerecord-specs",
-      libraryDependencies += specs2("provided").value
-    )
+  lazy val specs = project.settings(defaultSettings:_*).settings(
+    name := "scala-activerecord-specs",
+    libraryDependencies += specs2("provided").value
   ).dependsOn(core)
 
-  lazy val play2: Project = Project("play2", file("activerecord-play2"),
-    settings = defaultSettings ++ Seq(
-      name := "scala-activerecord-play2",
-      resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
-      libraryDependencies ++= {
-        scalaBinaryVersion.value match {
-          case "2.10" => Seq(
-            "play" %% "play" % "2.1.0" % "provided",
-            "play" %% "play-jdbc" % "2.1.0" % "provided"
-          )
-          case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
-        }
+  lazy val play2 = project.settings(defaultSettings:_*).settings(
+    name := "scala-activerecord-play2",
+    resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
+    libraryDependencies ++= {
+      scalaBinaryVersion.value match {
+        case "2.10" => Seq(
+          "play" %% "play" % "2.1.0" % "provided",
+          "play" %% "play-jdbc" % "2.1.0" % "provided"
+        )
+        case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
       }
+    }
+  ).dependsOn(core)
+
+  lazy val scalatra = project.settings(defaultSettings:_*).settings(
+    name := "scala-activerecord-scalatra",
+    resolvers += "Akka Repo" at "http://repo.akka.io/repository",
+    libraryDependencies ++= Seq(
+      "org.scalatra" %% "scalatra" % "2.2.0" % "provided",
+      "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided" artifacts (Artifact("javax.servlet", "jar", "jar"))
     )
   ).dependsOn(core)
 
-  lazy val scalatra: Project = Project("scalatra", file("activerecord-scalatra"),
-    settings = defaultSettings ++ Seq(
-      name := "scala-activerecord-scalatra",
-      resolvers += "Akka Repo" at "http://repo.akka.io/repository",
-      libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % "2.2.0" % "provided",
-        "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      )
-    )
-  ).dependsOn(core)
-
-  lazy val generator = Project("generator", file("activerecord-generator"),
-    settings = pluginSettings ++ Seq(
-      name := "scala-activerecord-generator",
-      libraryDependencies ++= Seq(
-        "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
-        "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
-      )
+  lazy val generator = project.settings(pluginSettings:_*).settings(
+    name := "scala-activerecord-generator",
+    libraryDependencies ++= Seq(
+      "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
+      "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
     )
   )
 
-  lazy val play2Sbt = Project("play2-sbt", file("activerecord-play2-sbt"),
-    settings = pluginSettings ++ Seq(
-      name := "scala-activerecord-play2-sbt"
-    )
+  lazy val play2Sbt = project.settings(pluginSettings:_*).settings(
+    name := "scala-activerecord-play2-sbt"
   ).dependsOn(generator)
 
-  lazy val scalatraSbt = Project("scalatra-sbt", file("activerecord-scalatra-sbt"),
-    settings = pluginSettings ++ Seq(
-      name := "scala-activerecord-scalatra-sbt"
-    )
+  lazy val scalatraSbt = project.settings(pluginSettings:_*).settings(
+    name := "scala-activerecord-scalatra-sbt"
   ).dependsOn(generator)
 
   val pomXml =
