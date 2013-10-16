@@ -6,6 +6,7 @@ import generator.Keys._
 import collection.JavaConversions.enumerationAsScalaIterator
 
 object Plugin extends sbt.Plugin {
+  import generator._
 
   val generatorSettings = Seq(
     generate <<= Task.generate,
@@ -14,8 +15,6 @@ object Plugin extends sbt.Plugin {
   )
 
   object Task {
-    import generator._
-
     def copyTemplates = Def.task {
       val loader = this.getClass.getClassLoader
       val dir = templateDirectory.value
@@ -23,18 +22,16 @@ object Plugin extends sbt.Plugin {
       IOUtil.copyResources(loader, "templates", dir, logger)
     }
 
-    def generate = Def.inputTask { Generator.allParser.parsed match {
+    def generate = Def.inputTask { Generator.parser.parsed match {
       case (name: String, args) =>
-        val sourceDir = (scalaSource in Compile).value
-        val templateDir = templateDirectory.value
-        implicit val logger = streams.value.log
         val scalaJar = scalaInstance.value.libraryJar
-        val templateEngine = new ScalateTemplateEngine(scalaJar, templateDir)
-        val info = GenerateInfo(templateEngine, sourceDir, args)
-        Generator.generators(name).generate(info)
+        val templateDir = templateDirectory.value
+        val sourceDir = (scalaSource in Compile).value
+        val logger = streams.value.log
+        val c = GeneratorContext(scalaJar, templateDir, sourceDir, logger)
+        Generator(name).invoke(args)(c)
     }}
   }
+
+  ModelGenerator.register
 }
-
-
-

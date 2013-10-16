@@ -6,20 +6,15 @@ import sbt._
 import sbt.complete.DefaultParsers._
 import mojolly.inflector.InflectorImports._
 
-class ControllerGenerator extends Generator {
+object ControllerGenerator extends Generator[(String, Seq[Seq[String]])] {
   val name = "controller"
 
-  def generate(info: GenerateInfo) {
-    import info._
-    val (controllerName, actions) = parsed match {
-      case (name: String, acts: Seq[_]) =>
-        (name.capitalize, acts.map {
-          case action: Seq[_] => action.map(_.toString)
-        })
-    }
+  def generate(args: (String, Seq[Seq[String]])) {
+    val (name, actions) = args
+    val controllerName = name.capitalize
     val target = sourceDir / "controllers" / (controllerName.pluralize.titleize + ".scala")
 
-    val contents = engine.render("controller/template.ssp", Map(
+    val contents = render("controller/template.ssp", Map(
       ("packageName", "controllers"),
       ("controllerName", controllerName.pluralize.titleize),
       ("modelName", controllerName.singularize.titleize),
@@ -31,7 +26,7 @@ class ControllerGenerator extends Generator {
 
   val help = "[controllerName] [action]*"
 
-  override val argumentsParser = (token(NotSpace, "controllerName") ~ actions)
+  val argumentsParser = (token(NotSpace, "controllerName") ~ actions)
 
   lazy val actions = (token(Space) ~> (path ~ action).map{
     case (x ~ y) => List(x, y)
@@ -42,19 +37,17 @@ class ControllerGenerator extends Generator {
 
 }
 
-class RoutesGenerator extends Generator {
+object RoutesGenerator extends Generator[String] {
   val name = "routes"
 
-  def generate(info: GenerateInfo) {
-    import info._
-    val modelName = parsed.asInstanceOf[String]
+  def generate(name: String) {
     val target = file("./conf/routes")
     val parser = new Parser.PlayRoute(target)
-    parser.insertedContents(modelName, engine).foreach(IOUtil.save(target, _))
+    parser.insertedContents(name, engine).foreach(IOUtil.save(target, _))
   }
 
   val help = "[ModelName]"
 
-  override val argumentsParser = token(NotSpace, "modelName")
+  val argumentsParser = token(NotSpace, "modelName")
 }
 

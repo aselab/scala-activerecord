@@ -22,7 +22,7 @@ case class ModelInfo(
 }
 
 object ModelInfo {
-  def apply(fields: List[List[String]]): Seq[ModelInfo] = {
+  def apply(fields: Seq[Seq[String]]): Seq[ModelInfo] = {
     fields map {
       case List(name, typeName) =>
         ModelInfo(name, getType(typeName))
