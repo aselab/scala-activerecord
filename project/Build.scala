@@ -59,10 +59,19 @@ object ActiveRecordBuild extends Build {
     }
   ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings
 
+  val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
+    Seq(
+      sbtPlugin := true,
+      crossScalaVersions := Seq("2.10.2"),
+      ScriptedPlugin.scriptedBufferLog := false,
+      ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
+      watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
+    )
+
   lazy val root: Project = Project("root", file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
-    .aggregate(core, specs, play2, scalatra, generator)
+    .aggregate(core, specs, play2, scalatra, generator, scalatraSbt)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
@@ -121,19 +130,20 @@ object ActiveRecordBuild extends Build {
   ).dependsOn(core)
 
   lazy val generator = Project("generator", file("activerecord-generator"),
-    settings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++ Seq(
+    settings = pluginSettings ++ Seq(
       name := "scala-activerecord-generator",
-      sbtPlugin := true,
       libraryDependencies ++= Seq(
         "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
-      ),
-      crossScalaVersions := Seq("2.10.2"),
-      ScriptedPlugin.scriptedBufferLog := false,
-      ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
-      watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
+      )
     )
   )
+
+  lazy val scalatraSbt = Project("scalatra-sbt", file("activerecord-scalatra-sbt"),
+    settings = pluginSettings ++ Seq(
+      name := "scala-activerecord-scalatra-sbt"
+    )
+  ).dependsOn(generator)
 
   val pomXml =
     <url>https://github.com/aselab/scala-activerecord</url>
