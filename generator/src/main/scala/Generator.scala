@@ -14,7 +14,7 @@ case class GeneratorContext(
   val engine = new ScalateTemplateEngine(scalaJar, templateDir)
 }
 
-trait Generator[ArgumentsType] {
+trait Generator[ArgumentsType] extends DSL {
   def name: String
   def help: String
   def argumentsParser: Parser[ArgumentsType]
@@ -29,13 +29,10 @@ trait Generator[ArgumentsType] {
 
   lazy val Field = charClass(s => !s.isWhitespace && !(s == ':')).+.string
 
-  protected def render(template: String, attributes: Map[String, Any]) =
-    engine.render(template, attributes)
-
   private val _context = new DynamicVariable[GeneratorContext](null)
-  protected def engine = _context.value.engine
-  protected def sourceDir = _context.value.sourceDir
-  implicit protected def logger = _context.value.logger
+  def engine = _context.value.engine
+  def logger = _context.value.logger
+  def sourceDir = _context.value.sourceDir
   implicit protected def context = _context.value
 }
 
@@ -63,13 +60,11 @@ object ModelGenerator extends Generator[(String, Seq[Seq[String]])] {
     val modelName = name.capitalize
     val target = sourceDir / "models" / (modelName + ".scala")
 
-    val contents = render("model/template.ssp", Map(
+    template(target, "model/template.ssp", Map(
       ("packageName", "models"),
       ("modelName", modelName),
       ("fields", ModelInfo(fields))
     ))
-
-    IOUtil.save(target, contents)
   }
 
   val help = "ModelName fieldName1:type[:options] fieldName2:type[:options]"

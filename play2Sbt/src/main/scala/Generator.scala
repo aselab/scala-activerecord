@@ -14,14 +14,12 @@ object ControllerGenerator extends Generator[(String, Seq[Seq[String]])] {
     val controllerName = name.capitalize
     val target = sourceDir / "controllers" / (controllerName.pluralize.titleize + ".scala")
 
-    val contents = render("controller/template.ssp", Map(
+    template(target, "controller/template.ssp", Map(
       ("packageName", "controllers"),
       ("controllerName", controllerName.pluralize.titleize),
       ("modelName", controllerName.singularize.titleize),
       ("instanceName", controllerName.singularize.camelize)
     ))
-
-    IOUtil.save(target, contents)
   }
 
   val help = "[controllerName] [action]*"
@@ -43,7 +41,7 @@ object RoutesGenerator extends Generator[String] {
   def generate(name: String) {
     val target = file("./conf/routes")
     val parser = new Parser.PlayRoute(target)
-    parser.insertedContents(name, engine).foreach(IOUtil.save(target, _))
+    parser.insertedContents(name, engine).foreach(createFile(target, _))
   }
 
   val help = "[ModelName]"

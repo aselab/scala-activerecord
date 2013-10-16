@@ -3,7 +3,6 @@ package com.github.aselab.activerecord
 import sbt._
 import Keys._
 import generator.Keys._
-import collection.JavaConversions.enumerationAsScalaIterator
 
 object Plugin extends sbt.Plugin {
   import generator._
@@ -16,10 +15,12 @@ object Plugin extends sbt.Plugin {
 
   object Task {
     def copyTemplates = Def.task {
-      val loader = this.getClass.getClassLoader
       val dir = templateDirectory.value
-      val logger = streams.value.log
-      IOUtil.copyResources(loader, "templates", dir, logger)
+      val dsl = new DSL {
+        val logger = streams.value.log
+        val engine = null
+      }
+      dsl.copyResources(getClass.getClassLoader, "templates", dir)
     }
 
     def generate = Def.inputTask { Generator.parser.parsed match {

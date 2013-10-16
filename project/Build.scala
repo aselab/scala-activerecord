@@ -35,11 +35,11 @@ object ActiveRecordBuild extends Build {
     crossScalaVersions := Seq("2.10.2", "2.9.2"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
+      specs2("test").value,
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
       "com.h2database" % "h2" % "1.3.170" % "test",
       "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
-      "junit" % "junit" % "4.11" % "test",
-      specs2("test").value
+      "junit" % "junit" % "4.11" % "test"
     ),
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,

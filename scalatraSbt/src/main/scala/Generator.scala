@@ -13,13 +13,11 @@ object ControllerGenerator extends Generator[(String, Seq[Seq[String]])] {
     val controllerName = name.capitalize
     val target = sourceDir / "controllers" / (controllerName + ".scala")
 
-    val contents = render("controller/template.ssp", Map(
+    template(target, "controller/template.ssp", Map(
       ("packageName", "controllers"),
       ("controllerName", controllerName),
       ("actions", actions)
     ))
-
-    IOUtil.save(target, contents)
   }
 
   val help = "[controllerName] [action]*"
