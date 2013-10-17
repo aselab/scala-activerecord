@@ -2,13 +2,14 @@ package com.github.aselab.activerecord.generator
 
 import sbt._
 import collection.JavaConversions.enumerationAsScalaIterator
-import scala.util.matching.Regex.quoteReplacement
+import scala.util.matching.Regex
+import java.util.regex.Pattern
 
 trait DSL {
   def logger: Logger
   def engine: ScalateTemplateEngine
 
-  def createDirectory(dir: File) {
+  def createDirectory(dir: File): String = {
     val status = if (dir.isDirectory) {
       "exist"
     } else {
@@ -18,50 +19,62 @@ trait DSL {
     log(status, dir)
   }
 
-  def createFile(file: File, data: => String) {
+  def createFile(file: File, data: => String): String = {
+    val d = data
     val status = if (file.isFile) {
-      if (IO.read(file) == data) "identical" else "conflict"
+      if (IO.read(file) == d) "identical" else "conflict"
     } else {
       val dir = file.getParentFile
       if (!dir.isDirectory) createDirectory(dir)
-      IO.write(file, data)
+      IO.write(file, d)
       "create"
     }
     log(status, file)
 
-    if (status == "conflict") resolveConflict(file, data)
+    if (status == "conflict") resolveConflict(file, d) else status
   }
 
-  def copyFile(source: File, destination: File) =
+  def copyFile(source: File, destination: File): String =
     createFile(destination, IO.read(source))
 
-  def template(destination: File, resource: String, args: Map[String, Any]) =
+  def template(destination: File, resource: String, args: Map[String, Any]): String =
     createFile(destination, engine.render(resource, args))
 
-  def prependFile(file: File, data: => String) {
+  def prependFile(file: File, data: => String): String =
     insertFileAfter(file, "\\A", data)
-  }
 
-  def appendFile(file: File, data: => String) {
+  def appendFile(file: File, data: => String): String =
     insertFileBefore(file, "\\z", data) 
-  }
 
-  def insertFileBefore(file: File, regex: String, data: => String) {
-    val replacement = quoteReplacement(data) + "$0"
-    replaceFile(file, regex, replacement)
-  }
+  def insertFileBefore(file: File, regex: String, data: => String): String =
+    insert(file, regex, data, after = false)
 
-  def insertFileAfter(file: File, regex: String, data: => String) {
-    val replacement = "$0" + quoteReplacement(data)
-    replaceFile(file, regex, replacement)
-  }
+  def insertFileAfter(file: File, regex: String, data: => String): String =
+    insert(file, regex, data, after = true)
 
-  def replaceFile(file: File, regex: String, data: => String) {
+  private def insert(file: File, regex: String, data: => String,
+    after: Boolean): String = {
+    val d = data
     val content = IO.read(file)
-    if (!content.contains(data)) {
-      IO.write(file, content.replaceFirst(regex, data))
-      log("insert", file)
+    val (searchPattern, replacement) = if (after) {
+      ((regex + Pattern.quote(d)).r, "$0" + Regex.quoteReplacement(data))
+    } else {
+      ((Pattern.quote(d) + regex).r, Regex.quoteReplacement(data) + "$0")
     }
+
+    val status = if (searchPattern.findFirstIn(content).isEmpty) {
+      val replaced = content.replaceFirst(regex, replacement)
+      if (replaced != content) {
+        IO.write(file, replaced)
+        "insert"
+      } else {
+        "skip"
+      }
+    } else {
+      "identical"
+    }
+
+    log(status, file)
   }
 
   def copyResources(loader: ClassLoader, name: String, dir: File) {
@@ -93,9 +106,9 @@ trait DSL {
     )
   }
 
-  def resolveConflict(file: File, data: String) {
+  def resolveConflict(file: File, data: String): String = {
     val question = "The file %s exists, do you want to overwrite it? (y/n): ".format(file.getPath)
-    def ask {
+    def ask: String = {
       scala.Console.readLine(question).toLowerCase.headOption match {
         case Some('y') =>
           IO.write(file, data)
@@ -111,6 +124,8 @@ trait DSL {
   def compare(f1: File, f2: File): Boolean =
     IO.readBytes(f1) == IO.readBytes(f2)
 
-  def log(status: String, file: File) =
+  def log(status: String, file: File): String = {
     logger.info(status + ": " + file)
+    status
+  }
 }
