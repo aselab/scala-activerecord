@@ -4,6 +4,7 @@ import sbt._
 import sbt.complete.Parser
 import sbt.complete.DefaultParsers._
 import scala.util.DynamicVariable
+import mojolly.inflector.InflectorImports._
 
 case class GeneratorContext(
   scalaJar: File,
@@ -18,9 +19,9 @@ trait Generator[ArgumentsType] extends DSL {
   def name: String
   def help: String
   def argumentsParser: Parser[ArgumentsType]
-  def generate(args: ArgumentsType): Unit
+  protected def generate(args: ArgumentsType): Unit
 
-  def invoke(args: Any)(implicit context: GeneratorContext) =
+  def invoke(args: ArgumentsType)(implicit context: GeneratorContext) =
     _context.withValue(context) {
       generate(args.asInstanceOf[ArgumentsType])
     }
@@ -54,22 +55,22 @@ object Generator {
 
 object ModelGenerator extends Generator[(String, Seq[Seq[String]])] {
   val name = "model"
+  val help = "ModelName fieldName1:type[:options] fieldName2:type[:options]"
 
   def generate(args: (String, Seq[Seq[String]])) {
     val (name, fields) = args
-    val modelName = name.capitalize
-    val target = sourceDir / "models" / (modelName + ".scala")
+    val modelName = name.pascalize
+    val dest = sourceDir / "models" / (modelName + ".scala")
 
-    template(target, "model/template.ssp", Map(
-      ("packageName", "models"),
-      ("modelName", modelName),
-      ("fields", ModelInfo(fields))
+    template(dest, "models/model.ssp", Map(
+      "modelName" -> modelName,
+      "fields" -> ModelInfo(fields)
     ))
+
+    TableGenerator.invoke((modelName, None))
   }
 
-  val help = "ModelName fieldName1:type[:options] fieldName2:type[:options]"
-
-  val argumentsParser = (token(NotSpace, "modelName") ~ fields)
+  val argumentsParser = (token(NotSpace, "ModelName") ~ fields)
   lazy val fields = (token(Space) ~> (fieldName ~ fieldType ~ options).map{
     case (x ~ y ~ z) => (x +: y +: z).toList
   }).* <~ SpaceClass.*
@@ -77,5 +78,30 @@ object ModelGenerator extends Generator[(String, Seq[Seq[String]])] {
   lazy val fieldName = token(Field <~ token(':'), "fieldName")
   lazy val fieldType = token(Field).examples(ModelInfo.allTypes: _*)
   lazy val options = (token(':') ~> token(Field).examples(ModelInfo.allOptions: _*)).*
+}
+
+object TableGenerator extends Generator[(String, Option[String])] {
+  val name = "table"
+  val help = "ModelName [tableName]"
+
+  def generate(args: (String, Option[String])) {
+    val (modelName, tableName) = args
+    val table = tableName.getOrElse(modelName.underscore.pluralize)
+    var insertText = """lazy val %s = table[%s]("%s")""".format(
+      modelName.camelize.pluralize, modelName.pascalize, table
+    )
+    val dest = sourceDir / "models" / "Tables.scala"
+
+    if (dest.exists) {
+      val regex = "ActiveRecordTables[^\\{]*\\{"
+      insertFileAfter(dest, regex, "\n  " + insertText)
+    } else {
+      template(dest, "models/schema.ssp", Map(
+        "insertText" -> insertText
+      ))
+    }
+  }
+
+  val argumentsParser = (token(NotSpace, "ModelName") ~ ((token(Space) ~> token(NotSpace, "tableName")).?))
 }
 

@@ -1,0 +1,11 @@
+<%@ val insertText: String %>
+package models
+
+import com.github.aselab.activerecord._
+
+/**
+ * Schema definition.
+ */
+object Tables extends ActiveRecordTables {
+  ${insertText}
+}

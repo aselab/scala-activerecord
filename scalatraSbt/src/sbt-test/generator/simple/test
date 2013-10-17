@@ -2,7 +2,9 @@
 $ exists src/main/scala/controllers/Person.scala
 > generate model person name:string:required age:int
 $ exists src/main/scala/models/Person.scala
+$ exists src/main/scala/models/Tables.scala
 > copyTemplates
 $ exists templates/controller/template.ssp
-$ exists templates/model/template.ssp
+$ exists templates/models/schema.ssp
+$ exists templates/models/model.ssp
 

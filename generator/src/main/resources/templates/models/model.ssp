@@ -1,8 +1,7 @@
-<%@ val packageName: String %>
 <%@ val modelName: String %>
 <%@ val fields: Seq[com.github.aselab.activerecord.generator.ModelInfo] %>
 <% val imports = fields.flatMap(_.imports).distinct %>
-package ${packageName}
+package models
 
 import com.github.aselab.activerecord._
 #if (imports.nonEmpty)

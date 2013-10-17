@@ -1,8 +1,10 @@
 > generate model Group name:string
 $ exists app/models/Group.scala
+$ exists app/models/Tables.scala
 > generate controller group
 $ exists app/controllers/Groups.scala
 > copyTemplates
 $ exists templates/controller/template.ssp
-$ exists templates/model/template.ssp
+$ exists templates/models/schema.ssp
+$ exists templates/models/model.ssp
 $ exists templates/routes/template.ssp

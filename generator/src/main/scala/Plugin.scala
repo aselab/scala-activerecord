@@ -30,7 +30,7 @@ object Plugin extends sbt.Plugin {
         val sourceDir = (scalaSource in Compile).value
         val logger = streams.value.log
         val c = GeneratorContext(scalaJar, templateDir, sourceDir, logger)
-        Generator(name).invoke(args)(c)
+        Generator(name).asInstanceOf[Generator[Any]].invoke(args)(c)
     }}
   }
 
