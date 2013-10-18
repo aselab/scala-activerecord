@@ -1,8 +1,7 @@
-<%@ val packageName: String %>
 <%@ val controllerName: String %>
 <%@ val modelName: String %>
 <%@ val instanceName: String %>
-package ${packageName}
+package controllers
 
 import play.api.mvc._
 import play.api.data._

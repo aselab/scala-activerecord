@@ -7,5 +7,5 @@ import com.github.aselab.activerecord._
  * Schema definition.
  */
 object Tables extends ActiveRecordTables {
-  ${insertText}
+  ${unescape(insertText)}
 }

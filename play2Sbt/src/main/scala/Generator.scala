@@ -6,46 +6,50 @@ import sbt._
 import sbt.complete.DefaultParsers._
 import mojolly.inflector.InflectorImports._
 
-object ControllerGenerator extends Generator[(String, Seq[Seq[String]])] {
+object ControllerGenerator extends Generator[(String, Seq[String])] {
   val name = "controller"
+  val help = "ControllerName [actions]*"
 
-  def generate(args: (String, Seq[Seq[String]])) {
+  val allActions = Seq("index", "show", "create", "update", "delete")
+
+  def generate(args: (String, Seq[String])) {
     val (name, actions) = args
-    val controllerName = name.capitalize
-    val target = sourceDir / "controllers" / (controllerName.pluralize.titleize + ".scala")
+    val className = name.pascalize
+    val target = sourceDir / "controllers" / (className + ".scala")
 
-    template(target, "controller/template.ssp", Map(
-      ("packageName", "controllers"),
-      ("controllerName", controllerName.pluralize.titleize),
-      ("modelName", controllerName.singularize.titleize),
-      ("instanceName", controllerName.singularize.camelize)
+    template(target, "controllers/controller.ssp", Map(
+      "className" -> className,
+      "actions" -> actions
     ))
+
+    RoutesGenerator.invoke(args)
   }
 
-  val help = "[controllerName] [action]*"
+  val argumentsParser = token(NotSpace, "ControllerName") ~ actions
 
-  val argumentsParser = (token(NotSpace, "controllerName") ~ actions)
-
-  lazy val actions = (token(Space) ~> (path ~ action).map{
-    case (x ~ y) => List(x, y)
-  }).* <~ SpaceClass.*
-
-  lazy val path = token(Field <~ token(':'), "path:action   e.g.) /index:get")
-  lazy val action = token(Field).examples("get", "post", "update", "delete")
-
+  lazy val actions = (token(Space) ~> token(NotSpace).examples(allActions:_*)).*
 }
 
-object RoutesGenerator extends Generator[String] {
+object RoutesGenerator extends Generator[(String, Seq[String])] {
   val name = "routes"
+  val help = "ControllerName [actions]*"
 
-  def generate(name: String) {
-    val target = file("./conf/routes")
-    val parser = new Parser.PlayRoute(target)
-    parser.insertedContents(name, engine).foreach(createFile(target, _))
+  def generate(args: (String, Seq[String])) {
+    val (name, actions) = args
+    val f = file("conf/routes")
+    val content = engine.render("conf/routes.ssp", Map(
+      "path" -> name.underscore,
+      "controllerName" -> name.pascalize,
+      "actions" -> actions
+    ))
+    if (f.exists) {
+      val regex = "^(:?[ \t]*#[^\n]*\n)*"
+      insertFileAfter(f, regex, content)
+    } else {
+      createFile(f, content)
+    }
   }
 
-  val help = "[ModelName]"
-
-  val argumentsParser = token(NotSpace, "modelName")
+  val argumentsParser = ControllerGenerator.argumentsParser
 }
 

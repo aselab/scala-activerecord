@@ -1,0 +1,42 @@
+<%@ val className: String %>
+<%@ val actions: Seq[String] %>
+package controllers
+
+import play.api.mvc._
+
+object ${className} extends Controller {
+#if (actions.contains("index"))
+
+  def index = Action {
+    NotImplemented
+  }#end
+#if (actions.contains("show"))
+
+  def show(id: Long) = Action {
+    NotImplemented
+  }#end
+#if (actions.contains("create"))
+
+  def newPage = Action { implicit request =>
+    NotImplemented
+  }
+
+  def create = Action { implicit request =>
+    NotImplemented
+  }#end
+#if (actions.contains("update"))
+
+  def edit(id: Long) = Action { implicit request =>
+    NotImplemented
+  }
+
+  def update(id: Long) = Action { implicit request =>
+    NotImplemented
+  }#end
+#if (actions.contains("delete"))
+
+  def delete(id: Long) = Action {
+    NotImplemented
+  }#end
+
+}
