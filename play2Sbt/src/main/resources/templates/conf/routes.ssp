@@ -1,18 +1,18 @@
 <%@ val path: String %>
 <%@ val controllerName: String %>
 <%@ val actions: Seq[String] %>
-
+<% val all = actions.contains("*") %>
 # ${controllerName} routes
-#if (actions.contains("index"))
+#if (all || actions.contains("index"))
 GET     /${path}                       controllers.${controllerName}.index#end
-#if (actions.contains("create"))
+#if (all || actions.contains("create"))
 GET     /${path}/new                   controllers.${controllerName}.newPage#end
-#if (actions.contains("show"))
+#if (all || actions.contains("show"))
 GET     /${path}/:id                   controllers.${controllerName}.show(id: Long)#end
-#if (actions.contains("create"))
+#if (all || actions.contains("create"))
 POST    /${path}                       controllers.${controllerName}.create#end
-#if (actions.contains("update"))
+#if (all || actions.contains("update"))
 GET     /${path}/:id/edit              controllers.${controllerName}.edit(id: Long)
 POST    /${path}/:id                   controllers.${controllerName}.update(id: Long)#end
-#if (actions.contains("delete"))
+#if (all || actions.contains("delete"))
 DELETE  /${path}/:id                   controllers.${controllerName}.delete(id: Long)#end

@@ -127,7 +127,6 @@ object ActiveRecordBuild extends Build {
     name := "scala-activerecord-generator",
     libraryDependencies ++= Seq(
       "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
-      "org.slf4j" % "slf4j-nop" % "1.7.5",
       "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
     )
   )

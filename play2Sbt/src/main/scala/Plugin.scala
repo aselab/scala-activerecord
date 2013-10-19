@@ -7,5 +7,6 @@ object Plugin extends sbt.Plugin {
 
   ControllerGenerator.register
   RoutesGenerator.register
+  ScaffoldGenerator.register
 }
 

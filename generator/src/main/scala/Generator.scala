@@ -55,7 +55,7 @@ object Generator {
 
 object ModelGenerator extends Generator[(String, Seq[Seq[String]])] {
   val name = "model"
-  val help = "ModelName fieldName1:type[:options] fieldName2:type[:options]"
+  val help = "ModelName [fieldName1:type[:options] fieldName2:type[:options]]"
 
   def generate(args: (String, Seq[Seq[String]])) {
     val (name, fields) = args

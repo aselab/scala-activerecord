@@ -10,7 +10,7 @@ object ControllerGenerator extends Generator[(String, Seq[String])] {
   val name = "controller"
   val help = "ControllerName [actions]*"
 
-  val allActions = Seq("index", "show", "create", "update", "delete")
+  val allActions = Seq("index", "show", "create", "update", "delete", "*")
 
   def generate(args: (String, Seq[String])) {
     val (name, actions) = args
@@ -53,3 +53,25 @@ object RoutesGenerator extends Generator[(String, Seq[String])] {
   val argumentsParser = ControllerGenerator.argumentsParser
 }
 
+object ScaffoldGenerator extends Generator[(String, Seq[Seq[String]])] {
+  val name = "scaffold"
+  val help = ModelGenerator.help
+
+  def generate(args: (String, Seq[Seq[String]])) {
+    val (name, fields) = args
+    val controller = name.pascalize.pluralize
+    val model = name.pascalize.singularize
+
+    template(sourceDir / "controllers" / (controller + ".scala"),
+      "controllers/scaffold.ssp", Map(
+        "Controller" -> controller,
+        "Model" -> model
+      )
+    )
+
+    RoutesGenerator.invoke((controller, Seq("*")))
+    ModelGenerator.invoke(args)
+  }
+
+  val argumentsParser = ModelGenerator.argumentsParser
+}

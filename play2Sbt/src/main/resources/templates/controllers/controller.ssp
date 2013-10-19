@@ -1,21 +1,22 @@
 <%@ val className: String %>
 <%@ val actions: Seq[String] %>
+<% val all = actions.contains("*") %>
 package controllers
 
 import play.api.mvc._
 
 object ${className} extends Controller {
-#if (actions.contains("index"))
+#if (all || actions.contains("index"))
 
   def index = Action {
     NotImplemented
   }#end
-#if (actions.contains("show"))
+#if (all || actions.contains("show"))
 
   def show(id: Long) = Action {
     NotImplemented
   }#end
-#if (actions.contains("create"))
+#if (all || actions.contains("create"))
 
   def newPage = Action { implicit request =>
     NotImplemented
@@ -24,7 +25,7 @@ object ${className} extends Controller {
   def create = Action { implicit request =>
     NotImplemented
   }#end
-#if (actions.contains("update"))
+#if (all || actions.contains("update"))
 
   def edit(id: Long) = Action { implicit request =>
     NotImplemented
@@ -33,7 +34,7 @@ object ${className} extends Controller {
   def update(id: Long) = Action { implicit request =>
     NotImplemented
   }#end
-#if (actions.contains("delete"))
+#if (all || actions.contains("delete"))
 
   def delete(id: Long) = Action {
     NotImplemented

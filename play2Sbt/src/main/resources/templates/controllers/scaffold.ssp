@@ -1,66 +1,65 @@
-<%@ val controllerName: String %>
-<%@ val modelName: String %>
-<%@ val instanceName: String %>
+<%@ val Controller: String %>
+<%@ val Model: String %>
+#import(mojolly.inflector.InflectorImports._)
+<% val view = "views.html." + Controller.underscore %>
+<% val instance = Model.camelize %>
 package controllers
 
 import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
 
 import models._
-import views.html.{${instanceName} => view}
 import com.github.aselab.activerecord.dsl._
 
-object ${controllerName} extends Controller {
+object ${Controller} extends Controller {
 
   def index = Action {
-    Ok(view.index(${modelName}.all.toList))
+    Ok(${view}.index(${Model}.all.toList))
   }
 
   def show(id: Long) = Action {
-    ${modelName}.find(id) match {
-      case Some(${instanceName}) => Ok(view.show(${instanceName}))
+    ${Model}.find(id) match {
+      case Some(${instance}) => Ok(${view}.show(${instance}))
       case _ => NotFound
     }
   }
 
   def newPage = Action { implicit request =>
-    Ok(view.edit(${modelName}.form, routes.${controllerName}.create, "Create", "${modelName} create"))
+    Ok(view.edit(${Model}.form, routes.${Controller}.create))
   }
 
   def create = Action { implicit request =>
-    ${modelName}.form.bindFromRequest.fold(
-      errors => BadRequest(view.edit(errors, routes.${controllerName}.create, "Create", "${modelName} create")), {
-      ${instanceName} =>
-        transaction { ${instanceName}.save }
-        Redirect(routes.${controllerName}.show(${instanceName}.id))
+    ${Model}.form.bindFromRequest.fold(
+      errors => BadRequest(${view}.edit(errors, routes.${Controller}.create), {
+      ${instance} =>
+        transaction { ${instance}.save }
+        Redirect(routes.${Controller}.show(${instance}.id))
     })
   }
 
   def edit(id: Long) = Action { implicit request =>
-    ${modelName}.find(id) match {
-      case Some(${instanceName}) => Ok(view.edit(${modelName}.form(${instanceName}), routes.${controllerName}.update(id), "Update", "${modelName} edit"))
+    ${Model}.find(id) match {
+      case Some(${instance}) => Ok(${view}.edit(${Model}.form(${instance}), routes.${Controller}.update(id))
       case _ => NotFound
     }
   }
 
   def update(id: Long) = Action { implicit request =>
-    ${modelName}.find(id) match {
-      case Some(${instanceName}) =>
-        ${modelName}.form(${instanceName}).bindFromRequest.fold(
-          errors => BadRequest(view.edit(errors, routes.${controllerName}.update(id), "Update", "${modelName} edit")), {
-          ${instanceName} =>
-            transaction { ${instanceName}.save }
-            Redirect(routes.${controllerName}.index)
+    ${Model}.find(id) match {
+      case Some(${instance}) =>
+        ${Model}.form(${instance}).bindFromRequest.fold(
+          errors => BadRequest(${view}.edit(errors, routes.${Controller}.update(id), {
+          ${instance} =>
+            transaction { ${instance}.save }
+            Redirect(routes.${Controller}.index)
         })
       case _ => NotFound
     }
   }
 
   def delete(id: Long) = Action {
-    ${modelName}.find(id) match {
-      case Some(${instanceName}) =>
-        transaction { ${instanceName}.delete }
+    ${Model}.find(id) match {
+      case Some(${instance}) =>
+        transaction { ${instance}.delete }
         Ok
       case _ => NotFound
     }
