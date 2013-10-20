@@ -2,6 +2,7 @@
 <%@ val controllerName: String %>
 <%@ val actions: Seq[String] %>
 <% val all = actions.contains("*") %>
+
 # ${controllerName} routes
 #if (all || actions.contains("index"))
 GET     /${path}                       controllers.${controllerName}.index#end
@@ -15,4 +16,5 @@ POST    /${path}                       controllers.${controllerName}.create#end
 GET     /${path}/:id/edit              controllers.${controllerName}.edit(id: Long)
 POST    /${path}/:id                   controllers.${controllerName}.update(id: Long)#end
 #if (all || actions.contains("delete"))
-DELETE  /${path}/:id                   controllers.${controllerName}.delete(id: Long)#end
+DELETE  /${path}/:id                   controllers.${controllerName}.delete(id: Long)
+#end

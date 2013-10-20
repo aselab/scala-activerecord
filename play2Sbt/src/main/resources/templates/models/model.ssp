@@ -18,4 +18,4 @@ case class ${modelName} (
   ${fields.mkString(",\n  ")}
 ) extends ActiveRecord
 
-object ${modelName} extends ActiveRecordCompanion[${modelName}]
+object ${modelName} extends ActiveRecordCompanion[${modelName}] with PlayFormSupport[${modelName}]

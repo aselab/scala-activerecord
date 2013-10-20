@@ -61,13 +61,20 @@ object ScaffoldGenerator extends Generator[(String, Seq[Seq[String]])] {
     val (name, fields) = args
     val controller = name.pascalize.pluralize
     val model = name.pascalize.singularize
+    val params = Map(
+      "controller" -> controller,
+      "model" -> model,
+      "columns" -> fields.map(_.head)
+    )
 
     template(sourceDir / "controllers" / (controller + ".scala"),
-      "controllers/scaffold.ssp", Map(
-        "Controller" -> controller,
-        "Model" -> model
-      )
+      "controllers/scaffold.ssp", params
     )
+
+    val base = sourceDir / "views" / controller.underscore
+    template(base / "index.scala.html", "views/index.ssp", params)
+    template(base / "show.scala.html", "views/show.ssp", params)
+    template(base / "edit.scala.html", "views/edit.ssp", params)
 
     RoutesGenerator.invoke((controller, Seq("*")))
     ModelGenerator.invoke(args)

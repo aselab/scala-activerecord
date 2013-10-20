@@ -1,8 +1,8 @@
-<%@ val Controller: String %>
-<%@ val Model: String %>
-#import(mojolly.inflector.InflectorImports._)
-<% val view = "views.html." + Controller.underscore %>
-<% val instance = Model.camelize %>
+<%@ val controller: String %>
+<%@ val model: String %>
+<% import mojolly.inflector.InflectorImports._ %>
+<% val view = "views.html." + controller.underscore %>
+<% val instance = model.camelize %>
 package controllers
 
 import play.api.mvc._
@@ -10,54 +10,54 @@ import play.api.mvc._
 import models._
 import com.github.aselab.activerecord.dsl._
 
-object ${Controller} extends Controller {
+object ${controller} extends Controller {
 
   def index = Action {
-    Ok(${view}.index(${Model}.all.toList))
+    Ok(${view}.index(${model}.all.toList))
   }
 
   def show(id: Long) = Action {
-    ${Model}.find(id) match {
+    ${model}.find(id) match {
       case Some(${instance}) => Ok(${view}.show(${instance}))
       case _ => NotFound
     }
   }
 
   def newPage = Action { implicit request =>
-    Ok(view.edit(${Model}.form, routes.${Controller}.create))
+    Ok(${view}.edit(${model}.form, routes.${controller}.create))
   }
 
   def create = Action { implicit request =>
-    ${Model}.form.bindFromRequest.fold(
-      errors => BadRequest(${view}.edit(errors, routes.${Controller}.create), {
+    ${model}.form.bindFromRequest.fold(
+      errors => BadRequest(${view}.edit(errors, routes.${controller}.create)), {
       ${instance} =>
         transaction { ${instance}.save }
-        Redirect(routes.${Controller}.show(${instance}.id))
+        Redirect(routes.${controller}.show(${instance}.id))
     })
   }
 
   def edit(id: Long) = Action { implicit request =>
-    ${Model}.find(id) match {
-      case Some(${instance}) => Ok(${view}.edit(${Model}.form(${instance}), routes.${Controller}.update(id))
+    ${model}.find(id) match {
+      case Some(${instance}) => Ok(${view}.edit(${model}.form(${instance}), routes.${controller}.update(id)))
       case _ => NotFound
     }
   }
 
   def update(id: Long) = Action { implicit request =>
-    ${Model}.find(id) match {
+    ${model}.find(id) match {
       case Some(${instance}) =>
-        ${Model}.form(${instance}).bindFromRequest.fold(
-          errors => BadRequest(${view}.edit(errors, routes.${Controller}.update(id), {
+        ${model}.form(${instance}).bindFromRequest.fold(
+          errors => BadRequest(${view}.edit(errors, routes.${controller}.update(id))), {
           ${instance} =>
             transaction { ${instance}.save }
-            Redirect(routes.${Controller}.index)
+            Redirect(routes.${controller}.index)
         })
       case _ => NotFound
     }
   }
 
   def delete(id: Long) = Action {
-    ${Model}.find(id) match {
+    ${model}.find(id) match {
       case Some(${instance}) =>
         transaction { ${instance}.delete }
         Ok

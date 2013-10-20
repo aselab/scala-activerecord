@@ -1,0 +1,21 @@
+<%@ val controller: String %>
+<%@ val model: String %>
+<%@ val columns: Seq[String] %>
+<% import mojolly.inflector.InflectorImports._ %>
+@(${model.camelize}: models.${model})
+
+@main("${model}") {
+  <h1>Show ${model}</h1>
+  <dl>
+#for (column <- columns)
+    <dt>${column.titleize}</dt>
+    <dd>@${model.camelize}.${column}</dd>
+#end
+  </dl>
+
+  <div class="form-actions">
+    <a href="@routes.${controller}.index" class="btn">Back</a>
+    <a href="@routes.${controller}.edit(${model.camelize}.id)" class="btn">Edit</a>
+    <a href="@routes.${controller}.delete(${model.camelize}.id)" class="btn btn-danger delete">Delete</a>
+  </div>
+}

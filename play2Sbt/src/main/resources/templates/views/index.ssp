@@ -1,0 +1,36 @@
+<%@ val controller: String %>
+<%@ val model: String %>
+<%@ val columns: Seq[String] %>
+<% import mojolly.inflector.InflectorImports._ %>
+@(${model.camelize.pluralize}: List[models.${model}])
+
+@main("${model}") {
+  <h1>Listing ${model.pluralize}</h1>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+#for (column <- columns)
+        <th>${column.titleize}</th>
+#end
+      </tr>
+    </thead>
+    <tbody>
+      @${model.camelize.pluralize}.map { ${model.camelize} =>
+        <tr>
+#for (column <- columns)
+          <td>@${model.camelize}.${column}</td>
+#end
+          <td>
+            <a href="@routes.${controller}.show(${model.camelize}.id)" class="btn">Show</a>
+            <a href="@routes.${controller}.edit(${model.camelize}.id)" class="btn">Edit</a>
+            <a href="@routes.${controller}.delete(${model.camelize}.id)" class="btn btn-danger delete">Delete</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="form-actions">
+    <a href="@routes.${controller}.newPage" class="btn btn-primary">Create</a>
+  </div>
+}

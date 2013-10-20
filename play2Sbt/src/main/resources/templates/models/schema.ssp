@@ -7,6 +7,6 @@ import com.github.aselab.activerecord.dsl._
 /**
  * Schema definition.
  */
-object Tables extends ActiveRecordTables {
+object Tables extends ActiveRecordTables with PlaySupport {
   ${unescape(insertText)}
 }
