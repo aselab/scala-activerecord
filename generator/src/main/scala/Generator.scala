@@ -1,18 +1,22 @@
 package com.github.aselab.activerecord.generator
 
 import sbt._
+import sbt.Keys._
+import Keys._
 import sbt.complete.Parser
 import sbt.complete.DefaultParsers._
 import scala.util.DynamicVariable
 import mojolly.inflector.InflectorImports._
 
-case class GeneratorContext(
-  scalaJar: File,
-  templateDir: File,
-  sourceDir: File,
-  logger: Logger
-) {
-  val engine = new ScalateTemplateEngine(scalaJar, templateDir)
+case class GeneratorContext(state: State, logger: Logger) {
+  val extracted: Extracted = Project.extract(state)
+  def apply[T](key: SettingKey[T]): T = extracted.get(key)
+  def apply[T](key: TaskKey[T]): T = extracted.runTask(key, state)._2
+
+  lazy val scalaJar: File = apply(scalaInstance).libraryJar
+  lazy val templateDir: File = apply(templateDirectory)
+  lazy val sourceDir: File = apply(scalaSource in Compile)
+  lazy val engine = new ScalateTemplateEngine(scalaJar, templateDir)
 }
 
 trait Generator[ArgumentsType] extends DSL {
@@ -31,9 +35,9 @@ trait Generator[ArgumentsType] extends DSL {
   lazy val Field = charClass(s => !s.isWhitespace && !(s == ':')).+.string
 
   private val _context = new DynamicVariable[GeneratorContext](null)
-  def engine = _context.value.engine
-  def logger = _context.value.logger
-  def sourceDir = _context.value.sourceDir
+  def engine = context.engine
+  def logger = context.logger
+  def sourceDir = context.sourceDir
   implicit protected def context = _context.value
 }
 

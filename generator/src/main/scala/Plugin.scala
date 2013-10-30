@@ -25,12 +25,8 @@ object Plugin extends sbt.Plugin {
 
     def generate = Def.inputTask { Generator.parser.parsed match {
       case (name: String, args) =>
-        val scalaJar = scalaInstance.value.libraryJar
-        val templateDir = templateDirectory.value
-        val sourceDir = (scalaSource in Compile).value
-        val logger = streams.value.log
-        val c = GeneratorContext(scalaJar, templateDir, sourceDir, logger)
-        Generator(name).asInstanceOf[Generator[Any]].invoke(args)(c)
+        val context = GeneratorContext(state.value, streams.value.log)
+        Generator(name).asInstanceOf[Generator[Any]].invoke(args)(context)
     }}
   }
 
