@@ -14,7 +14,7 @@ object ControllerGenerator extends Generator[(String, Seq[String])] {
 
   def generate(args: (String, Seq[String])) {
     val (name, actions) = args
-    val className = name.pascalize
+    val className = name.pascalize.pluralize
     val target = sourceDir / "controllers" / (className + ".scala")
 
     template(target, "controllers/controller.ssp", Map(

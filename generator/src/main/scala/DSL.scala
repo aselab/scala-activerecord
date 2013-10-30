@@ -86,7 +86,7 @@ trait DSL {
             val dst = dir / src.getPath.drop(root.getPath.size)
             if (src.isDirectory) {
               createDirectory(dst)
-            } else {
+            } else if (!dst.isFile) {
               copyFile(src, dst)
             }
           }
@@ -98,7 +98,7 @@ trait DSL {
             val dst = dir / e.getName.drop(entryName.size)
             if (e.isDirectory) {
               createDirectory(dst)
-            } else {
+            } else if (!dst.isFile) {
               createFile(dst, IO.readStream(jarFile.getInputStream(e)))
             }
           }

@@ -4,7 +4,11 @@ $ exists app/models/Tables.scala
 > generate controller group
 $ exists app/controllers/Groups.scala
 > copyTemplates
-$ exists templates/controller/template.ssp
+$ exists templates/conf/routes.ssp
+$ exists templates/controllers/controller.ssp
+$ exists templates/controllers/scaffold.ssp
 $ exists templates/models/schema.ssp
 $ exists templates/models/model.ssp
-$ exists templates/routes/template.ssp
+$ exists templates/views/edit.ssp
+$ exists templates/views/index.ssp
+$ exists templates/views/show.ssp
