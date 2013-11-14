@@ -41,7 +41,7 @@ trait IO extends Validatable { this: ProductModel =>
   def assign(data: Map[String, Any]): Unit = {
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
-      val value = if (info.isOption) Some(v) else v
+      val value = if (info.isOption) Some(v).filter(_ != "") else v
       this.setValue(k, value)
     }
   }
@@ -62,6 +62,7 @@ trait IO extends Validatable { this: ProductModel =>
         } else {
           data.get(key).collect {
             case v if !(info.isOption && v.isEmpty) => converter.deserialize(v)
+            case _ => ""
           }
         }
 

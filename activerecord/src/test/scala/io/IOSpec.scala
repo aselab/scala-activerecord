@@ -168,6 +168,20 @@ object IOSpec extends DatabaseSpecification with Mockito {
         m must equalTo(PrimitiveModel.newModel(5))
       }
 
+      "option type" in {
+        val m = PrimitiveModel.newInstance
+        m.ostring = Some("aaa")
+        m.oint = Some(34)
+        m.olong = Some(33L)
+        m.assignFormValues(Map(
+          "oint" -> "",
+          "ostring" -> ""
+        ))
+        m.ostring must beNone
+        m.oint must beNone
+        m.olong must beSome(33L)
+      }
+
       "list types" in {
         val m = ListModel.newInstance
         m.assignFormValues(Map(
