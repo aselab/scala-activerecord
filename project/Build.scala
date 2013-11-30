@@ -6,7 +6,7 @@ object ActiveRecordBuild extends Build {
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.10") "2.2.2" else "1.12.4.1"
+    val v = if (scalaBinaryVersion.value == "2.10") "2.3.4" else "1.12.4.1"
     "org.specs2" %% "specs2" % v % scope
   }
 
@@ -31,14 +31,14 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = Defaults.defaultSettings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.10.2",
-    crossScalaVersions := Seq("2.10.2", "2.9.2"),
+    scalaVersion := "2.10.3",
+    crossScalaVersions := Seq("2.10.3", "2.9.2"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
-      "com.h2database" % "h2" % "1.3.170" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.0.9" % "test",
+      "com.h2database" % "h2" % "1.3.174" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.0.13" % "test",
       "junit" % "junit" % "4.11" % "test"
     ),
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -78,12 +78,12 @@ object ActiveRecordBuild extends Build {
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
         "com.github.aselab" %% "squeryl" % "0.9.6-M1",
-        "com.typesafe" % "config" % "1.0.0",
-        "com.jolbox" % "bonecp" % "0.7.1.RELEASE",
+        "com.typesafe" % "config" % "1.0.2",
+        "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "0.2.0",
+        "com.github.nscala-time" %% "nscala-time" % "0.6.0",
         "commons-validator" % "commons-validator" % "1.4.0",
-        "org.slf4j" % "slf4j-api" % "1.7.2"
+        "org.slf4j" % "slf4j-api" % "1.7.5"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
@@ -106,8 +106,8 @@ object ActiveRecordBuild extends Build {
     libraryDependencies ++= {
       scalaBinaryVersion.value match {
         case "2.10" => Seq(
-          "play" %% "play" % "2.1.0" % "provided",
-          "play" %% "play-jdbc" % "2.1.0" % "provided"
+          "com.typesafe.play" %% "play" % "2.2.1" % "provided",
+          "com.typesafe.play" %% "play-jdbc" % "2.2.1" % "provided"
         )
         case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
       }
@@ -118,8 +118,8 @@ object ActiveRecordBuild extends Build {
     name := "scala-activerecord-scalatra",
     resolvers += "Akka Repo" at "http://repo.akka.io/repository",
     libraryDependencies ++= Seq(
-      "org.scalatra" %% "scalatra" % "2.2.0" % "provided",
-      "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "provided" artifacts (Artifact("javax.servlet", "jar", "jar"))
+      "org.scalatra" %% "scalatra" % "2.2.1" % "provided",
+      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   ).dependsOn(core)
 
