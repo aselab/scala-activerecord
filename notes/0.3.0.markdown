@@ -1,0 +1,14 @@
+* Added support for Scala 2.11 (drop support for Scala 2.9.x)
+* Added support for multiple schemas
+* Added BoneCP configuration settings (MaxConnectionAge, IdleMaxAge, IdleConnectionTestPeriod) (#50, #53)
+* Implemented dynamic Relation#orderBy (#40)
+* Added ability to remove one record from CollectionAssociation (#41)
+* Required validator now treats Option fields (#44)
+* Fixed a bug for assign empty value in optional field (#34)
+* Added MSSQL support (#38)
+* Added DB2 support
+* Added ActiveModel
+* Added sbt-plugins (play2, scalatra, generator)
+* Added factory methods for test
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.2.3...0.3.0)
