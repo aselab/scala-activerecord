@@ -1,6 +1,8 @@
 package com.github.aselab.activerecord
 
 import aliases._
+import io._
+import inner._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
@@ -10,10 +12,8 @@ import _root_.views.html.{helper => playhelper}
 import _root_.views.html.helper._
 
 
-class ActiveRecordFormatter[T <: AR](
-  companion: ActiveRecordBaseCompanion[_, T], source: Option[T])
-  (implicit m: Manifest[T]) extends Formatter[T] {
-
+class ActiveModelFormatter[T <: ProductModel with IO](
+  companion: ProductModelCompanion[T] with FormSupport[T], source: Option[T]) extends Formatter[T] { 
   def bind(key: String, data: Map[String, String]): Either[Seq[FormError], T] = {
     val m = companion.bind(data)(source.getOrElse(companion.newInstance))
     if (m.validate) {
@@ -26,11 +26,11 @@ class ActiveRecordFormatter[T <: AR](
   def unbind(key: String, value: T): Map[String, String] = companion.unbind(value)
 }
 
-trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
+trait PlayFormSupport[T <: ProductModel with IO] { self: FormSupport[T] with ProductModelCompanion[T] =>
   lazy val helper = new PlayHelper(self)
 
   def mapping(source: Option[T] = None) =
-    of(new ActiveRecordFormatter[T](self, source))
+    of(new ActiveModelFormatter[T](self, source))
 
   def form(source: T) = {
     val m = Option(source)
@@ -40,7 +40,7 @@ trait PlayFormSupport[T <: AR] { self: ActiveRecordBaseCompanion[_, T] =>
   def form = Form(mapping(), Map(), Nil, None)
 }
 
-class PlayHelper[T <: AR](companion: ActiveRecordBaseCompanion[_, T]) {
+class PlayHelper[T <: ProductModel with IO](companion: FormSupport[T]) {
   protected def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
     val isRequired = options.collectFirst{ case ('required, v) => v }
       .getOrElse(companion.isRequired(field.name))

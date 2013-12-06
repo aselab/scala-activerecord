@@ -3,8 +3,13 @@ package com.github.aselab.activerecord
 import com.github.aselab.activerecord.dsl._
 import inner._
 
-trait ActiveRecordBase[T] extends ProductModel with CRUDable
-  with ActiveRecord.AssociationSupport with validations.ValidationSupport with io.IO
+trait ActiveModel extends ProductModel with io.IO with validations.ValidationSupport {
+  def isNewRecord = true
+}
+
+trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T]
+
+trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.AssociationSupport
 {
   def id: T
   def isPersisted: Boolean
@@ -82,7 +87,7 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 object ActiveRecord extends inner.Relations with inner.Associations
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
-  extends ProductModelCompanion[T] with inner.CompanionConversion[T] with io.FormSupport[T] {
+  extends ActiveModelCompanion[T] with inner.CompanionConversion[T] {
   import reflections.ReflectionUtil._
   import ActiveRecord._
 

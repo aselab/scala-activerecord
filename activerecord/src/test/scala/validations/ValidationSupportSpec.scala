@@ -32,7 +32,7 @@ object ValidationSupportSpec extends DatabaseSpecification {
     @Accepted acceptedOption: Option[Boolean] = Some(true),
     @Email emailOption: Option[String] = Some("test@example.com"),
     @Format("""^\d+$""") formatOption: Option[String] = Some("100")
-  ) extends ActiveRecord
+  ) extends ActiveModel
 
   case class UserModel(
     @Transient @Confirmation var password: String,
@@ -41,7 +41,7 @@ object ValidationSupportSpec extends DatabaseSpecification {
 
   case class MissingConfirmationField(
     @Confirmation test: String
-  ) extends ActiveRecord
+  ) extends ActiveModel
 
   case class ValidationSupportModel(
     @Email email: String = ""
@@ -55,19 +55,19 @@ object ValidationSupportSpec extends DatabaseSpecification {
     @Required(on="create") onCreate: String = "a",
     @Required(on="update") onUpdate: String = "a",
     persisted: Boolean = false
-  ) extends ActiveRecord {
+  ) extends ActiveModel {
     override def isNewRecord = !persisted
   }
 
-  object CustomAnnotationModel extends ActiveRecordCompanion[CustomAnnotationModel]
-  object ValidationModel extends ActiveRecordCompanion[ValidationModel]
+  object CustomAnnotationModel extends ActiveModelCompanion[CustomAnnotationModel]
+  object ValidationModel extends ActiveModelCompanion[ValidationModel]
   object UserModel extends ActiveRecordCompanion[UserModel]
 
-  object MissingConfirmationField extends ActiveRecordCompanion[MissingConfirmationField]
+  object MissingConfirmationField extends ActiveModelCompanion[MissingConfirmationField]
 
   object ValidationSupportModel extends ProductModelCompanion[ValidationSupportModel]
 
-  object AnnotationOptionModel extends ActiveRecordCompanion[AnnotationOptionModel]
+  object AnnotationOptionModel extends ActiveModelCompanion[AnnotationOptionModel]
 
   "ValidationSupport" should {
     "doValidate" in {

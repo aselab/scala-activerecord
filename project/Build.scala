@@ -106,8 +106,8 @@ object ActiveRecordBuild extends Build {
     libraryDependencies ++= {
       scalaBinaryVersion.value match {
         case "2.10" => Seq(
-          "com.typesafe.play" %% "play" % "2.2.1" % "provided",
-          "com.typesafe.play" %% "play-jdbc" % "2.2.1" % "provided"
+          "play" %% "play" % "2.1.0" % "provided",
+          "play" %% "play-jdbc" % "2.1.0" % "provided"
         )
         case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
       }

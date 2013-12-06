@@ -10,8 +10,8 @@ import java.sql.Timestamp
 
 object IOSpec extends DatabaseSpecification with Mockito {
 
-  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveRecord
-  object ListModel extends ActiveRecordCompanion[ListModel] {
+  case class ListModel(l1: List[String], l2: List[Int]) extends ActiveModel
+  object ListModel extends ActiveModelCompanion[ListModel] {
     def create(addErrors: (String, String)*) = {
       val l = ListModel(Nil, Nil)
       addErrors.foreach{ case (k, v) => l.errors.add(k, v) }
@@ -22,10 +22,10 @@ object IOSpec extends DatabaseSpecification with Mockito {
   case class NestModel(
     @Required int: Int,
     list: ListModel
-  ) extends ActiveRecord {
+  ) extends ActiveModel {
     def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
   }
-  object NestModel extends ActiveRecordCompanion[NestModel] {
+  object NestModel extends ActiveModelCompanion[NestModel] {
     def create(l: ListModel, addErrors: (String, String)*) = {
       val n = NestModel(0, l)
       addErrors.foreach{ case (k, v) => n.errors.add(k, v) }
@@ -37,10 +37,10 @@ object IOSpec extends DatabaseSpecification with Mockito {
     @Required int: Int,
     nest: NestModel,
     nestlist: List[NestModel]
-  ) extends ActiveRecord {
+  ) extends ActiveModel {
     def this() = this(1, new NestModel, List(new NestModel, new NestModel))
   }
-  object ComplexModel extends ActiveRecordCompanion[ComplexModel]
+  object ComplexModel extends ActiveModelCompanion[ComplexModel]
 
   "IO" should {
     "toFormValues" in {
