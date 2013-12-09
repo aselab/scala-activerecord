@@ -11,13 +11,12 @@ class PlayConfig(
 ) extends ActiveRecordConfig {
   def classLoader = play.api.Play.application.classloader
 
-  def getString(key: String): Option[String] =
+  private def _getString(key: String): Option[String] =
     overrideSettings.get(key).map(_.toString).orElse(
       current.configuration.getString(key)
     )
 
-  def getString(key: String, default: String): String =
-    getString(key).getOrElse(default)
+  def getString(key: String): Option[String] = _getString("activerecord." + key)
 
   def getBoolean(key: String, default: Boolean): Boolean =
     overrideSettings.get(key).map(_.asInstanceOf[Boolean]).orElse(
@@ -25,16 +24,17 @@ class PlayConfig(
     ).getOrElse(default)
 
   def autoCreate: Boolean = getBoolean("activerecord.autoCreate", true)
+
   def autoDrop: Boolean = getBoolean("activerecord.autoDrop", false)
 
   def schemaClass: String =
-    getString("activerecord.schema", "models.Tables")
+    getString("schema").getOrElse("models.Tables")
 
   def connection: Connection =
     play.api.db.DB.getConnection("activerecord")
 
   lazy val adapter: DatabaseAdapter =
-    adapter(getString("db.activerecord.driver", "org.h2.Driver"))
+    adapter(_getString("db.activerecord.driver").getOrElse("org.h2.Driver"))
 
   def translator: i18n.Translator = PlayTranslator
 }
