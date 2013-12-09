@@ -11,10 +11,13 @@ class PlayConfig(
 ) extends ActiveRecordConfig {
   def classLoader = play.api.Play.application.classloader
 
-  def getString(key: String, default: String): String =
+  def getString(key: String): Option[String] =
     overrideSettings.get(key).map(_.toString).orElse(
       current.configuration.getString(key)
-    ).getOrElse(default)
+    )
+
+  def getString(key: String, default: String): String =
+    getString(key).getOrElse(default)
 
   def getBoolean(key: String, default: Boolean): Boolean =
     overrideSettings.get(key).map(_.asInstanceOf[Boolean]).orElse(
@@ -34,8 +37,6 @@ class PlayConfig(
     adapter(getString("db.activerecord.driver", "org.h2.Driver"))
 
   def translator: i18n.Translator = PlayTranslator
-
-  def timeZone: TimeZone = TimeZone.getDefault
 }
 
 object PlayTranslator extends i18n.Translator {

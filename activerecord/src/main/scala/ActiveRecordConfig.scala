@@ -10,10 +10,13 @@ import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
 import reflections.ReflectionUtil.classToCompanion
+import org.joda.time.format._
 
 object Config {
   private var _conf: ActiveRecordConfig = _
   private var _timeZone: TimeZone = _
+  private var _dateFormatter: DateTimeFormatter = _
+  private var _datetimeFormatter: DateTimeFormatter = _
 
   def confOption: Option[ActiveRecordConfig] = Option(_conf)
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
@@ -32,6 +35,11 @@ object Config {
 
   def timeZone: TimeZone = Option(_timeZone).getOrElse(conf.timeZone)
   def timeZone_=(value: TimeZone): Unit = _timeZone = value
+  def dateFormatter: DateTimeFormatter = Option(_dateFormatter).getOrElse(conf.dateFormatter)
+  def dateFormatter_=(value: DateTimeFormatter): Unit = _dateFormatter = value
+  def datetimeFormatter: DateTimeFormatter = Option(_datetimeFormatter).getOrElse(conf.datetimeFormatter)
+  def datetimeFormatter_=(value: DateTimeFormatter): Unit = _datetimeFormatter = value
+
   def logger: Logger = conf.logger
   def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
 }
@@ -42,6 +50,7 @@ trait ActiveRecordConfig {
   def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
+  def getString(key: String): Option[String]
   lazy val schema = catching(
     classOf[ClassNotFoundException], classOf[ClassCastException]
   ).withApply(e => throw ActiveRecordException.cannotLoadSchema(schemaClass)) {
@@ -63,7 +72,13 @@ trait ActiveRecordConfig {
     Session.cleanupResources
   }
   def translator: i18n.Translator
-  def timeZone: TimeZone
+  lazy val timeZone: TimeZone = getString("timeZone").map(TimeZone.getTimeZone)
+    .getOrElse(TimeZone.getDefault)
+  lazy val dateFormatter: DateTimeFormatter = getString("dateFormat").map(DateTimeFormat.forPattern)
+    .getOrElse(ISODateTimeFormat.date)
+  lazy val datetimeFormatter: DateTimeFormatter = getString("datetimeFormat").map(DateTimeFormat.forPattern)
+    .getOrElse(ISODateTimeFormat.dateTime)
+
   def classLoader: ClassLoader
 
   lazy val logger = LoggerFactory.getLogger("activerecord")
@@ -122,6 +137,4 @@ class DefaultConfig(
 
   def connection: Connection = pool.getConnection
   val translator: i18n.Translator = i18n.DefaultTranslator
-  lazy val timeZone = getString("timeZone").map(TimeZone.getTimeZone)
-    .getOrElse(TimeZone.getDefault)
 }

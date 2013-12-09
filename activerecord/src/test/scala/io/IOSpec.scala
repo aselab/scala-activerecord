@@ -61,8 +61,8 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "obigDecimal" -> "5",
           "double" -> "5.0",
           "odouble" -> "5.0",
-          "date" -> "1970-01-06T00:00:00.000Z",
-          "odate" -> "1970-01-06T00:00:00.000Z",
+          "date" -> "1970-01-06",
+          "odate" -> "1970-01-06",
           "int" -> "5",
           "oint" -> "5",
           "uuid" -> "00000000-0000-0005-0000-000000000005"
@@ -159,8 +159,8 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "obigDecimal" -> "5",
           "double" -> "5.0",
           "odouble" -> "5.0",
-          "date" -> "1970-01-06T09:00:00.000+09:00",
-          "odate" -> "1970-01-06T09:00:00.000+09:00",
+          "date" -> "1970-01-06",
+          "odate" -> "1970-01-06",
           "int" -> "5",
           "oint" -> "5",
           "uuid" -> "00000000-0000-0005-0000-000000000005"

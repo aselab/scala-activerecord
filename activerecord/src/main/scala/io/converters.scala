@@ -17,6 +17,8 @@ trait FormConverter[T] extends Converter[T, String] {
 }
 
 object FormConverter extends PrimitiveHandler[FormConverter[_]] {
+  def timezone = DateTimeZone.forTimeZone(Config.timeZone)
+
   val stringHandler = new FormConverter[String] {
     def deserialize(s: String): String = s
   }
@@ -46,13 +48,11 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
   }
 
   val timestampHandler = new FormConverter[Timestamp] {
-    override def serialize(v: Any): String = {
-      val timezone = DateTimeZone.forTimeZone(Config.timeZone)
-      new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
-    }
+    override def serialize(v: Any): String =
+      new DateTime(v, timezone).toString(Config.datetimeFormatter)
 
     def deserialize(s: String): Timestamp =
-      new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(s).millis)
+      new Timestamp(Config.datetimeFormatter.withZone(timezone).parseDateTime(s).millis)
   }
 
   val uuidHandler = new FormConverter[UUID] {
@@ -60,13 +60,11 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
   }
 
   val dateHandler = new FormConverter[Date] {
-    override def serialize(v: Any): String = {
-      val timezone = DateTimeZone.forTimeZone(Config.timeZone)
-      new DateTime(v).withZone(timezone).toString(ISODateTimeFormat.dateTime)
-    }
+    override def serialize(v: Any): String =
+      new DateTime(v, timezone).toString(Config.dateFormatter)
 
     def deserialize(s: String): Date =
-      ISODateTimeFormat.dateTime.parseDateTime(s).toDate
+      Config.dateFormatter.withZone(timezone).parseDateTime(s).toDate
   }
 }
 
