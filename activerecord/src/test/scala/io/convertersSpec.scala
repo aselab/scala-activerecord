@@ -7,7 +7,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.github.aselab.activerecord._
 
 object convertersSpec extends DatabaseSpecification {
-  override def config = Map("timeZone" -> "GMT")
+  def setConfig(conf: (String, String)*) = Config.conf = new DefaultConfig(overrideSettings = conf.toMap)
 
   "FormConverter" should {
     "String" in {
@@ -19,7 +19,8 @@ object convertersSpec extends DatabaseSpecification {
     "Date" in {
       val converter = FormConverter.get(classOf[Date]).get
 
-      "convert with the timezone setting when Config.timeZone is null" in {
+      "convert with the timezone setting when Config.timeZone is GMT" in {
+        setConfig("timeZone" -> "GMT")
         val string = "2012-05-06"
         val date = new DateTime(2012, 5, 6, 0, 0, 0, DateTimeZone.forID("GMT")).toDate
         converter.serialize(date) mustEqual string
@@ -27,26 +28,25 @@ object convertersSpec extends DatabaseSpecification {
       }
 
       "convert with Config.timeZone" in {
-        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
+        setConfig("timeZone" -> "Asia/Tokyo")
         val string = "2012-06-16"
         val date = Config.dateFormatter.parseDateTime(string).toDate
         val serialized = converter.serialize(date)
         val deserialized = converter.deserialize(string)
-        Config.timeZone = null
 
         serialized mustEqual string
         deserialized mustEqual date
       }
 
       "convert with Config.dateFormatter" in {
-        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
-        Config.dateFormatter = DateTimeFormat.forPattern("yyyy/MM/dd")
+        setConfig(
+          "timeZone" -> "Asia/Tokyo",
+          "dateFormat" -> "yyyy/MM/dd"
+        )
         val string = "2013/06/16"
         val date = Config.dateFormatter.parseDateTime(string).toDate
         val serialized = converter.serialize(date)
         val deserialized = converter.deserialize(string)
-        Config.timeZone = null
-        Config.dateFormatter = null
 
         serialized mustEqual string
         deserialized mustEqual date
@@ -56,33 +56,35 @@ object convertersSpec extends DatabaseSpecification {
     "Timestamp" in {
       val converter = FormConverter.get(classOf[Timestamp]).get
 
-      "convert with the timezone setting when Config.timeZone is null" in {
+      "convert with the timezone setting when Config.timeZone is GMT" in {
+        setConfig("timeZone" -> "GMT")
         val string = "2012-05-06T08:02:11.530Z"
-        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        val t = new Timestamp(new DateTime(2012, 5, 6, 8, 2, 11, 530, DateTimeZone.forID("GMT")).millis)
         converter.serialize(t) mustEqual string
         converter.deserialize(string) mustEqual t
       }
 
       "convert with Config.timeZone" in {
-        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
+        setConfig("timeZone" -> "Asia/Tokyo")
         val string = "2012-06-16T18:23:51.133+09:00"
-        val t = new Timestamp(ISODateTimeFormat.dateTime.parseDateTime(string).millis)
+        val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).millis)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
-        Config.timeZone = null
 
         serialized mustEqual string
         deserialized mustEqual t
       }
 
       "convert with Config.datetimeFormatter" in {
-        Config.timeZone = TimeZone.getTimeZone("Asia/Tokyo")
-        Config.datetimeFormatter = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmssZ")
+        setConfig(
+          "timeZone" -> "Asia/Tokyo",
+          "datetimeFormat" -> "yyyyMMdd'T'HHmmssZ"
+        )
+        Config.timeZone = DateTimeZone.forID("Asia/Tokyo")
         val string = "20120616T182351+0900"
         val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).millis)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
-        Config.timeZone = null
 
         serialized mustEqual string
         deserialized mustEqual t

@@ -11,10 +11,11 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
 import reflections.ReflectionUtil.classToCompanion
 import org.joda.time.format._
+import org.joda.time.DateTimeZone
 
 object Config {
   private var _conf: ActiveRecordConfig = _
-  private var _timeZone: TimeZone = _
+  private var _timeZone: DateTimeZone = _
   private var _dateFormatter: DateTimeFormatter = _
   private var _datetimeFormatter: DateTimeFormatter = _
 
@@ -33,8 +34,8 @@ object Config {
   def translator: i18n.Translator =
     confOption.map(_.translator).getOrElse(i18n.DefaultTranslator)
 
-  def timeZone: TimeZone = Option(_timeZone).getOrElse(conf.timeZone)
-  def timeZone_=(value: TimeZone): Unit = _timeZone = value
+  def timeZone: DateTimeZone = Option(_timeZone).getOrElse(conf.timeZone)
+  def timeZone_=(value: DateTimeZone): Unit = _timeZone = value
   def dateFormatter: DateTimeFormatter = Option(_dateFormatter).getOrElse(conf.dateFormatter)
   def dateFormatter_=(value: DateTimeFormatter): Unit = _dateFormatter = value
   def datetimeFormatter: DateTimeFormatter = Option(_datetimeFormatter).getOrElse(conf.datetimeFormatter)
@@ -72,12 +73,12 @@ trait ActiveRecordConfig {
     Session.cleanupResources
   }
   def translator: i18n.Translator
-  lazy val timeZone: TimeZone = getString("timeZone").map(TimeZone.getTimeZone)
-    .getOrElse(TimeZone.getDefault)
+  lazy val timeZone: DateTimeZone = DateTimeZone.forTimeZone(getString("timeZone").map(TimeZone.getTimeZone)
+    .getOrElse(TimeZone.getDefault))
   lazy val dateFormatter: DateTimeFormatter = getString("dateFormat").map(DateTimeFormat.forPattern)
-    .getOrElse(ISODateTimeFormat.date)
+    .getOrElse(ISODateTimeFormat.date).withZone(timeZone)
   lazy val datetimeFormatter: DateTimeFormatter = getString("datetimeFormat").map(DateTimeFormat.forPattern)
-    .getOrElse(ISODateTimeFormat.dateTime)
+    .getOrElse(ISODateTimeFormat.dateTime).withZone(timeZone)
 
   def classLoader: ClassLoader
 
