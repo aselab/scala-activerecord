@@ -6,7 +6,7 @@ object ActiveRecordBuild extends Build {
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.10") "2.3.4" else "1.12.4.1"
+    val v = if (scalaBinaryVersion.value == "2.10") "2.3.6" else "1.12.4.1"
     "org.specs2" %% "specs2" % v % scope
   }
 
@@ -62,7 +62,7 @@ object ActiveRecordBuild extends Build {
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
     Seq(
       sbtPlugin := true,
-      crossScalaVersions := Seq("2.10.2"),
+      crossScalaVersions := Seq("2.10.3"),
       ScriptedPlugin.scriptedBufferLog := false,
       ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
       watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
@@ -118,7 +118,7 @@ object ActiveRecordBuild extends Build {
     name := "scala-activerecord-scalatra",
     resolvers += "Akka Repo" at "http://repo.akka.io/repository",
     libraryDependencies ++= Seq(
-      "org.scalatra" %% "scalatra" % "2.2.1" % "provided",
+      "org.scalatra" %% "scalatra" % "2.2.2" % "provided",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   ).dependsOn(core)
