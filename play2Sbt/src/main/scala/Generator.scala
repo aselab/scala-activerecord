@@ -1,6 +1,7 @@
-package com.github.aselab.activerecord.play
+package com.github.aselab.activerecord.play.sbt
 
-import com.github.aselab.activerecord.generator._
+import com.github.aselab.sbt.Generator
+import com.github.aselab.activerecord.sbt._
 
 import sbt._
 import sbt.complete.DefaultParsers._
@@ -14,7 +15,7 @@ object ControllerGenerator extends Generator[(String, Seq[String])] {
 
   def generate(args: (String, Seq[String])) {
     val (name, actions) = args
-    val className = name.pascalize.pluralize
+    val className = name.pascalize
     val target = sourceDir / "controllers" / (className + ".scala")
 
     template(target, "controllers/controller.ssp", Map(
@@ -25,9 +26,9 @@ object ControllerGenerator extends Generator[(String, Seq[String])] {
     RoutesGenerator.invoke(args)
   }
 
-  val argumentsParser = token(NotSpace, "ControllerName") ~ actions
+  val argumentsParser = Space ~> token(ScalaID, "ControllerName") ~ actions
 
-  lazy val actions = (token(Space) ~> token(NotSpace).examples(allActions:_*)).*
+  lazy val actions = (Space ~> ScalaID.examples(allActions:_*)).*
 }
 
 object RoutesGenerator extends Generator[(String, Seq[String])] {
@@ -37,14 +38,14 @@ object RoutesGenerator extends Generator[(String, Seq[String])] {
   def generate(args: (String, Seq[String])) {
     val (name, actions) = args
     val f = file("conf/routes")
-    val content = engine.render("conf/routes.ssp", Map(
+    val content = scalateTemplate.render("conf/routes.ssp", Map(
       "path" -> name.underscore,
       "controllerName" -> name.pascalize,
       "actions" -> actions
     ))
     if (f.exists) {
       val regex = "^(:?[ \t]*#[^\n]*\n)*"
-      insertFileAfter(f, regex, content)
+      insertIntoFileAfter(f, regex, content)
     } else {
       createFile(f, content)
     }

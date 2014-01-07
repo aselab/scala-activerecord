@@ -1,6 +1,6 @@
 <%@ val packageName: String %>
 <%@ val controllerName: String %>
-<%@ val actions: List[List[String]] %>
+<%@ val actions: Seq[(String, String)] %>
 package ${packageName}
 
 import com.github.aselab.activerecord.dsl._
@@ -10,8 +10,8 @@ import org.scalatra._
  * ${controllerName} controller.
  */
 class ${controllerName} extends ScalatraServlet {
-<% actions.map { case List(path, action) =>%>
-  ${action}("${path}") {
+<% actions.map { case (method, path) => %>
+  ${method}("${path}") {
 
   }
 

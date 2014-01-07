@@ -1,34 +1,34 @@
-package com.github.aselab.activerecord.scalatra
+package com.github.aselab.activerecord.scalatra.sbt
 
-import com.github.aselab.activerecord.generator._
+import com.github.aselab.sbt.Generator
+import com.github.aselab.activerecord.sbt._
 
 import sbt._
 import sbt.complete.DefaultParsers._
+import mojolly.inflector.InflectorImports._
 
-object ControllerGenerator extends Generator[(String, Seq[Seq[String]])] {
+object ControllerGenerator extends Generator[(String, Seq[(String, String)])] {
   val name = "controller"
 
-  def generate(args: (String, Seq[Seq[String]])) {
+  def generate(args: (String, Seq[(String, String)])) {
     val (name, actions) = args
-    val controllerName = name.capitalize
+    val controllerName = name.pascalize
     val target = sourceDir / "controllers" / (controllerName + ".scala")
 
     template(target, "controller/template.ssp", Map(
-      ("packageName", "controllers"),
-      ("controllerName", controllerName),
-      ("actions", actions)
+      "packageName" -> "controllers",
+      "controllerName" -> controllerName,
+      "actions" -> actions
     ))
   }
 
   val help = "[controllerName] [action]*"
 
-  val argumentsParser = (token(NotSpace, "controllerName") ~ actions)
+  val argumentsParser = Space ~> token(ScalaID, "controllerName") ~ actions
 
-  lazy val actions = (token(Space) ~> (path ~ action).map{
-    case (x ~ y) => List(x, y)
-  }).* <~ SpaceClass.*
+  lazy val actions = (Space ~> method ~ path).*
 
-  lazy val path = token(Field <~ token(':'), "path:action   e.g.) /index:get")
-  lazy val action = token(Field).examples("get", "post", "update", "delete")
+  lazy val method = ScalaID.examples("get", "post", "update", "delete") <~ token(':')
+  lazy val path = token(NotSpace, "path")
 }
 

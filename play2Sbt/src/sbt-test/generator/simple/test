@@ -1,8 +1,14 @@
 > generate model Group name:string
 $ exists app/models/Group.scala
 $ exists app/models/Tables.scala
-> generate controller group
-$ exists app/controllers/Groups.scala
+> generate controller home index
+$ exists app/controllers/Home.scala
+> generate scaffold Project name:string
+$ exists app/models/Project.scala
+$ exists app/controllers/Projects.scala
+$ exists app/views/projects/index.scala.html
+$ exists app/views/projects/show.scala.html
+$ exists app/views/projects/edit.scala.html
 > copyTemplates
 $ exists templates/conf/routes.ssp
 $ exists templates/controllers/controller.ssp

@@ -1,18 +1,19 @@
 <%@ val modelName: String %>
-<%@ val fields: Seq[com.github.aselab.activerecord.generator.ModelInfo] %>
-<% val imports = fields.flatMap(_.imports).distinct %>
+<%@ val fields: Seq[com.github.aselab.activerecord.sbt.Field] %>
 package models
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
-#if (imports.nonEmpty)
-${imports.map("import %s".format(_)).mkString("\n")}
+#for (statement <- fields.flatMap(_.importStatement).distinct)
+${statement}
 #end
 
 /**
  * ${modelName} model.
  *
- * ${fields.map(_.param).mkString("\n * ")}
+#for (f <- fields)
+ * ${f.scalaDoc}
+#end
  */
 case class ${modelName} (
   ${fields.mkString(",\n  ")}

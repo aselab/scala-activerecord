@@ -1,1 +1,1 @@
-activerecordSettings
+generatorSettings

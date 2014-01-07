@@ -125,8 +125,9 @@ object ActiveRecordBuild extends Build {
 
   lazy val generator = project.settings(pluginSettings:_*).settings(
     name := "scala-activerecord-generator",
+    resolvers ++= defaultResolvers,
+    addSbtPlugin("com.github.aselab" % "sbt-generator" % "0.1.0-SNAPSHOT"),
     libraryDependencies ++= Seq(
-      "org.fusesource.scalate" %% "scalate-core" % "1.6.1",
       "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
     )
   )
