@@ -4,6 +4,7 @@ import com.github.aselab.sbt.Generator
 import com.github.aselab.activerecord.sbt._
 
 import sbt._
+import sbt.Keys._
 import sbt.complete.DefaultParsers._
 import mojolly.inflector.InflectorImports._
 
@@ -37,7 +38,7 @@ object RoutesGenerator extends Generator[(String, Seq[String])] {
 
   def generate(args: (String, Seq[String])) {
     val (name, actions) = args
-    val f = file("conf/routes")
+    val f = context(baseDirectory) / "conf" / "routes"
     val content = scalateTemplate.render("conf/routes.ssp", Map(
       "path" -> name.underscore,
       "controllerName" -> name.pascalize,
