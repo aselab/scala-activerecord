@@ -7,9 +7,19 @@ import play.api.Play.current
 import java.util.{Locale, TimeZone}
 
 class PlayConfig(
+  val schema: ActiveRecordTables,
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
+  lazy val schemaName = schema.getClass.getName.dropRight(1)
+  lazy val _prefix = current.configuration.getString("schema." + schemaName).getOrElse("activerecord")
+
+  def prefix(key: String) =
+    "db." + _prefix + "." + key
+
   def classLoader = play.api.Play.application.classloader
+
+  private def debug(key: String): Unit =
+    debug(key, current.configuration.getString(key))
 
   private def _getString(key: String): Option[String] =
     overrideSettings.get(key).map(_.toString).orElse(
@@ -31,10 +41,17 @@ class PlayConfig(
     getString("schema").getOrElse("models.Tables")
 
   def connection: Connection =
-    play.api.db.DB.getConnection("activerecord")
+    play.api.db.DB.getConnection(_prefix)
 
-  lazy val adapter: DatabaseAdapter =
-    adapter(_getString("db.activerecord.driver").getOrElse("org.h2.Driver"))
+  override def log = {
+    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix,  play.api.Play.application.mode))
+    logger.debug("\tSchema class: " + schemaName)
+    List(prefix("url"), prefix("driver"), prefix("user")).foreach(debug)
+  }
+
+  lazy val adapter: DatabaseAdapter = {
+    adapter(_getString(prefix("driver")).orElse(getString("driver")).getOrElse("org.h2.Driver"))
+  }
 
   def translator: i18n.Translator = PlayTranslator
 }
@@ -53,6 +70,11 @@ object PlayTranslator extends i18n.Translator {
 }
 
 trait PlaySupport { self: ActiveRecordTables =>
-  override def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    new PlayConfig(config)
+  override def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
+    new PlayConfig(self, c)
+}
+
+object PlayConfig {
+  def loadSchemas = current.configuration.getConfig("schema")
+    .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find).toSeq
 }

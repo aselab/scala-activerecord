@@ -23,6 +23,8 @@ trait Associations {
 
     protected lazy val companion = classToARCompanion[T](associationClass)
 
+    def inTransaction[A](a: => A) = companion.inTransaction(a)
+
     protected lazy val source: Relation1[T, T] = companion.table
 
     protected[inner] def fieldInfo(name: String) =
@@ -59,7 +61,7 @@ trait Associations {
 
     def remove(): Option[T]
 
-    def delete(): Option[T] = inTransaction {
+    def delete(): Option[T] = companion.inTransaction {
       val result = toOption
       result.foreach(_.delete)
       relation.cache = Nil
@@ -70,7 +72,7 @@ trait Associations {
   trait CollectionAssociation[O <: AR, T <: AR] extends OwnersAssociation[O, T]{
     def removeAll(): List[T]
 
-    def deleteAll(): List[T] = inTransaction {
+    def deleteAll(): List[T] = companion.inTransaction {
       val result = relation.toList
       result.foreach(_.delete)
       relation.cache = Nil
@@ -136,7 +138,7 @@ trait Associations {
       r.groupBy(_.getOption[Any](foreignKey).orNull)
     }
 
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = companion.inTransaction {
       if (hasConstraint) delete else remove
       if (m.isNewRecord) m.save(throws = true)
       assignConditions(m).update
@@ -146,7 +148,7 @@ trait Associations {
 
     def :=(m: T): T = associate(m)
 
-    def remove(): Option[T] = inTransaction {
+    def remove(): Option[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
@@ -191,7 +193,7 @@ trait Associations {
       idMap.map {case (id, ids) => (id, ids.map(recordMap))}
     }
 
-    def associate(m: T): I = inTransaction {
+    def associate(m: T): I = companion.inTransaction {
       if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
       if (hasConstraint) delete else remove
       assignConditions(m).update
@@ -205,7 +207,7 @@ trait Associations {
 
     def :=(m: T): I = associate(m)
 
-    def remove(): Option[T] = inTransaction {
+    def remove(): Option[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
@@ -220,7 +222,7 @@ trait Associations {
       result
     }
 
-    override def delete(): Option[T] = inTransaction {
+    override def delete(): Option[T] = companion.inTransaction {
       val result = super.delete
       if (hasConstraint) through.delete else remove
       result
@@ -250,14 +252,14 @@ trait Associations {
 
     def assign(m: T): T = assignConditions(m)
 
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = companion.inTransaction {
       if (m.isNewRecord) m.save(throws = true)
       assign(m).update
     }
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = inTransaction {
+    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -265,12 +267,12 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = inTransaction {
+    def :=(list: Traversable[T]): List[T] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
@@ -327,7 +329,7 @@ trait Associations {
 
     def <<(m: T): I = associate(m)
 
-    def <<(list: Traversable[T]): List[I] = inTransaction {
+    def <<(list: Traversable[T]): List[I] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -335,17 +337,17 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[I] = this << list
 
-    def :=(list: Traversable[T]): List[I] = inTransaction {
+    def :=(list: Traversable[T]): List[I] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList
       relation.cache.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
-      
+
       val result = relation.toList
       through.relation.foreach {r =>
         r.setValue(foreignKey, None)
@@ -355,7 +357,7 @@ trait Associations {
       result
     }
 
-    override def deleteAll(): List[T] = inTransaction {
+    override def deleteAll(): List[T] = companion.inTransaction {
       val result = super.deleteAll
       if (hasConstraint) through.deleteAll else removeAll
       relation.cache = Nil
@@ -406,7 +408,7 @@ trait Associations {
       ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
     }
 
-    def associate(m: T): T = inTransaction {
+    def associate(m: T): T = companion.inTransaction {
       if (m.isNewRecord) m.save(throws = true)
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
@@ -423,7 +425,7 @@ trait Associations {
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = inTransaction {
+    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
@@ -431,12 +433,12 @@ trait Associations {
 
     def ++=(list: Traversable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = inTransaction {
+    def :=(list: Traversable[T]): List[T] = companion.inTransaction {
       removeAll
       relation.cache = list.toList.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    def removeAll(): List[T] = companion.inTransaction {
       val result = relation.toList
       interCompanion.forceDelete(inter =>
         owner.id === (if (isLeftSide) inter.leftId else inter.rightId)
@@ -449,7 +451,7 @@ trait Associations {
   trait AssociationSupport { self: AR =>
     protected def belongsTo[T <: AR]
       (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
-        belongsTo[T](Config.schema.foreignKeyFromClass(m.erasure))
+        belongsTo[T](Config.schema(self.recordCompanion).foreignKeyFromClass(m.erasure))
           .asInstanceOf[BelongsToAssociation[this.type, T]]
 
     protected def belongsTo[T <: AR](foreignKey: String)
@@ -464,7 +466,7 @@ trait Associations {
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
       (implicit m: Manifest[T]): HasOneAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(self.getClass))
+          Config.schema(self.recordCompanion).foreignKeyFromClass(self.getClass))
         new HasOneAssociation[this.type, T](self, conditions, key)
       }
 
@@ -474,7 +476,7 @@ trait Associations {
       foreignKey: String = null
     )(implicit m1: Manifest[T], m2: Manifest[I]): HasOneThroughAssociation[this.type, T, I] = {
       val key = Option(foreignKey).getOrElse(
-        Config.schema.foreignKeyFromClass(m1.erasure))
+        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.erasure))
 
       new HasOneThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
     }
@@ -487,7 +489,7 @@ trait Associations {
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
       (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
-          Config.schema.foreignKeyFromClass(self.getClass))
+          Config.schema(self.recordCompanion).foreignKeyFromClass(self.getClass))
         new HasManyAssociation[this.type, T](self, conditions, key)
       }
 
@@ -497,7 +499,7 @@ trait Associations {
       foreignKey: String = null
     )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
       val key = Option(foreignKey).getOrElse(
-        Config.schema.foreignKeyFromClass(m1.erasure))
+        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.erasure))
 
       new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
     }
@@ -513,7 +515,7 @@ trait Associations {
       (conditions: Map[String, Any])
       (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
     {
-      val name = Config.schema.tableNameFromClasses(self.getClass, m.erasure)
+      val name = Config.schema(self.recordCompanion).tableNameFromClasses(self.getClass, m.erasure)
       val companion = new IntermediateRecordCompanion {
         val tableName = name
       }

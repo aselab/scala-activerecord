@@ -191,9 +191,9 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
 
     "toSql" >> {
       PrimitiveModel.all.toSql mustEqual
-        inTransaction { PrimitiveModel.all.toQuery.statement }
+        PrimitiveModel.inTransaction { PrimitiveModel.all.toQuery.statement }
       PrimitiveModel.where(m => m.id === 1).toSql mustEqual
-        inTransaction { PrimitiveModel.where(m => m.id === 1).toQuery.statement }
+        PrimitiveModel.inTransaction { PrimitiveModel.where(m => m.id === 1).toQuery.statement }
     }
 
     "cache controls" >> {

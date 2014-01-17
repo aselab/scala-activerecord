@@ -49,9 +49,7 @@ package manytomany {
 object ManyToManyAssociationSpec extends DatabaseSpecification {
   import manytomany._
 
-  override val config = Map(
-    "schema" -> "com.github.aselab.activerecord.inner.manytomany.Tables"
-  )
+  override def schema = Tables
 
   "HasManyThroughAssociation" should {
     "assign persisted record" >> new TestData {

@@ -7,7 +7,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.github.aselab.activerecord._
 
 object convertersSpec extends DatabaseSpecification {
-  def setConfig(conf: (String, String)*) = Config.conf = new DefaultConfig(overrideSettings = conf.toMap)
+  def setConfig(conf: (String, String)*) = Config.conf = new DefaultConfig(schema.head, overrideSettings = conf.toMap)
 
   "FormConverter" should {
     "String" in {

@@ -7,7 +7,7 @@ trait Versionable extends ActiveRecord with Serializable {
 
   @dsl.Ignore private lazy val _className = getClass.getName
 
-  abstract override def doUpdate: Boolean = dsl.inTransaction {
+  abstract override def doUpdate: Boolean = Version.inTransaction {
     changed.foreach { case (name, value) =>
       Version(_className, this.id, name, value._1.toString, value._2.toString).save
     }

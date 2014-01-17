@@ -54,9 +54,7 @@ package onetoone {
 object OneToOneAssociationSpec extends DatabaseSpecification {
   import onetoone._
 
-  override val config = Map(
-    "schema" -> "com.github.aselab.activerecord.inner.onetoone.Tables"
-  )
+  override def schema = Tables
 
   "HasOneAssociation" should {
     "associate persisted record" >> new TestData {

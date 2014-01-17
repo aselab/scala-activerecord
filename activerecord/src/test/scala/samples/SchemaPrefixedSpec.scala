@@ -21,11 +21,11 @@ object SchemaTestTables extends ActiveRecordTables {
 }
 
 object SchemaPrefixedSpec extends DatabaseSpecification {
-  override lazy val schema = SchemaTestTables
+  override def schema = SchemaTestTables
 
   "Tables.isCreated" should {
-    "prefixed tables" in {
-      schema.isCreated must beTrue
+    "prefixed tables" >> {
+      SchemaTestTables.isCreated must beTrue
     }
   }
 }

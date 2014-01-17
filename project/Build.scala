@@ -71,13 +71,13 @@ object ActiveRecordBuild extends Build {
   lazy val root = project.in(file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
-    .aggregate(core, specs, play2, scalatra, generator, play2Sbt, scalatraSbt)
+    .aggregate(core, specs, play2, play2Specs, scalatra, generator, play2Sbt, scalatraSbt)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
-        "com.github.aselab" %% "squeryl" % "0.9.6-M1",
+        "org.squeryl" %% "squeryl" % "0.9.6-RC2",
         "com.typesafe" % "config" % "1.0.2",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
@@ -103,16 +103,23 @@ object ActiveRecordBuild extends Build {
   lazy val play2 = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-play2",
     resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
-    libraryDependencies ++= {
-      scalaBinaryVersion.value match {
-        case "2.10" => Seq(
-          "play" %% "play" % "2.1.0" % "provided",
-          "play" %% "play-jdbc" % "2.1.0" % "provided"
-        )
-        case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
-      }
-    }
+    libraryDependencies ++= List(
+      "com.typesafe.play" %% "play" % "2.2.0" % "provided",
+      "com.typesafe.play" %% "play-jdbc" % "2.2.0" % "provided",
+      "com.typesafe.play" %% "play-test" % "2.2.0" % "provided"
+    )
   ).dependsOn(core)
+
+  lazy val play2Specs = project.settings(defaultSettings:_*).settings(
+    name := "scala-activerecord-play2-specs",
+    resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
+    libraryDependencies ++= List(
+      "com.typesafe.play" %% "play" % "2.2.0" % "provided",
+      "com.typesafe.play" %% "play-jdbc" % "2.2.0" % "provided",
+      "com.typesafe.play" %% "play-test" % "2.2.0" % "provided",
+      specs2("provided").value
+    )
+  ).dependsOn(play2, specs)
 
   lazy val scalatra = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-scalatra",

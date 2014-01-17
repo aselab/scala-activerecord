@@ -113,7 +113,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   protected def self: this.type = this
 
   /** database schema */
-  lazy val schema = Config.schema
+  lazy val schema = Config.schema(this)
 
   /**
    * corresponding database table
@@ -122,6 +122,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     val name = getClass.getName.dropRight(1)
     schema.getTable(name)
   }
+
+  def inTransaction[T](f: => T): T = schema.inTransaction(f)
+
+  def transaction[T](f: => T): T = schema.transaction(f)
 
   /**
    * all search.

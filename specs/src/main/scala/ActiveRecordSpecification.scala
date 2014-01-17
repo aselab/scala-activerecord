@@ -4,11 +4,9 @@ import org.specs2.mutable._
 import org.specs2.execute._
 import org.specs2.specification._
 
-trait AutoRollback extends BeforeAfterExample {
-  def schema: ActiveRecordTables
-
-  def before = schema.startTransaction
-  def after = schema.rollback
+trait AutoRollback extends BeforeAfterExample { self: ActiveRecordSpecification =>
+  def before = self.schema.foreach(_.startTransaction)
+  def after = self.schema.reverse.foreach(_.rollback)
 }
 
 trait BeforeAfterAllExamples extends Specification {
@@ -26,15 +24,17 @@ trait BeforeAfterAllExamples extends Specification {
 trait ActiveRecordSpecification extends BeforeAfterAllExamples {
   sequential
 
+  implicit def toTableList(table: ActiveRecordTables) = Seq(table)
+
   def beforeAll = {
     System.setProperty("run.mode", "test")
-    schema.initialize(config)
+    schema.foreach(_.initialize(config))
   }
 
-  def afterAll = dsl.transaction {
-    schema.drop
-    schema.cleanup
-  }
+  def afterAll = schema.foreach { s => s.transaction {
+    s.drop
+    s.cleanup
+  }}
 
   private var factories = Map.empty[String, Map[String, Any]]
 
@@ -62,5 +62,5 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
 
   def config: Map[String, String] = Map()
 
-  lazy val schema: ActiveRecordTables = new DefaultConfig(overrideSettings = config).schema
+  def schema: Seq[ActiveRecordTables] = Config.loadSchemas()
 }

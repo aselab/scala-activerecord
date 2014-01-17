@@ -8,7 +8,7 @@ import scala.util.control.Exception._
 import annotations._
 import scala.tools.scalap.scalax.rules.scalasig._
 
-class ClassInfo[T <: AnyRef](clazz: Class[T]) {
+class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   import ClassInfo._
 
   val name = clazz.getName

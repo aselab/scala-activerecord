@@ -171,7 +171,7 @@ trait Relations {
       value
     }
 
-    def reload(implicit m: Manifest[S]): List[S] = inTransaction {
+    def reload(implicit m: Manifest[S]): List[S] = companion.inTransaction {
       cache = queryToIterable(toQuery).toList
 
       if (manifest == m && cache.nonEmpty) {
@@ -200,12 +200,16 @@ trait Relations {
     def headOption: Option[S] = if (isLoaded) {
       cache.headOption
     } else {
-      inTransaction { limit(1).toQuery.headOption }
+      companion.inTransaction { limit(1).toQuery.headOption }
     }
 
     def last: S = getOrException(lastOption)
 
-    def lastOption: Option[S] = reverse.limit(1).toQuery.headOption
+    def lastOption: Option[S] = if (isLoaded) {
+      cache.lastOption
+    } else {
+      companion.inTransaction { reverse.limit(1).toQuery.headOption }
+    }
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -216,7 +220,7 @@ trait Relations {
      * @param condition fieldname-value tuple
      * @param conditions multiple fieldname-value tuples(optional)
      */
-    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = inTransaction {
+    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = companion.inTransaction {
       findAllBy(condition, conditions:_*).headOption
     }
 
@@ -247,7 +251,7 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findBy(name: String, value: Any): Option[S] = inTransaction {
+    def findBy(name: String, value: Any): Option[S] = companion.inTransaction {
       findAllBy(name, value).headOption
     }
 
@@ -266,20 +270,21 @@ trait Relations {
       where(m => field.toEqualityExpression(m.getValue[Any](name), value))
     }
 
-    def deleteAll()(implicit ev: S =:= T): List[T] = inTransaction {
+    def deleteAll()(implicit ev: S =:= T): List[T] = companion.inTransaction {
       val records = toQuery.toList
       records.foreach(_.delete)
       records.asInstanceOf[List[T]]
     }
 
-    def exists(condition: T => LogicalBoolean): Boolean = inTransaction {
+    def exists(condition: T => LogicalBoolean): Boolean = companion.inTransaction {
       where(condition).limit(1).count != 0
     }
 
-    def count: Long = if (isUnique) {
-      toQuery.Count
-    } else {
-      toQuery(t => whereScope(t).compute(dsl.count))
+    def count: Long = companion.inTransaction {if (isUnique) {
+        toQuery.Count
+      } else {
+        toQuery(t => whereScope(t).compute(dsl.count))
+      }
     }
 
     def compute[T1](e: T => TypedExpression[T1, _]): T1 =
@@ -319,7 +324,7 @@ trait Relations {
       whereScope(t).select(selector(t)).orderBy(ordersExpression(t))
     ))
 
-    def toSql: String = inTransaction { toQuery.statement }
+    def toSql: String = companion.inTransaction { toQuery.statement }
   }
 
   case class Relation1[T <: AR, S](

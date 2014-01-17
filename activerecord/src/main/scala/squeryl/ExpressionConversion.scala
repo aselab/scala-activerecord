@@ -27,7 +27,18 @@ class ExpressionConversion(field: FieldInfo) {
     new ast.EqualityExpression(toExpression(v1), toExpression(v2))
 
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {
-    new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2)))
+    new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2, field match {
+    case f if f.is[String] => optionStringTEF.createOutMapper
+    case f if f.is[Boolean] => optionBooleanTEF.createOutMapper
+    case f if f.is[Int] => optionIntTEF.createOutMapper
+    case f if f.is[Long] => optionLongTEF.createOutMapper
+    case f if f.is[Float] => optionFloatTEF.createOutMapper
+    case f if f.is[Double] => optionDoubleTEF.createOutMapper
+    case f if f.is[BigDecimal] => optionBigDecimalTEF.createOutMapper
+    case f if f.is[Timestamp] => optionTimestampTEF.createOutMapper
+    case f if f.is[Date] => optionDateTEF.createOutMapper
+    case f if f.is[UUID] => optionUUIDTEF.createOutMapper
+  })))
   } catch {
     case e: RuntimeException => throw ActiveRecordException.unsupportedType(field.name)
   }
