@@ -12,8 +12,8 @@ import _root_.views.html.{helper => playhelper}
 import _root_.views.html.helper._
 
 
-class ActiveModelFormatter[T <: ProductModel with IO](
-  companion: ProductModelCompanion[T] with FormSupport[T], source: Option[T]) extends Formatter[T] { 
+class ActiveModelFormatter[T <: ActiveModel](
+  companion: ActiveModelCompanion[T], source: Option[T]) extends Formatter[T] { 
   def bind(key: String, data: Map[String, String]): Either[Seq[FormError], T] = {
     val m = companion.bind(data)(source.getOrElse(companion.newInstance))
     if (m.validate) {
@@ -26,7 +26,7 @@ class ActiveModelFormatter[T <: ProductModel with IO](
   def unbind(key: String, value: T): Map[String, String] = companion.unbind(value)
 }
 
-trait PlayFormSupport[T <: ProductModel with IO] { self: FormSupport[T] with ProductModelCompanion[T] =>
+trait PlayFormSupport[T <: ActiveModel] { self: ActiveModelCompanion[T] =>
   lazy val helper = new PlayHelper(self)
 
   def mapping(source: Option[T] = None) =
@@ -40,7 +40,7 @@ trait PlayFormSupport[T <: ProductModel with IO] { self: FormSupport[T] with Pro
   def form = Form(mapping(), Map(), Nil, None)
 }
 
-class PlayHelper[T <: ProductModel with IO](companion: FormSupport[T]) {
+class PlayHelper[T <: ActiveModel](companion: ActiveModelCompanion[T]) {
   protected def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
     val isRequired = options.collectFirst{ case ('required, v) => v }
       .getOrElse(companion.isRequired(field.name))

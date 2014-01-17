@@ -113,10 +113,10 @@ object FormUtil {
     a + b.flatMap(s => split(s.toString)).map("[%s]".format(_)).mkString
 }
 
-trait FormSupport[T <: ProductModel with IO] { self: ProductModelCompanion[T] =>
+trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
   import ReflectionUtil._
 
-  type C = ProductModelCompanion[ProductModel with IO] with FormSupport[ProductModel with IO]
+  type C = ActiveModelCompanion[ActiveModel]
 
   def isRequired(name: String): Boolean = {
     def inner(c: C, names: Seq[String]): Boolean = {
