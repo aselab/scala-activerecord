@@ -1,1 +1,1 @@
-generatorSettings
+activerecordScalatraSettings
