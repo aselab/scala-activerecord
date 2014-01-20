@@ -174,13 +174,13 @@ case class ScalaSigInfo(clazz: Class[_]) {
     case symbol: ClassSymbol if !symbol.isModule => symbol
   }.find(_.name == clazz.getSimpleName).getOrElse(error)
 
-  lazy val genericTypes: Map[String, Class[_]] = classSymbol.children.collect {
+  lazy val genericTypes: Map[String, Class[_]] = (classSymbol.children.collect {
     case m: MethodSymbol if m.isLocal => (m.name.trim, m.infoType)
   }.collect {
     case (name, TypeRefType(_, symbol, Seq(TypeRefType(_, s, Nil))))
       if support.primitiveClasses.isDefinedAt(s.path) =>
         (name, support.primitiveClasses(s.path))
-  }.toMap
+  } ++ Option(clazz.getSuperclass).filterNot(_ == classOf[Object]).map(ScalaSigInfo(_).genericTypes.toSeq).getOrElse(Nil)).toMap
 }
 
 trait ReflectionUtil {

@@ -56,9 +56,10 @@ object reflectionsSpec extends Specification {
     throw new Exception
   }
 
-  trait BaseModel {
+  abstract class BaseModel {
     var string = "string"
     var int = 0
+    var oboolean: Option[Boolean] = Some(true)
   }
 
   case class ExtendedModel(
@@ -149,7 +150,7 @@ object reflectionsSpec extends Specification {
 
     "includes superclass's fields" in {
       val c = new ClassInfo(classOf[ExtendedModel])
-      c.fieldInfo.keys must contain(exactly("string", "int", "estring", "eint"))
+      c.fieldInfo.keys must contain(exactly("string", "int", "estring", "eint", "oboolean"))
     }
   }
 
