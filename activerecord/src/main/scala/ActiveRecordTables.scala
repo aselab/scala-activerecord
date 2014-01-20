@@ -75,7 +75,7 @@ trait ActiveRecordTables extends Schema {
   def foreignKeyFromClass(c: Class[_]): String =
     c.getSimpleName.camelize + "Id"
 
-  protected def execute(sql: String, logging: Boolean = true) {
+  protected def execute(sql: String, logging: Boolean = true): Unit = inTransaction {
     if (logging) Config.logger.debug(sql)
     val connection = Session.currentSession.connection
     val s = connection.createStatement
@@ -124,9 +124,10 @@ trait ActiveRecordTables extends Schema {
 
   /** cleanup database resources */
   def cleanup: Unit = {
+    if (Config.autoDrop) drop
     Config.cleanup
+    sessionStack.foreach { case (s1, s2) => s1.foreach(_.cleanup); s2.cleanup }
     sessionStack.clear
-    if (Config.autoDrop) transaction { drop }
     _initialized = false
   }
 
