@@ -38,15 +38,16 @@ trait IO extends Validatable { this: ProductModel =>
     }
   }
 
-  def assign(data: Map[String, Any]): Unit = {
+  def assign(data: Map[String, Any]): this.type = {
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
       val value = if (info.isOption) Some(v).filter(_ != "") else v
       this.setValue(k, value)
     }
+    this
   }
 
-  def assignFormValues(data: Map[String, String]): Unit = {
+  def assignFormValues(data: Map[String, String]): this.type = {
     assign(_companion.fieldInfo.flatMap {
       case (name, info) =>
         def converter = FormConverter.get(info.fieldType).getOrElse(

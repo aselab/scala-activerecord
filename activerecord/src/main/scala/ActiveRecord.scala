@@ -7,7 +7,10 @@ trait ActiveModel extends ProductModel with io.IO with validations.ValidationSup
   def isNewRecord = true
 }
 
-trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T]
+trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] {
+  override def newInstance = super.newInstance
+  def newInstance(data: Map[String, Any]): T = newInstance.assign(data)
+}
 
 trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.AssociationSupport
 {
@@ -66,6 +69,8 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
   } else {
     super.toMap
   }
+
+  override def assign(data: Map[String, Any]): this.type = super.assign(data - "id")
 
   def recordInDatabase: Option[this.type] = recordCompanion.find(id)
 }
@@ -198,7 +203,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /** Unique annotated fields */
   lazy val uniqueFields = fields.filter(_.isUnique)
 
-  def fromMap(data: Map[String, Any]): Unit = newInstance.assign(data)
+  def fromMap(data: Map[String, Any]): T = newInstance.assign(data)
 }
 
 /**
