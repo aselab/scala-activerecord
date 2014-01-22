@@ -61,6 +61,7 @@ trait ActiveRecordConfig {
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
     case "org.postgresql.Driver" => new PostgreSqlAdapter
+    case "net.sourceforge.jtds.jdbc.Driver" => new MSSQLServer
     case "com.mysql.jdbc.Driver" => new MySQLAdapter {
       override def quoteIdentifier(s: String) = "`%s`".format(s)
     }

@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.2.4"
+  val _version = "0.2.5"
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
@@ -77,7 +77,7 @@ object ActiveRecordBuild extends Build {
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
-        "com.github.aselab" %% "squeryl" % "0.9.6-M1",
+        "com.github.aselab" %% "squeryl" % "0.9.6-M2",
         "com.typesafe" % "config" % "1.0.2",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
