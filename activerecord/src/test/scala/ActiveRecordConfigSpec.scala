@@ -50,6 +50,10 @@ object ActiveRecordConfigSpec extends Specification {
         config("org.apache.derby.jdbc.EmbeddedDriver").adapter must haveClass[DerbyAdapter]
       }
 
+      "mssql driver" in {
+        config("net.sourceforge.jtds.jdbc.Driver").adapter must haveClass[MSSQLServer]
+      }
+
       "unsupported driver" in {
         config("not.supported.Driver").adapter must throwA(
           ActiveRecordException.unsupportedDriver("not.supported.Driver"))
