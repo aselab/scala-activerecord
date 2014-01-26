@@ -54,6 +54,10 @@ object ActiveRecordConfigSpec extends Specification {
         config("net.sourceforge.jtds.jdbc.Driver").adapter must haveClass[MSSQLServer]
       }
 
+      "db2 driver" in {
+        config("com.ibm.db2.jcc.DB2Driver").adapter must haveClass[DB2Adapter]
+      }
+
       "unsupported driver" in {
         config("not.supported.Driver").adapter must throwA(
           ActiveRecordException.unsupportedDriver("not.supported.Driver"))
