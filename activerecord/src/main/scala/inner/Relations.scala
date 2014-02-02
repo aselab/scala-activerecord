@@ -276,14 +276,16 @@ trait Relations {
       where(condition).limit(1).count != 0
     }
 
-    def count: Long = if (isUnique) {
-      toQuery.Count
-    } else {
-      toQuery(t => whereScope(t).compute(dsl.count))
+    def count: Long = inTransaction {if (isUnique) {
+        toQuery.Count
+      } else {
+        toQuery(t => whereScope(t).compute(dsl.count))
+      }
     }
 
-    def compute[T1](e: T => TypedExpression[T1, _]): T1 =
+    def compute[T1](e: T => TypedExpression[T1, _]): T1 = inTransaction {
       toQuery(t => whereScope(t).compute(e(t._1)))
+    }
 
     def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
