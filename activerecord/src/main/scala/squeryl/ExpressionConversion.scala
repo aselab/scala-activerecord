@@ -26,6 +26,15 @@ class ExpressionConversion(field: FieldInfo) {
   def toEqualityExpression(v1: => Any, v2: => Any): ast.EqualityExpression =
     new ast.EqualityExpression(toExpression(v1), toExpression(v2))
 
+  def toOrderByExpression(v1: => Any, order: String): ExpressionNode = {
+    val arg = new OrderByArg(toExpression(v1))
+    order.toLowerCase match {
+      case "asc" => arg.asc
+      case "desc" => arg.desc
+      case _ => throw new IllegalArgumentException("order must be 'asc' or 'desc'")
+    }
+  }
+
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {
     new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2)))
   } catch {

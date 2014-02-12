@@ -62,6 +62,13 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
       }
     }
 
+    "#orderBy(dynamic)" >> {
+      val all = PrimitiveModel.all.toList
+      relation.orderBy("int", "desc").toList mustEqual all.sortWith((a, b) => a.int > b.int)
+      relation.orderBy("int", "ASC").toList mustEqual all.sortWith((a, b) => a.int < b.int)
+      relation.orderBy("int", "foo").toList must throwA[IllegalArgumentException]
+    }
+
     "#reverse" >> {
       "empty order" >> {
         relation.reverse.toList mustEqual PrimitiveModel.all.toList.reverse

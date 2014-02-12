@@ -266,6 +266,13 @@ trait Relations {
       where(m => field.toEqualityExpression(m.getValue[Any](name), value))
     }
 
+    def orderBy(name: String, order: String): this.type = {
+      val field = companion.fieldInfo.getOrElse(name,
+        throw ActiveRecordException.notFoundField(name)
+      )
+      orderBy(m => field.toOrderByExpression(m.getValue[Any](name), order))
+    }
+
     def deleteAll()(implicit ev: S =:= T): List[T] = inTransaction {
       val records = toQuery.toList
       records.foreach(_.delete)
