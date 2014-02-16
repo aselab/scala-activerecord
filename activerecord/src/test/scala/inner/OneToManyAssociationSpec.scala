@@ -94,6 +94,20 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       group.users.toList mustEqual List(newUser)
     }
 
+    "remove" >> new TestData {
+      val user2 = User("user2").create
+      group.usersByOtherKey := List(user, user2)
+      val removed = group.usersByOtherKey.remove(user)
+      removed must beSome(user)
+      group.usersByOtherKey.toList mustEqual List(user2)
+      group.usersByOtherKey.reload mustEqual List(user2)
+    }
+
+    "remove with not null constraint" >> new TestData {
+      group.users << user
+      group.users.remove(user) must throwA(ActiveRecordException.notNullConstraint("groupId"))
+    }
+
     "removeAll" >> new TestData {
       val user2 = User("user2").create
       group.usersByOtherKey << user
@@ -102,6 +116,7 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       removed mustEqual List(user, user2)
       removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
       group.usersByOtherKey must beEmpty
+      group.usersByOtherKey.reload must beEmpty
     }
 
     "removeAll with not null constraint" >> new TestData {

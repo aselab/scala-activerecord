@@ -68,6 +68,8 @@ trait Associations {
   }
 
   trait CollectionAssociation[O <: AR, T <: AR] extends OwnersAssociation[O, T]{
+    def remove(m: T): Option[T]
+
     def removeAll(): List[T]
 
     def deleteAll(): List[T] = inTransaction {
@@ -270,18 +272,31 @@ trait Associations {
       relation.cache = list.toList.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    private def remove(r: Relation[T, T]) = inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
-      val result = relation.toList
-      result.foreach {r =>
-        r.setValue(foreignKey, None)
-        r.save(throws = true)
+      val result = r.toList
+      result.foreach {m =>
+        m.setValue(foreignKey, None)
+        m.save(throws = true)
       }
-      relation.cache = Nil
+      r.cache = Nil
       result
     }
+
+    def remove(m: T): Option[T] = {
+      val field = fieldInfo("id")
+      val result = remove(relation.where(r =>
+        field.toEqualityExpression(r.id, m.id)
+      ))
+      if (relation.isLoaded) {
+        relation.cache = relation.cache.filterNot(_.id == m.id)
+      }
+      result.headOption
+    }
+
+    def removeAll(): List[T] = remove(relation)
   }
 
   class HasManyThroughAssociation[O <: AR, T <: AR, I <: AR](
@@ -341,16 +356,34 @@ trait Associations {
       relation.cache.map(associate)
     }
 
-    def removeAll(): List[T] = inTransaction {
+    private def remove(r: Relation[I, I]) = inTransaction {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
       
-      val result = relation.toList
-      through.relation.foreach {r =>
-        r.setValue(foreignKey, None)
-        r.save(throws = true)
+      val result = r.toList
+      result.foreach {m =>
+        m.setValue(foreignKey, None)
+        m.save(throws = true)
       }
+      r.cache = Nil
+      result
+    }
+
+    def remove(m: T): Option[T] = {
+      val field = through.fieldInfo(foreignKey)
+      val inters = remove(through.relation.where(r =>
+        field.toEqualityExpression(r.getValue[Any](foreignKey), m.id)
+      ))
+      if (relation.isLoaded) {
+        relation.cache = relation.cache.filterNot(_.id == m.id)
+      }
+      if (inters.nonEmpty) Some(m) else None
+    }
+
+    def removeAll(): List[T] = inTransaction {
+      val result = relation.toList
+      remove(through.relation)
       relation.cache = Nil
       result
     }
@@ -367,18 +400,36 @@ trait Associations {
     val owner: O, conditions: Map[String, Any],
     interCompanion: IntermediateRecordCompanion
   )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
-    lazy val foreignKey = if (isLeftSide) "leftId" else "rightId"
+
+    abstract sealed trait Side
+    case object LeftSide extends Side
+    case object RightSide extends Side
+
+    private val (ownerSide, assocSide) = {
+      val c = Seq(owner.getClass, manifest.erasure).sortBy(_.getSimpleName)
+      if (c.head == owner.getClass) {
+        (LeftSide, RightSide)
+      } else {
+        (RightSide, LeftSide)
+      }
+    }
+
+    lazy val foreignKey = if (assocSide == LeftSide) "leftId" else "rightId"
 
     protected val hasConstraint = false
 
-    private val isLeftSide = List(owner.getClass, manifest.erasure)
-      .sortBy(_.getSimpleName).head == manifest.erasure
-
+    private def getId(inter: IntermediateRecord, side: Side) = {
+      side match {
+        case LeftSide => inter.leftId
+        case RightSide => inter.rightId
+      }
+    }
+    
     val allConditions = conditions
 
     private def joinedRelation = {
       val on = {(m: T, inter: IntermediateRecord) =>
-        m.id === (if (isLeftSide) inter.leftId else inter.rightId)
+        getId(inter, assocSide) === m.id
       }
       val select = {(m: T, inter: IntermediateRecord) => m}
 
@@ -389,9 +440,7 @@ trait Associations {
     }
 
     lazy val relation2: Relation2[T, IntermediateRecord, T] = {
-      joinedRelation.where((m, inter) =>
-        owner.id === (if (isLeftSide) inter.rightId else inter.leftId)
-      )
+      joinedRelation.where((m, inter) => getId(inter, ownerSide) === owner.id)
     }
 
     def relation: Relation[T, T] = relation2
@@ -400,9 +449,9 @@ trait Associations {
       (implicit m: Manifest[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id).asInstanceOf[List[Long]]
       joinedRelation.where((m, inter) =>
-        (if (isLeftSide) inter.rightId else inter.leftId) in ids
+        getId(inter, ownerSide) in ids
       ).select((m, inter) =>
-        (if (isLeftSide) inter.rightId else inter.leftId) -> m
+        (getId(inter, ownerSide), m)
       ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
     }
 
@@ -410,12 +459,13 @@ trait Associations {
       if (m.isNewRecord) m.save(throws = true)
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
-      if (isLeftSide) {
-        inter.setValue("leftId", m.id)
-        inter.setValue("rightId", owner.id)
-      } else {
-        inter.setValue("rightId", m.id)
-        inter.setValue("leftId", owner.id)
+      assocSide match {
+        case LeftSide =>
+          inter.setValue("leftId", m.id)
+          inter.setValue("rightId", owner.id)
+        case RightSide =>
+          inter.setValue("rightId", m.id)
+          inter.setValue("leftId", owner.id)
       }
       inter.save(throws = true)
       t
@@ -432,14 +482,31 @@ trait Associations {
     def ++=(list: Traversable[T]): List[T] = this << list
 
     def :=(list: Traversable[T]): List[T] = inTransaction {
-      removeAll
+      interCompanion.forceDelete(inter =>
+        getId(inter, ownerSide) === owner.id
+      )
       relation.cache = list.toList.map(associate)
+    }
+
+    def remove(m: T): Option[T] = {
+      val count = interCompanion.forceDelete(inter =>
+        getId(inter, ownerSide) === owner.id and
+        getId(inter, assocSide) === m.id
+      )
+      if (count > 0) {
+        if (relation.isLoaded) {
+          relation.cache = relation.cache.filterNot(_.id == m.id)
+        }
+        Some(m)
+      } else {
+        None
+      }
     }
 
     def removeAll(): List[T] = inTransaction {
       val result = relation.toList
       interCompanion.forceDelete(inter =>
-        owner.id === (if (isLeftSide) inter.leftId else inter.rightId)
+        getId(inter, ownerSide) === owner.id
       )
       relation.cache = Nil
       result
