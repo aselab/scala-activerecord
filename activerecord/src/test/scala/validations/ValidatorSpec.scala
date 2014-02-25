@@ -23,8 +23,13 @@ object ValidatorSpec extends Specification with Mockito {
   }
 
   type Value = {val value: Any}
-  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable with Value) =
-    validator.validateWith(m.value, a, m, "value")
+  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable with Value) = {
+    val v = m.value match {
+      case v: Option[_] => v
+      case v => Some(v)
+    }
+    validator.validateWith(v, a, m, "value")
+  }
 
   case class Model(value: Any, isNewRecord: Boolean = true) extends Validatable with inner.ProductModel {
     var valueConfirmation = value
@@ -100,6 +105,12 @@ object ValidatorSpec extends Specification with Mockito {
 
       "invalid if value is empty string" in {
         val m = Model("")
+        validate(validator, a, m)
+        m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.required"))
+      }
+
+      "invalid if value is None" in {
+        val m = Model(None)
         validate(validator, a, m)
         m.errors must contain(ValidationError(modelClass, "value", "activerecord.errors.required"))
       }

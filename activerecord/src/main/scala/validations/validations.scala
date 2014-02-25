@@ -126,7 +126,9 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
 
   def validate(value: Any): Unit
 
-  def validateWith(v: Any, a: Annotation, model: Validatable, name: String): Unit = {
+  def validateOption(value: Option[Any]): Unit = value.foreach(validate)
+
+  def validateWith(v: Option[Any], a: Annotation, model: Validatable, name: String): Unit = {
     _annotation.withValue(a) {
       _model.withValue(model) {
         _fieldName.withValue(name) {
@@ -136,7 +138,7 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T])
             case "update" if !model.isNewRecord => false
             case _ => true
           })
-          if (!skip) validate(v)
+          if (!skip) validateOption(v)
         }
       }
     }
@@ -197,6 +199,9 @@ object Validator {
   val requiredValidator = new Validator[annotations.Required] {
     def validate(value: Any): Unit =
       if (isBlank(value)) errors.add(fieldName, message("required"))
+
+    override def validateOption(value: Option[Any]): Unit =
+      validate(value.orNull)
   }
 
   val lengthValidator = new Validator[annotations.Length] {
@@ -314,12 +319,13 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
       case (name, info) =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
-          (self.getValue[Any](name) match {
+          val value = self.getValue[Any](name) match {
             case v: Option[_] => v
             case v => Some(v)
-          }).foreach { value => validators.foreach {
+          }
+          validators.foreach  {
             case (a, validator) => validator.validateWith(value, a, this, name)
-          }}
+          }
         }
     }
     super.doValidate()
