@@ -113,6 +113,7 @@ class DefaultConfig(
   lazy val partitionCount = getInt("partitionCount")
   lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
   lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
+  lazy val maxConnectionAge = getInt("maxConnectionAge").getOrElse(0).toLong
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
   def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader
@@ -131,6 +132,7 @@ class DefaultConfig(
     partitionCount.foreach(conf.setPartitionCount)
     maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
     minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
+    conf.setMaxConnectionAgeInSeconds(maxConnectionAge)
     new BoneCP(conf)
   }
 
