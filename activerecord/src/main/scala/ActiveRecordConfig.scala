@@ -186,6 +186,7 @@ class DefaultConfig(
 
   override def cleanup: Unit = {
     super.cleanup
+    pool.shutdown()
   }
 
   def connection: Connection = pool.getConnection
