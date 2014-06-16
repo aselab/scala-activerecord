@@ -129,7 +129,7 @@ object ActiveRecordBuild extends Build {
     name := "scala-activerecord-scalatra",
     resolvers += "Akka Repo" at "http://repo.akka.io/repository",
     libraryDependencies ++= Seq(
-      "org.scalatra" %% "scalatra" % "2.3.0.RC3" % "provided",
+      "org.scalatra" %% "scalatra" % "2.3.0" % "provided",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   ).dependsOn(core)
