@@ -55,7 +55,7 @@ trait IO extends Validatable { this: ProductModel =>
         )
 
         def deserialize(data: Map[String, String], key: String) = if (info.isModel) {
-          val companion = classToCompanion(info.fieldType).asInstanceOf[FormSupport[ProductModel with IO]]
+          val companion = classToCompanion(info.fieldType).asInstanceOf[FormSupport[ActiveModel]]
           val map = data.collect {
             case (k, v) if k.startsWith(key + "[") => FormUtil.shift(k) -> v
           }

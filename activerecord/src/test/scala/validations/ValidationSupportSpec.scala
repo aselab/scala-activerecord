@@ -8,7 +8,7 @@ import inner._
 
 object ValidationSupportSpec extends DatabaseSpecification {
   import dsl._
-  import annotation.target._
+  import annotation.meta._
   type CustomAnnotation = sample.CustomAnnotation @field
 
   case class CustomAnnotationModel(

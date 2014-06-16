@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.inner
 import com.github.aselab.activerecord._
 
 trait Annotations {
-  import annotation.target._
+  import annotation.meta._
 
   type Column = org.squeryl.annotations.Column
 

@@ -162,7 +162,7 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
     Some(i.toLong).filterNot(_ => none),
     Some(i.toFloat).filterNot(_ => none),
     Some(i.toDouble).filterNot(_ => none),
-    Some(BigDecimal(i)).filterNot(_ => none),
+    Some(BigDecimal(i)),
     Some(new Timestamp(i.toLong)).filterNot(_ => none),
     Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none)
   )
