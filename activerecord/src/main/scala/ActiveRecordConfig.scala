@@ -101,6 +101,7 @@ class DefaultConfig(
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
+  def getLong(key: String): Option[Long] = get[Long](key).orElse(get(key, config.getLong))
   def getBoolean(key: String): Option[Boolean] = get[Boolean](key).orElse(get(key, config.getBoolean))
 
   lazy val autoCreate = getBoolean("autoCreate").getOrElse(true)
@@ -114,6 +115,8 @@ class DefaultConfig(
   lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
   lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
   lazy val maxConnectionAge = getInt("maxConnectionAge").getOrElse(0).toLong
+  lazy val idleMaxAge = getLong("idleMaxAge")
+  lazy val idleConnectionTestPeriod = getLong("idleConnectionTestPeriod")
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
   def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader
@@ -133,6 +136,8 @@ class DefaultConfig(
     maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
     minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
     conf.setMaxConnectionAgeInSeconds(maxConnectionAge)
+    idleMaxAge.foreach(conf.setIdleMaxAgeInSeconds)
+    idleConnectionTestPeriod.foreach(conf.setIdleConnectionTestPeriodInSeconds)
     new BoneCP(conf)
   }
 
