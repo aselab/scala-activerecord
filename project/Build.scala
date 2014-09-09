@@ -2,23 +2,27 @@ import sbt._
 import Keys._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.2.4"
+  val _version = "0.3.0"
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.10") "2.3.6" else "1.12.4.1"
+    val v = "2.3.12"
     "org.specs2" %% "specs2" % v % scope
+  }
+
+  def play20(app: String, scope: String) = Def.setting {
+    val v = if (scalaBinaryVersion.value == "2.11") "2.3.0" else "2.2.0"
+    "com.typesafe.play" %% app % v % scope
   }
 
   val compilerSettings = Seq(
     javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
-    scalacOptions ++= Seq("-deprecation", "-unchecked") ++
-      Some("-feature").filter(_ => scalaBinaryVersion.value == "2.10"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
     scalacOptions in Compile in doc ++= {
       val base = baseDirectory.value
       Seq("-sourcepath", base.getAbsolutePath, "-doc-source-url",
-        "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName)
-      ) ++ Some("-diagrams").filter(_ => scalaBinaryVersion.value == "2.10")
+        "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName),
+        "-diagrams")
     },
     compileOrder in Compile := CompileOrder.JavaThenScala
   )
@@ -28,17 +32,17 @@ object ActiveRecordBuild extends Build {
     Classpaths.typesafeReleases
   )
 
-  val defaultSettings = Defaults.defaultSettings ++ Seq(
+  val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.10.3",
-    crossScalaVersions := Seq("2.10.3", "2.9.2"),
+    scalaVersion := "2.11.1",
+    crossScalaVersions := Seq("2.11.1", "2.10.4"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
       "com.h2database" % "h2" % "1.3.174" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.0.13" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
       "junit" % "junit" % "4.11" % "test"
     ),
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -61,8 +65,9 @@ object ActiveRecordBuild extends Build {
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
     Seq(
+      scalaVersion := "2.10.4",
       sbtPlugin := true,
-      crossScalaVersions := Seq("2.10.3"),
+      crossScalaVersions := Seq("2.10.4"),
       ScriptedPlugin.scriptedBufferLog := false,
       ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
       watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
@@ -71,19 +76,19 @@ object ActiveRecordBuild extends Build {
   lazy val root = project.in(file("."))
     .settings(defaultSettings: _*)
     .settings(publish := {}, publishLocal := {})
-    .aggregate(core, specs, play2, scalatra, generator, play2Sbt, scalatraSbt)
+    .aggregate(core, specs, play2, play2Specs, scalatra, generator, play2Sbt, scalatraSbt)
 
   lazy val core: Project = Project("core", file("activerecord"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
-        "com.github.aselab" %% "squeryl" % "0.9.6-M2",
-        "com.typesafe" % "config" % "1.0.2",
+        "org.squeryl" %% "squeryl" % "0.9.6-RC3",
+        "com.typesafe" % "config" % "1.2.1",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "0.6.0",
+        "com.github.nscala-time" %% "nscala-time" % "1.2.0",
         "commons-validator" % "commons-validator" % "1.4.0",
-        "org.slf4j" % "slf4j-api" % "1.7.5"
+        "org.slf4j" % "slf4j-api" % "1.7.7"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
@@ -102,23 +107,29 @@ object ActiveRecordBuild extends Build {
 
   lazy val play2 = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-play2",
-    resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/repo",
-    libraryDependencies ++= {
-      scalaBinaryVersion.value match {
-        case "2.10" => Seq(
-          "play" %% "play" % "2.1.0" % "provided",
-          "play" %% "play-jdbc" % "2.1.0" % "provided"
-        )
-        case _ => Seq("play" % "play_2.9.1" % "2.0.4" % "provided")
-      }
-    }
+    resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
+    libraryDependencies ++= List(
+      play20("play", "provided").value,
+      play20("play-jdbc", "provided").value
+    )
   ).dependsOn(core)
+
+  lazy val play2Specs = project.settings(defaultSettings:_*).settings(
+    name := "scala-activerecord-play2-specs",
+    resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
+    libraryDependencies ++= List(
+      play20("play", "provided").value,
+      play20("play-jdbc", "provided").value,
+      play20("play-test", "provided").value,
+      specs2("provided").value
+    )
+  ).dependsOn(play2, specs)
 
   lazy val scalatra = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-scalatra",
     resolvers += "Akka Repo" at "http://repo.akka.io/repository",
     libraryDependencies ++= Seq(
-      "org.scalatra" %% "scalatra" % "2.2.2" % "provided",
+      "org.scalatra" %% "scalatra" % "2.3.0" % "provided",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   ).dependsOn(core)

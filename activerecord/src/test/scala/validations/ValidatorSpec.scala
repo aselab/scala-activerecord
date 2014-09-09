@@ -5,7 +5,7 @@ import org.specs2.mock._
 import com.github.aselab.activerecord._
 
 object ValidatorSpec extends Specification with Mockito {
-  import annotation.target._
+  import annotation.meta._
   type CustomAnnotation = sample.CustomAnnotation @field
 
   val customValidator =  new Validator[sample.CustomAnnotation] {

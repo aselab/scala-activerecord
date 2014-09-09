@@ -5,8 +5,9 @@ import dsl._
 import aliases._
 import reflections.ReflectionUtil._
 
-trait Optimistic extends CRUDable with SquerylOptimistic { self: AR =>
-  private def occVersion = self.getValue[Int]("occVersionNumber")
+trait Optimistic extends CRUDable { self: AR =>
+  protected val occVersionNumber = 0
+  private def occVersion = occVersionNumber
 
   /** update with lock */
   abstract override protected def doUpdate = try {

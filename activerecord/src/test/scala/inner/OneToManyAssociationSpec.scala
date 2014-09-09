@@ -35,9 +35,7 @@ package onetomany {
 object OneToManyAssociationSpec extends DatabaseSpecification {
   import onetomany._
 
-  override val config = Map(
-    "schema" -> "com.github.aselab.activerecord.inner.onetomany.Tables"
-  )
+  override def schema = Tables
 
   "BelongsToAssociation" should {
     "assign persisted record" >> new TestData {

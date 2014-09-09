@@ -51,7 +51,7 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
     }
 
     def deserialize(s: String): Timestamp =
-      new Timestamp(Config.datetimeFormatter.parseDateTime(s).millis)
+      new Timestamp(Config.datetimeFormatter.parseDateTime(s).getMillis)
   }
 
   val uuidHandler = new FormConverter[UUID] {

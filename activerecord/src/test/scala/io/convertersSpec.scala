@@ -7,7 +7,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.github.aselab.activerecord._
 
 object convertersSpec extends DatabaseSpecification {
-  def setConfig(conf: (String, String)*) = Config.conf = new DefaultConfig(overrideSettings = conf.toMap)
+  def setConfig(conf: (String, String)*) = Config.conf = new DefaultConfig(schema.head, overrideSettings = conf.toMap)
 
   "FormConverter" should {
     "String" in {
@@ -59,7 +59,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with the timezone setting when Config.timeZone is GMT" in {
         setConfig("timeZone" -> "GMT")
         val string = "2012-05-06T08:02:11.530Z"
-        val t = new Timestamp(new DateTime(2012, 5, 6, 8, 2, 11, 530, DateTimeZone.forID("GMT")).millis)
+        val t = new Timestamp(new DateTime(2012, 5, 6, 8, 2, 11, 530, DateTimeZone.forID("GMT")).getMillis)
         converter.serialize(t) mustEqual string
         converter.deserialize(string) mustEqual t
       }
@@ -67,7 +67,7 @@ object convertersSpec extends DatabaseSpecification {
       "convert with Config.timeZone" in {
         setConfig("timeZone" -> "Asia/Tokyo")
         val string = "2012-06-16T18:23:51.133+09:00"
-        val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).millis)
+        val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).getMillis)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
 
@@ -82,7 +82,7 @@ object convertersSpec extends DatabaseSpecification {
         )
         Config.timeZone = DateTimeZone.forID("Asia/Tokyo")
         val string = "20120616T182351+0900"
-        val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).millis)
+        val t = new Timestamp(Config.datetimeFormatter.parseDateTime(string).getMillis)
         val serialized = converter.serialize(t)
         val deserialized = converter.deserialize(string)
 

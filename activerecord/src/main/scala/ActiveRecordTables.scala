@@ -1,11 +1,14 @@
 package com.github.aselab.activerecord
 
-import org.squeryl.{Session, SessionFactory}
+import org.squeryl.{Session, LazySession, AbstractSession, SessionFactory}
+import org.squeryl.internals.DatabaseAdapter
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
 import mojolly.inflector.InflectorImports._
 import java.io.{PrintWriter, StringWriter}
+import reflections.ReflectionUtil._
+import java.sql.Connection
 
 /**
  * Base class of database schema.
@@ -32,6 +35,26 @@ trait ActiveRecordTables extends Schema {
     }.toMap ++ map
   }
 
+  val sessionManager = new SessionManager(this)
+
+  def inTransaction[T](f: => T): T = allSessions.find {
+    case ActiveRecordSession(_, _, schema) if schema == this => true
+    case _ => false
+  } match {
+    case Some(s) =>
+      val old = Session.currentSession
+      s.bindToCurrentThread
+      val result = f
+      old.bindToCurrentThread
+      result
+    case None =>
+      transaction(f)
+  }
+
+  def transaction[T](f: => T): T = {
+    dsl.transaction(this.sessionManager)(f)
+  }
+
   def getTable[T](name: String): Table[T] = {
     tableMap.getOrElse(name, throw ActiveRecordException.tableNotFound(name))
       .asInstanceOf[Table[T]]
@@ -52,7 +75,7 @@ trait ActiveRecordTables extends Schema {
   def foreignKeyFromClass(c: Class[_]): String =
     c.getSimpleName.camelize + "Id"
 
-  protected def execute(sql: String, logging: Boolean = true) {
+  protected def execute(sql: String, logging: Boolean = true): Unit = inTransaction {
     if (logging) Config.logger.debug(sql)
     val connection = Session.currentSession.connection
     val s = connection.createStatement
@@ -70,7 +93,7 @@ trait ActiveRecordTables extends Schema {
   private[activerecord] def isCreated: Boolean = inTransaction {
     all.headOption.exists{ t =>
       try {
-        val name = Config.adapter.quoteName(t.prefixedName)
+        val name = config.adapter.quoteName(t.prefixedName)
         execute("select 1 from " + name + " limit 1", false)
         true
       } catch {
@@ -84,9 +107,9 @@ trait ActiveRecordTables extends Schema {
   /** load configuration and then setup database and session */
   def initialize(config: Map[String, Any]) {
     if (!_initialized) {
-      Config.conf = loadConfig(config)
-      SessionFactory.concreteFactory = Some(() => session)
-      if (Config.autoCreate) transaction { if (!isCreated) create }
+      configOption = Some(loadConfig(config))
+      Config.registerSchema(this)
+      if (Config.autoCreate) this.transaction { if (!isCreated) create }
     }
 
     _initialized = true
@@ -101,33 +124,49 @@ trait ActiveRecordTables extends Schema {
 
   /** cleanup database resources */
   def cleanup: Unit = {
+    if (Config.autoDrop) drop
     Config.cleanup
-    if (Config.autoDrop) transaction { drop }
+    sessionStack.foreach { case (s1, s2) => s1.foreach(_.cleanup); s2.cleanup }
+    sessionStack.clear
     _initialized = false
   }
 
-  def loadConfig(config: Map[String, Any]): ActiveRecordConfig =
-    new DefaultConfig(overrideSettings = config)
+  private var configOption: Option[ActiveRecordConfig] = None
+  def config = configOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
+    new DefaultConfig(this, overrideSettings = c)
 
-  def session: Session = {
-    val s = Session.create(Config.connection, Config.adapter)
-    s.setLogger(Config.logger.debug)
-    s
+  def newSession: AbstractSession = {
+    val connectionFunc = () => {
+      val c = config.connection
+      Config.logger.trace(Thread.currentThread.getStackTrace.toStream.drop(3).filterNot { se =>
+        se.getClassName.startsWith("com.github.aselab") || se.getClassName.startsWith("org.squeryl")
+      }.take(10).mkString("[StackTrace]\n  ", "\n  ", ""))
+      Config.logger.debug("[URL] " + c.getMetaData.getURL)
+      c
+    }
+    ActiveRecordSession(connectionFunc, config.adapter, this)
   }
 
+  override def create = inTransaction { super.create }
+
+  override def drop = inTransaction { super.drop }
+
   /** drop and create table */
-  def reset: Unit = inTransaction {
+  def reset: Unit = this.inTransaction {
     drop
     create
   }
 
-  type SwapSession = (Option[Session], Session)
+  type SwapSession = (Option[AbstractSession], AbstractSession)
   private val sessionStack = collection.mutable.Stack.empty[SwapSession]
+
+  def allSessions = Session.currentSessionOption.toSeq ++ sessionStack.map(_._2)
 
   /** Set rollback point for test */
   def startTransaction {
     val oldSession = Session.currentSessionOption
-    val newSession = SessionFactory.newSession
+    val newSession = sessionManager.newSession
     oldSession.foreach(_.unbindFromCurrentThread)
     newSession.bindToCurrentThread
     val c = newSession.connection
@@ -135,6 +174,15 @@ trait ActiveRecordTables extends Schema {
       if (c.getAutoCommit) c.setAutoCommit(false)
     } catch { case e: java.sql.SQLException => }
     sessionStack.push(oldSession -> newSession)
+  }
+
+  def endTransaction: Unit = try {
+    val (oldSession, newSession) = sessionStack.pop
+    newSession.unbindFromCurrentThread
+    newSession.close
+    oldSession.foreach(_.bindToCurrentThread)
+  } catch {
+    case e: NoSuchElementException => throw ActiveRecordException.cannotRollback
   }
 
   /** Rollback to startTransaction point */
@@ -180,4 +228,17 @@ trait ActiveRecordTables extends Schema {
     }:_*))
     t
   }
+}
+
+class SessionManager(schema: ActiveRecordTables) extends SessionFactory {
+  def newSession = schema.newSession
+}
+
+case class ActiveRecordSession(c: () => Connection, a: DatabaseAdapter, schema: ActiveRecordTables) extends LazySession(c, a) {
+  setLogger(Config.logger.debug)
+}
+
+object ActiveRecordTables {
+  def find(schemaName: String)(implicit classLoader: ClassLoader = defaultLoader): ActiveRecordTables =
+    classToCompanion(schemaName).asInstanceOf[ActiveRecordTables]
 }

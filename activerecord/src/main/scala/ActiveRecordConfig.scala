@@ -9,7 +9,8 @@ import com.jolbox.bonecp._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
-import reflections.ReflectionUtil.classToCompanion
+import reflections.ReflectionUtil._
+import scala.collection.JavaConversions._
 import org.joda.time.format._
 import org.joda.time.DateTimeZone
 
@@ -23,9 +24,12 @@ object Config {
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
+  def schema(companion: ActiveRecordBaseCompanion[_, _]): ActiveRecordTables = {
+    val clazz = companion.classInfo.clazz
+    tables.getOrElse(clazz, throw ActiveRecordException.tableNotFound(clazz.toString))
+  }
   def autoCreate: Boolean = conf.autoCreate
   def autoDrop: Boolean = conf.autoDrop
-  def schema: ActiveRecordTables = conf.schema
   def connection: java.sql.Connection = conf.connection
   def adapter: DatabaseAdapter = conf.adapter
 
@@ -43,20 +47,32 @@ object Config {
 
   def logger: Logger = conf.logger
   def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
+
+  private val _tables = collection.mutable.Map.empty[Class[_], ActiveRecordTables]
+  def tables = _tables.toMap
+  def registerSchema(s: ActiveRecordTables) = {
+    conf = s.config
+    s.all.foreach(t => _tables.update(t.posoMetaData.clasz, s))
+  }
+
+  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load) =
+    config.getStringList(key).map(ActiveRecordTables.find)
 }
 
 trait ActiveRecordConfig {
+  def schema: ActiveRecordTables
   def autoCreate: Boolean
   def autoDrop: Boolean
-  def schemaClass: String
   def connection: Connection
   def adapter: DatabaseAdapter
   def getString(key: String): Option[String]
-  lazy val schema = catching(
-    classOf[ClassNotFoundException], classOf[ClassCastException]
-  ).withApply(e => throw ActiveRecordException.cannotLoadSchema(schemaClass)) {
-    classToCompanion(schemaClass).asInstanceOf[ActiveRecordTables]
+
+  protected def debug[T](key: String, value: Option[T], default: String = "(not found)") {
+    logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
   }
+
+  def log = {}
+  log
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
@@ -71,9 +87,8 @@ trait ActiveRecordConfig {
     case driver => throw ActiveRecordException.unsupportedDriver(driver)
   }
 
-  def cleanup: Unit = {
-    Session.cleanupResources
-  }
+  def cleanup: Unit = schema.allSessions.foreach(_.cleanup)
+
   def translator: i18n.Translator
   lazy val timeZone: DateTimeZone = DateTimeZone.forTimeZone(getString("timeZone").map(TimeZone.getTimeZone)
     .getOrElse(TimeZone.getDefault))
@@ -88,16 +103,41 @@ trait ActiveRecordConfig {
 }
 
 class DefaultConfig(
+  val schema: ActiveRecordTables,
   config: Config = ConfigFactory.load(),
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
-  val env = System.getProperty("run.mode", "dev")
+  lazy val env = System.getProperty("run.mode", "dev")
+  lazy val _prefix = schema.getClass.getName.dropRight(1)
+  def prefix(key: String) = _prefix + "." + key
 
-  def get[T](key: String): Option[T] = overrideSettings.get(key).map(_.asInstanceOf[T])
-  def get[T](key: String, getter: String => T): Option[T] = try {
-    Option(getter(env + "." + key))
-  } catch {
-    case e: ConfigException.Missing => None
+  logger.debug("----- Loading config: %s (mode: %s) -----".format(_prefix, env))
+
+  def get[T](key: String): Option[T] = {
+    if (overrideSettings.isEmpty) return None
+    val keyWithPrefix = prefix(key)
+    val valueWithPrefix = overrideSettings.get(keyWithPrefix)
+    debug(keyWithPrefix + " (overrideSettings)", valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(key + " (overrideSettings)", overrideSettings.get(key))
+    }
+    valueWithPrefix.orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+  }
+
+  def get[T](key: String, getter: String => T): Option[T] = {
+    def inner(k: String) = try {
+      Option(getter(k))
+    } catch {
+      case e: ConfigException.Missing => None
+    }
+    val k = env + "." + key
+    val keyWithPrefix = prefix(k)
+    val valueWithPrefix = inner(keyWithPrefix)
+    debug(keyWithPrefix, valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(k, inner(k))
+    }
+    valueWithPrefix.orElse(inner(k))
   }
   def getString(key: String): Option[String] = get[String](key).orElse(get(key, config.getString))
   def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, config.getInt))
@@ -106,7 +146,6 @@ class DefaultConfig(
 
   lazy val autoCreate = getBoolean("autoCreate").getOrElse(true)
   lazy val autoDrop = getBoolean("autoDrop").getOrElse(false)
-  lazy val schemaClass = getString("schema").getOrElse("models.Tables")
   lazy val driverClass = getString("driver").getOrElse("org.h2.Driver")
   lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
   lazy val username = getString("username")
@@ -141,8 +180,22 @@ class DefaultConfig(
     new BoneCP(conf)
   }
 
+  override def log = {
+    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix, env))
+    settings.foreach{ case (k, v) => debug(k, v, "") }
+  }
+
+  lazy val settings = List(
+    "driver" -> Some(driverClass),
+    "jdbcurl" -> Some(jdbcurl),
+    "username" -> username,
+    "maxConnectionsPerPartition" -> maxConnectionsPerPartition,
+    "minConnectionsPerPartition" -> minConnectionsPerPartition
+  )
+
   override def cleanup: Unit = {
     super.cleanup
+    pool.shutdown()
   }
 
   def connection: Connection = pool.getConnection

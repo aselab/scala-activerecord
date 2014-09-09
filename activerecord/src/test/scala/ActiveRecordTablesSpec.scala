@@ -41,7 +41,7 @@ object ActiveRecordTablesSpec extends DatabaseSpecification {
   "database schema" should {
     def ddl = {
       var lines = List.empty[String]
-      transaction { TestTables.printDdl(lines +:= _) }
+      TestTables.transaction { TestTables.printDdl(lines +:= _) }
       lines.mkString("\n")
     }
 
