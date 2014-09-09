@@ -11,7 +11,7 @@ libraryDependencies ++= Seq(
   "com.github.aselab" %% "scala-activerecord" % "0.2.3",
   "com.github.aselab" %% "scala-activerecord-play2" % "0.2.3",
   jdbc,
-  "com.h2database" % "h2" % "1.3.170"  // See Supported databases
+  "com.h2database" % "h2" % "1.4.180"  // See Supported databases
 )
 ```
 

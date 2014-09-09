@@ -6,7 +6,7 @@ object ActiveRecordBuild extends Build {
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
-    val v = "2.3.12"
+    val v = "2.4.2"
     "org.specs2" %% "specs2" % v % scope
   }
 
@@ -35,13 +35,13 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.11.1",
-    crossScalaVersions := Seq("2.11.1", "2.10.4"),
+    scalaVersion := "2.11.2",
+    crossScalaVersions := Seq("2.11.2", "2.10.4"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
-      "com.h2database" % "h2" % "1.3.174" % "test",
+      "com.h2database" % "h2" % "1.4.180" % "test",
       "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
       "junit" % "junit" % "4.11" % "test"
     ),
@@ -86,7 +86,7 @@ object ActiveRecordBuild extends Build {
         "com.typesafe" % "config" % "1.2.1",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "1.2.0",
+        "com.github.nscala-time" %% "nscala-time" % "1.4.0",
         "commons-validator" % "commons-validator" % "1.4.0",
         "org.slf4j" % "slf4j-api" % "1.7.7"
       ),
