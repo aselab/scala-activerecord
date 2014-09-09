@@ -56,7 +56,11 @@ object Config {
   }
 
   def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load) =
-    config.getStringList(key).map(ActiveRecordTables.find)
+    if (config.hasPath(key)) {
+      config.getStringList(key).map(ActiveRecordTables.find).toSeq
+    } else {
+      Seq(ActiveRecordTables.find("models.Tables"))
+    }
 }
 
 trait ActiveRecordConfig {
@@ -67,7 +71,7 @@ trait ActiveRecordConfig {
   def adapter: DatabaseAdapter
   def getString(key: String): Option[String]
 
-  protected def debug[T](key: String, value: Option[T], default: String = "(not found)") {
+  protected def debug[T](key: String, value: Option[T], default: String = "(not found)"): Unit = {
     logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
   }
 
