@@ -1,14 +1,40 @@
+## Important changes
+* dsl#transaction is deprecated and causes runtime error. use ActiveRecordCompanion#transaction instead.
+* dsl#inTransaction is deprecated and causes runtime error. use ActiveRecordCompanion#inTransaction instead.
+
+code sample:
+```scala
+package models
+
+import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
+
+case class Person(name: String, age: Int) extends ActiveRecord
+
+object Person extends ActiveRecordCompanion[Person]
+
+...
+
+// using inTransaction
+object App extends App {
+  Person.inTransaction {
+    Person("person1", 10).save
+  }
+}
+```
+
+## New features and bug fixes
 * Added support for Scala 2.11 (drop support for Scala 2.9.x)
 * Added support for multiple schemas
 * Added BoneCP configuration settings (MaxConnectionAge, IdleMaxAge, IdleConnectionTestPeriod) (#50, #53)
-* Implemented dynamic Relation#orderBy (#40)
-* Added ability to remove one record from CollectionAssociation (#41)
 * Required validator now treats Option fields (#44)
+* Added ability to remove one record from CollectionAssociation (#41)
+* Implemented dynamic Relation#orderBy (#40)
 * Fixed a bug for assign empty value in optional field (#34)
 * Added MSSQL support (#38)
 * Added DB2 support
 * Added ActiveModel
-* Added sbt-plugins (play2, scalatra, generator)
+* Added sbt-plugins (play2, scalatra)
 * Added factory methods for test
 
 [all changes](https://github.com/aselab/scala-activerecord/compare/0.2.3...0.3.0)
