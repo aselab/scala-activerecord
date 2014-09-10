@@ -53,7 +53,7 @@ object ActiveRecordConfigSpec extends Specification {
       }
 
       "postgresql driver" in {
-        config("org.postgresql.Driver").adapter must haveClass[PostgreSqlAdapter]
+        config("org.postgresql.Driver").adapter must beAnInstanceOf[PostgreSqlAdapter]
       }
 
       "mysql driver" in {

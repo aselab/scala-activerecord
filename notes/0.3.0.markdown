@@ -26,6 +26,8 @@ object App extends App {
 }
 ```
 
+* Set the sequence name of autoincrement in PostgreSQL by default (#42)
+
 ## New features and bug fixes
 * Added support for Scala 2.11 (drop support for Scala 2.9.x)
 * Added support for multiple schemas
