@@ -1,6 +1,9 @@
-## Important changes
-* dsl#transaction is deprecated and causes runtime error. use ActiveRecordCompanion#transaction instead.
-* dsl#inTransaction is deprecated and causes runtime error. use ActiveRecordCompanion#inTransaction instead.
+## Breaking changes
+The following functions have been unavailable by the multi-schema support:
+* com.github.aselab.activerecord.dsl#transaction
+* com.github.aselab.activerecord.dsl#inTransaction
+
+Please use the methods of [ActiveRecordCompanion](https://aselab.ci.cloudbees.com/job/scala-activerecord/javadoc/index.html#com.github.aselab.activerecord.ActiveRecordCompanion@inTransaction[T](f:=%3ET):T) instead.
 
 code sample:
 ```scala
