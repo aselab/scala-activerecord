@@ -12,8 +12,9 @@ trait Optimistic extends CRUDable { self: AR =>
   /** update with lock */
   abstract override protected def doUpdate = try {
     val result = super.doUpdate
-    if (result)
+    if (result) {
       this.setValue("occVersionNumber", occVersion + 1)
+    }
     result
   } catch {
     case e: StaleUpdateException => throw ActiveRecordException.staleUpdate(e)

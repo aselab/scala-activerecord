@@ -25,7 +25,7 @@ trait Associations {
 
     protected lazy val companion = classToARCompanion[T](associationClass)
 
-    def inTransaction[A](a: => A) = companion.inTransaction(a)
+    def inTransaction[A](a: => A): A = companion.inTransaction(a)
 
     protected lazy val source: Relation1[T, T] = companion.table
 
@@ -215,7 +215,7 @@ trait Associations {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
-      
+
       val result = toOption
       through.relation.foreach {r =>
         r.setValue(foreignKey, None)
@@ -364,7 +364,7 @@ trait Associations {
       if (hasConstraint) {
         throw ActiveRecordException.notNullConstraint(foreignKey)
       }
-      
+
       val result = r.toList
       result.foreach {m =>
         m.setValue(foreignKey, None)
@@ -428,7 +428,7 @@ trait Associations {
         case RightSide => inter.rightId
       }
     }
-    
+
     val allConditions = conditions
 
     private def joinedRelation = {

@@ -12,10 +12,10 @@ object dsl extends org.squeryl.PrimitiveTypeMode
 
   @deprecated(deprecateMessage("transaction"), "0.3.0")
   override def transaction[A](a: => A): A = sys.error(deprecateMessage("transaction"))
-  override def transaction[A](sf: org.squeryl.SessionFactory)(a: => A) = super.transaction(sf)(a)
+  override def transaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.transaction(sf)(a)
   @deprecated(deprecateMessage("inTransaction"), "0.3.0")
   override def inTransaction[A](a: => A): A = sys.error(deprecateMessage("inTransaction"))
-  override def inTransaction[A](sf: org.squeryl.SessionFactory)(a: => A) = super.inTransaction(sf)(a)
+  override def inTransaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.inTransaction(sf)(a)
 }
 
 package views {

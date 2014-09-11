@@ -30,7 +30,8 @@ trait ProductModelCompanion[T <: ProductModel] {
 
   lazy val fields: List[FieldInfo] = fieldInfo.values.toList
 
-  lazy val validatableFields: List[FieldInfo] = fields.filter(info => classOf[validations.Validatable].isAssignableFrom(info.fieldType))
+  lazy val validatableFields: List[FieldInfo] =
+    fields.filter(info => classOf[validations.Validatable].isAssignableFrom(info.fieldType))
 
   lazy val validators: Map[String, Seq[(Annotation, Validator[_])]] = {
     fieldInfo.map {

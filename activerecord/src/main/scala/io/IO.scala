@@ -99,7 +99,7 @@ trait IO extends Validatable { this: ProductModel =>
     errors.toSeq ++ nestErrors
   }
 
-  override def validate() = super.validate && formErrors.isEmpty
+  override def validate(): Boolean = super.validate && formErrors.isEmpty
 }
 
 object FormUtil {
@@ -110,7 +110,7 @@ object FormUtil {
   def split(s: String): Seq[String] = s.replaceAll("""\[([^\[\]]*)\]""", ",$1").split(",")
 
   /** a, b, c[d] => a[b][c][d] */
-  def join(a: String, b: Any*) =
+  def join(a: String, b: Any*): String =
     a + b.flatMap(s => split(s.toString)).map("[%s]".format(_)).mkString
 }
 

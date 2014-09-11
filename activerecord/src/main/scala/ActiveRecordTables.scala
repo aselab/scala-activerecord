@@ -133,7 +133,7 @@ trait ActiveRecordTables extends Schema {
   }
 
   private var configOption: Option[ActiveRecordConfig] = None
-  def config = configOption.getOrElse(throw ActiveRecordException.notInitialized)
+  def config: ActiveRecordConfig = configOption.getOrElse(throw ActiveRecordException.notInitialized)
   def loadConfig(c: Map[String, Any]): ActiveRecordConfig =
     new DefaultConfig(this, overrideSettings = c)
 
@@ -149,9 +149,9 @@ trait ActiveRecordTables extends Schema {
     ActiveRecordSession(connectionFunc, config.adapter, this)
   }
 
-  override def create = inTransaction { super.create }
+  override def create: Unit = inTransaction { super.create }
 
-  override def drop = inTransaction { super.drop }
+  override def drop: Unit = inTransaction { super.drop }
 
   /** drop and create table */
   def reset: Unit = this.inTransaction {
@@ -162,7 +162,7 @@ trait ActiveRecordTables extends Schema {
   type SwapSession = (Option[AbstractSession], AbstractSession)
   private val sessionStack = collection.mutable.Stack.empty[SwapSession]
 
-  def allSessions = Session.currentSessionOption.toSeq ++ sessionStack.map(_._2)
+  def allSessions: Seq[AbstractSession] = Session.currentSessionOption.toSeq ++ sessionStack.map(_._2)
 
   /** Set rollback point for test */
   def startTransaction {
@@ -232,10 +232,12 @@ trait ActiveRecordTables extends Schema {
 }
 
 class SessionManager(schema: ActiveRecordTables) extends SessionFactory {
-  def newSession = schema.newSession
+  def newSession: AbstractSession = schema.newSession
 }
 
-case class ActiveRecordSession(c: () => Connection, a: DatabaseAdapter, schema: ActiveRecordTables) extends LazySession(c, a) {
+case class ActiveRecordSession(
+  c: () => Connection, a: DatabaseAdapter, schema: ActiveRecordTables
+) extends LazySession(c, a) {
   setLogger(Config.logger.debug)
 }
 

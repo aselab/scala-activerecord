@@ -4,11 +4,11 @@ import com.github.aselab.activerecord.dsl._
 import inner._
 
 trait ActiveModel extends ProductModel with io.IO with validations.ValidationSupport {
-  def isNewRecord = true
+  def isNewRecord: Boolean = true
 }
 
 trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] {
-  override def newInstance = super.newInstance
+  override def newInstance: T = super.newInstance
   def newInstance(data: Map[String, Any]): T = newInstance.assign(data)
 }
 
@@ -106,7 +106,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     def getId(m: T): K = m.id
     def isPersisted(m: T): Boolean = m.isPersisted
     val idPropertyName = "id"
-    override def optimisticCounterPropertyName =
+    override def optimisticCounterPropertyName: Option[String] =
       if (isOptimistic) Some("occVersionNumber") else None
   }
 

@@ -49,13 +49,13 @@ object Config {
   def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
 
   private val _tables = collection.mutable.Map.empty[Class[_], ActiveRecordTables]
-  def tables = _tables.toMap
-  def registerSchema(s: ActiveRecordTables) = {
+  def tables: Map[Class[_], ActiveRecordTables] = _tables.toMap
+  def registerSchema(s: ActiveRecordTables): Unit = {
     conf = s.config
     s.all.foreach(t => _tables.update(t.posoMetaData.clasz, s))
   }
 
-  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load) =
+  def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load): Seq[ActiveRecordTables] =
     if (config.hasPath(key)) {
       config.getStringList(key).map(ActiveRecordTables.find).toSeq
     } else {
@@ -75,7 +75,7 @@ trait ActiveRecordConfig {
     logger.debug("\t%s -> %s".format(key, value.getOrElse(default)))
   }
 
-  def log = {}
+  def log: Unit = {}
   log
 
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
@@ -115,7 +115,7 @@ class DefaultConfig(
 ) extends ActiveRecordConfig {
   lazy val env = System.getProperty("run.mode", "dev")
   lazy val _prefix = schema.getClass.getName.dropRight(1)
-  def prefix(key: String) = _prefix + "." + key
+  def prefix(key: String): String = s"${_prefix}.${key}"
 
   logger.debug("----- Loading config: %s (mode: %s) -----".format(_prefix, env))
 
@@ -131,7 +131,7 @@ class DefaultConfig(
   }
 
   def get[T](key: String, getter: String => T): Option[T] = {
-    def inner(k: String) = try {
+    def inner(k: String): Option[T] = try {
       Option(getter(k))
     } catch {
       case e: ConfigException.Missing => None
@@ -186,7 +186,7 @@ class DefaultConfig(
     new BoneCP(conf)
   }
 
-  override def log = {
+  override def log: Unit = {
     logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix, env))
     settings.foreach{ case (k, v) => debug(k, v, "") }
   }
