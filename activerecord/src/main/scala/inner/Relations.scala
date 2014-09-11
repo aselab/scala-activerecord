@@ -7,6 +7,9 @@ import com.github.aselab.activerecord.squeryl.Implicits._
 import ActiveRecord._
 import reflections._
 import ReflectionUtil._
+import scala.language.reflectiveCalls
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
 
 trait Relations {
   case class Parameters[T <: AR, JoinedType <: {def _1: T}, S](
@@ -26,10 +29,10 @@ trait Relations {
 
     val parameters: Parameters[T, JoinedType, S]
 
-    val manifest: Manifest[T]
+    val manifest: ClassTag[T]
 
     lazy val companion: ActiveRecordBaseCompanion[_, T] =
-      classToARCompanion(manifest.erasure)
+      classToARCompanion(manifest.runtimeClass)
 
     // scalastyle:off
     def conditions = parameters.conditions
@@ -171,7 +174,7 @@ trait Relations {
       value
     }
 
-    def reload(implicit m: Manifest[S]): List[S] = companion.inTransaction {
+    def reload(implicit m: ClassTag[S]): List[S] = companion.inTransaction {
       cache = queryToIterable(toQuery).toList
 
       if (manifest == m && cache.nonEmpty) {
@@ -187,7 +190,7 @@ trait Relations {
       cache
     }
 
-    def load(implicit m: Manifest[S]): List[S] = if (isLoaded) cache else reload
+    def load(implicit m: ClassTag[S]): List[S] = if (isLoaded) cache else reload
 
     private def getOrException(o: Option[S]) = try {
       o.get
@@ -338,7 +341,7 @@ trait Relations {
   case class Relation1[T <: AR, S](
     parameters: Parameters[T, Tuple1[T], S],
     queryable: Queryable[T]
-  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
     type JoinedType = Tuple1[T]
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
@@ -348,8 +351,8 @@ trait Relations {
       from(queryable)(m => f(Tuple1(m)))
 
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
-      (implicit m: Manifest[J]): Relation2[T, J, S] = {
-      val c = classToARCompanion[J](m.erasure)
+      (implicit m: ClassTag[J]): Relation2[T, J, S] = {
+      val c = classToARCompanion[J](m.runtimeClass)
 
       Relation2(
         Parameters[T, (T, J), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
@@ -360,9 +363,9 @@ trait Relations {
 
     def joins[J1 <: AR, J2 <: AR](
       on: (T, J1, J2) => (LogicalBoolean, LogicalBoolean)
-    )(implicit m1: Manifest[J1], m2: Manifest[J2]): Relation3[T, J1, J2, S] = {
-      val c1 = classToARCompanion[J1](m1.erasure)
-      val c2 = classToARCompanion[J2](m2.erasure)
+    )(implicit m1: ClassTag[J1], m2: ClassTag[J2]): Relation3[T, J1, J2, S] = {
+      val c1 = classToARCompanion[J1](m1.runtimeClass)
+      val c2 = classToARCompanion[J2](m2.runtimeClass)
 
       Relation3(
         Parameters[T, (T, J1, J2), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
@@ -373,10 +376,10 @@ trait Relations {
 
     def joins[J1 <: AR, J2 <: AR, J3 <: AR](
       on: (T, J1, J2, J3) => (LogicalBoolean, LogicalBoolean, LogicalBoolean)
-    )(implicit m1: Manifest[J1], m2: Manifest[J2], m3: Manifest[J3]): Relation4[T, J1, J2, J3, S] = {
-      val c1 = classToARCompanion[J1](m1.erasure)
-      val c2 = classToARCompanion[J2](m2.erasure)
-      val c3 = classToARCompanion[J3](m3.erasure)
+    )(implicit m1: ClassTag[J1], m2: ClassTag[J2], m3: ClassTag[J3]): Relation4[T, J1, J2, J3, S] = {
+      val c1 = classToARCompanion[J1](m1.runtimeClass)
+      val c2 = classToARCompanion[J2](m2.runtimeClass)
+      val c3 = classToARCompanion[J3](m3.runtimeClass)
 
       Relation4(
         Parameters[T, (T, J1, J2, J3), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
@@ -391,7 +394,7 @@ trait Relations {
     queryable: Queryable[T],
     joinTable: Queryable[J1],
     on: ((T, J1)) => LogicalBoolean
-  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
     type JoinedType = (T, J1)
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
@@ -422,7 +425,7 @@ trait Relations {
     joinTable1: Queryable[J1],
     joinTable2: Queryable[J2],
     on: ((T, J1, J2)) => (LogicalBoolean, LogicalBoolean)
-  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
     type JoinedType = (T, J1, J2)
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
@@ -455,7 +458,7 @@ trait Relations {
     joinTable2: Queryable[J2],
     joinTable3: Queryable[J3],
     on: ((T, J1, J2, J3)) => (LogicalBoolean, LogicalBoolean, LogicalBoolean)
-  )(implicit val manifest: Manifest[T]) extends Relation[T, S] {
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
     type JoinedType = (T, J1, J2, J3)
 
     protected def copyParams[R](params: Parameters[T, JoinedType, R]) =

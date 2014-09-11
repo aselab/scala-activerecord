@@ -4,6 +4,7 @@ import org.specs2.mutable._
 import org.specs2.mock._
 import java.util.Locale
 import i18n._
+import scala.language.reflectiveCalls
 
 object i18nSpec extends Specification with Mockito {
   "Translator" should {

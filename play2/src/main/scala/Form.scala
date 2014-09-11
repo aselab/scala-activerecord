@@ -3,6 +3,7 @@ package com.github.aselab.activerecord
 import aliases._
 import io._
 import inner._
+import scala.reflect.ClassTag
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
@@ -64,12 +65,12 @@ class PlayHelper[T <: ActiveModel](companion: ActiveModelCompanion[T]) {
   def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
     playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
 
-  implicit def fieldConstructor(implicit m: Manifest[T]) = new FieldConstructor {
+  implicit def fieldConstructor(implicit m: ClassTag[T]) = new FieldConstructor {
     def apply(elements: FieldElements) = {
       val error = if (elements.hasErrors) "error" else ""
       Html(<div class={"control-group %s %s".format(elements.args.get('_class).getOrElse(""), error)} 
         id={elements.args.get('_id).map(_.toString).getOrElse(elements.id + "_field")}>
-        <label class="control-label" for={elements.id}>{Config.translator.field(m.erasure, elements.field.name)(elements.lang.toLocale)}</label>
+        <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.lang.toLocale)}</label>
         <div class="controls">
           {xml.Unparsed(elements.input.body)}
           {if (elements.errors.length > 0) {

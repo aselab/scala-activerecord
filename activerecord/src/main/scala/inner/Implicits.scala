@@ -5,12 +5,14 @@ import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import ActiveRecord._
 import reflections._
+import scala.reflect.ClassTag
+import scala.language.reflectiveCalls
 
 // scalastyle:off
 
 // low priority implicits
 trait CompanionIterable[T <: AR] {
-  implicit val manifest: Manifest[T]
+  implicit val manifest: ClassTag[T]
   def all: Relation1[T, T]
   implicit def companionToIterable(c: this.type): List[T] = c.all.toList
 }
@@ -22,21 +24,21 @@ trait CompanionConversion[T <: AR] extends CompanionIterable[T] {
 // low priority implicits
 trait IterableConversion {
   implicit def relationToIterable[T](relation: Relation[_, T])
-    (implicit m: Manifest[T]): Iterable[T] = relation.load
+    (implicit manifest: ClassTag[T]): Iterable[T] = relation.load
 
   implicit def associationToIterable[T <: AR]
-    (association: Association[_, T])(implicit m: Manifest[T]): Iterable[T] =
+    (association: Association[_, T])(implicit manifest: ClassTag[T]): Iterable[T] =
       relationToIterable(association.relation)
 }
 
 trait DSL extends IterableConversion {
-  implicit def keyedEntityDef[T <: AR](implicit m: Manifest[T]) = {
-    ReflectionUtil.classToARCompanion[T](m.erasure)
+  implicit def keyedEntityDef[T <: AR](implicit manifest: ClassTag[T]) = {
+    ReflectionUtil.classToARCompanion[T](manifest.runtimeClass)
       .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
   }
 
   implicit def queryToRelation[T <: AR](query: Queryable[T])
-    (implicit m: Manifest[T]): Relation1[T, T] =
+    (implicit m: ClassTag[T]): Relation1[T, T] =
     Relation1(Parameters[T, Tuple1[T], T](), query)
 
   implicit def relationToQuery[T <: AR, S]

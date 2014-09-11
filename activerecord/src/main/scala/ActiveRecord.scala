@@ -93,13 +93,14 @@ object ActiveRecord extends inner.Relations with inner.Associations
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   extends ActiveModelCompanion[T] with inner.CompanionConversion[T] {
+  import scala.reflect.ClassTag
   import reflections.ReflectionUtil._
   import ActiveRecord._
 
-  implicit val manifest: Manifest[T] = Manifest.classType(targetClass)
+  implicit val manifest: ClassTag[T] = ClassTag(targetClass)
 
   lazy val isOptimistic =
-    classOf[Optimistic].isAssignableFrom(manifest.erasure)
+    classOf[Optimistic].isAssignableFrom(manifest.runtimeClass)
 
   implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
     def getId(m: T): K = m.id

@@ -7,6 +7,9 @@ import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
 import java.util.Locale
+import scala.reflect.ClassTag
+import scala.language.reflectiveCalls
+import scala.language.existentials
 
 class Errors(model: Class[_]) extends Iterable[ValidationError] {
   protected val errorList =
@@ -112,7 +115,7 @@ case class ValidationError(
     ValidationError(model, key, error, this.args:_*)
 }
 
-abstract class Validator[T <: Validator.AnnotationType](implicit m: Manifest[T]) {
+abstract class Validator[T <: Validator.AnnotationType](implicit m: ClassTag[T]) {
   val _annotation = new DynamicVariable[Annotation](null)
   val _fieldName = new DynamicVariable[String](null)
   val _model = new DynamicVariable[Validatable](null)
@@ -177,13 +180,13 @@ object Validator {
     classOf[annotations.Unique] -> uniqueValidator
   )
 
-  def register[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]): Unit =
-    validators += (m.erasure.asInstanceOf[A] -> validator)
+  def register[T <: AnnotationType](validator: Validator[T])(implicit m: ClassTag[T]): Unit =
+    validators += (m.runtimeClass.asInstanceOf[A] -> validator)
 
   def unregister(annotation: A): Unit = validators -= annotation
 
-  def unregister[T <: AnnotationType](validator: Validator[T])(implicit m: Manifest[T]): Unit =
-    unregister(m.erasure.asInstanceOf[Class[T]])
+  def unregister[T <: AnnotationType](validator: Validator[T])(implicit m: ClassTag[T]): Unit =
+    unregister(m.runtimeClass.asInstanceOf[Class[T]])
 
   def get(annotation: A): Option[Validator[AnnotationType]] =
     validators.get(annotation).asInstanceOf[Option[Validator[AnnotationType]]]

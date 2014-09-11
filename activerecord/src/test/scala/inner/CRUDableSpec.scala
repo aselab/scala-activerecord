@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord.inner
 
 import org.specs2.mutable._
+import scala.language.reflectiveCalls
 
 object SaveableSpec extends Specification {
   "Saveable" should {

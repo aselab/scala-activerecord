@@ -17,7 +17,7 @@ object ActiveRecordBuild extends Build {
 
   val compilerSettings = Seq(
     javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:implicitConversions"),
     scalacOptions in Compile in doc ++= {
       val base = baseDirectory.value
       Seq("-sourcepath", base.getAbsolutePath, "-doc-source-url",

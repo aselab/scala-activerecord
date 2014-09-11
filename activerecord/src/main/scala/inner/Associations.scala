@@ -7,19 +7,21 @@ import squeryl.Implicits._
 import reflections._
 import ReflectionUtil._
 import ActiveRecord._
+import scala.language.existentials
+import scala.reflect.ClassTag
 
 trait Associations {
   trait Association[+O <: AR, T <: AR] {
     val owner: O
-    val associationClass = manifest.erasure
-    implicit val manifest: Manifest[T]
+    val associationClass = manifest.runtimeClass
+    implicit val manifest: ClassTag[T]
 
     def foreignKey: String
 
     def relation: Relation[T, T]
 
     protected[inner] def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]]
+      (implicit m: ClassTag[S]): Map[Any, List[T]]
 
     protected lazy val companion = classToARCompanion[T](associationClass)
 
@@ -84,14 +86,14 @@ trait Associations {
 
   class BelongsToAssociation[O <: AR, T <: AR](
     val owner: O, val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends Association[O, T] {
+  )(implicit val manifest: ClassTag[T]) extends Association[O, T] {
     lazy val foreignKeyInfo = owner._companion.fieldInfo(foreignKey)
 
     def condition: T => LogicalBoolean =
       m => foreignKeyInfo.toEqualityExpression(m.id, owner.getValue[Any](foreignKey))
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id)
       val field = foreignKeyInfo
       val r = source.joins[S]((m, o) =>
@@ -121,7 +123,7 @@ trait Associations {
 
   class HasOneAssociation[O <: AR, T <: AR](
     val owner: O, conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends SingularAssociation[O, T] {
+  )(implicit val manifest: ClassTag[T]) extends SingularAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
     protected lazy val hasConstraint = !fieldInfo(foreignKey).isOption
@@ -131,7 +133,7 @@ trait Associations {
     def relation: Relation[T, T] = relation1
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id)
       val field = fieldInfo(foreignKey)
 
@@ -167,7 +169,7 @@ trait Associations {
   class HasOneThroughAssociation[O <: AR, T <: AR, I <: AR](
     val owner: O, val through: SingularAssociation[O, I],
     conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends SingularAssociation[O, T] {
+  )(implicit val manifest: ClassTag[T], m: ClassTag[I]) extends SingularAssociation[O, T] {
     val allConditions = conditions
 
     private lazy val idFieldInfo = fieldInfo("id")
@@ -184,7 +186,7 @@ trait Associations {
     def relation: Relation[T, T] = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val idMap = through.eagerLoad(sources).map {
         case (id, inters) => (id, inters.flatMap(_.getOption[Any](foreignKey)))
       }
@@ -233,7 +235,7 @@ trait Associations {
 
   class HasManyAssociation[O <: AR, T <: AR](
     val owner: O, conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
+  )(implicit val manifest: ClassTag[T]) extends CollectionAssociation[O, T] {
     val allConditions = conditions + (foreignKey -> owner.id)
 
     protected lazy val hasConstraint = !fieldInfo(foreignKey).isOption
@@ -243,7 +245,7 @@ trait Associations {
     def relation: Relation[T, T] = relation1
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id)
       val field = fieldInfo(foreignKey)
 
@@ -304,7 +306,7 @@ trait Associations {
   class HasManyThroughAssociation[O <: AR, T <: AR, I <: AR](
     val owner: O, val through: CollectionAssociation[O, I],
     conditions: Map[String, Any], val foreignKey: String
-  )(implicit val manifest: Manifest[T], m: Manifest[I]) extends CollectionAssociation[O, T] {
+  )(implicit val manifest: ClassTag[T], m: ClassTag[I]) extends CollectionAssociation[O, T] {
     val allConditions = conditions
 
     private lazy val idFieldInfo = fieldInfo("id")
@@ -321,7 +323,7 @@ trait Associations {
     def relation: Relation[T, T] = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val idMap = through.eagerLoad(sources).map {
         case (id, inters) => (id, inters.flatMap(_.getOption[Any](foreignKey)))
       }
@@ -401,14 +403,14 @@ trait Associations {
   class HasAndBelongsToManyAssociation[O <: ActiveRecord, T <: ActiveRecord](
     val owner: O, conditions: Map[String, Any],
     interCompanion: IntermediateRecordCompanion
-  )(implicit val manifest: Manifest[T]) extends CollectionAssociation[O, T] {
+  )(implicit val manifest: ClassTag[T]) extends CollectionAssociation[O, T] {
 
     abstract sealed trait Side
     case object LeftSide extends Side
     case object RightSide extends Side
 
     private val (ownerSide, assocSide) = {
-      val c = Seq(owner.getClass, manifest.erasure).sortBy(_.getSimpleName)
+      val c = Seq(owner.getClass, manifest.runtimeClass).sortBy(_.getSimpleName)
       if (c.head == owner.getClass) {
         (LeftSide, RightSide)
       } else {
@@ -448,7 +450,7 @@ trait Associations {
     def relation: Relation[T, T] = relation2
 
     def eagerLoad[S <: AR](sources: List[S])
-      (implicit m: Manifest[S]): Map[Any, List[T]] = {
+      (implicit m: ClassTag[S]): Map[Any, List[T]] = {
       val ids = sources.map(_.id).asInstanceOf[List[Long]]
       joinedRelation.where((m, inter) =>
         getId(inter, ownerSide) in ids
@@ -517,21 +519,21 @@ trait Associations {
 
   trait AssociationSupport { self: AR =>
     protected def belongsTo[T <: AR]
-      (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
-        belongsTo[T](Config.schema(self.recordCompanion).foreignKeyFromClass(m.erasure))
+      (implicit m: ClassTag[T]): BelongsToAssociation[this.type, T] =
+        belongsTo[T](Config.schema(self.recordCompanion).foreignKeyFromClass(m.runtimeClass))
           .asInstanceOf[BelongsToAssociation[this.type, T]]
 
     protected def belongsTo[T <: AR](foreignKey: String)
-      (implicit m: Manifest[T]): BelongsToAssociation[this.type, T] =
+      (implicit m: ClassTag[T]): BelongsToAssociation[this.type, T] =
         new BelongsToAssociation[this.type, T](self, foreignKey)
 
     protected def hasOne[T <: AR]
-      (implicit m: Manifest[T]): HasOneAssociation[this.type, T] =
+      (implicit m: ClassTag[T]): HasOneAssociation[this.type, T] =
         hasOne[T]().asInstanceOf[HasOneAssociation[this.type, T]]
 
     protected def hasOne[T <: AR]
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
-      (implicit m: Manifest[T]): HasOneAssociation[this.type, T] = {
+      (implicit m: ClassTag[T]): HasOneAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
           Config.schema(self.recordCompanion).foreignKeyFromClass(self.getClass))
         new HasOneAssociation[this.type, T](self, conditions, key)
@@ -541,20 +543,20 @@ trait Associations {
       through: SingularAssociation[this.type, I],
       conditions: Map[String, Any] = Map.empty,
       foreignKey: String = null
-    )(implicit m1: Manifest[T], m2: Manifest[I]): HasOneThroughAssociation[this.type, T, I] = {
+    )(implicit m1: ClassTag[T], m2: ClassTag[I]): HasOneThroughAssociation[this.type, T, I] = {
       val key = Option(foreignKey).getOrElse(
-        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.erasure))
+        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.runtimeClass))
 
       new HasOneThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
     }
 
     protected def hasMany[T <: AR]
-      (implicit m: Manifest[T]): HasManyAssociation[this.type, T] =
+      (implicit m: ClassTag[T]): HasManyAssociation[this.type, T] =
         hasMany[T]().asInstanceOf[HasManyAssociation[this.type, T]]
 
     protected def hasMany[T <: AR]
       (conditions: Map[String, Any] = Map.empty, foreignKey: String = null)
-      (implicit m: Manifest[T]): HasManyAssociation[this.type, T] = {
+      (implicit m: ClassTag[T]): HasManyAssociation[this.type, T] = {
         val key = Option(foreignKey).getOrElse(
           Config.schema(self.recordCompanion).foreignKeyFromClass(self.getClass))
         new HasManyAssociation[this.type, T](self, conditions, key)
@@ -564,9 +566,9 @@ trait Associations {
       through: CollectionAssociation[this.type, I],
       conditions: Map[String, Any] = Map.empty,
       foreignKey: String = null
-    )(implicit m1: Manifest[T], m2: Manifest[I]): HasManyThroughAssociation[this.type, T, I] = {
+    )(implicit m1: ClassTag[T], m2: ClassTag[I]): HasManyThroughAssociation[this.type, T, I] = {
       val key = Option(foreignKey).getOrElse(
-        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.erasure))
+        Config.schema(self.recordCompanion).foreignKeyFromClass(m1.runtimeClass))
 
       new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
     }
@@ -574,15 +576,15 @@ trait Associations {
 
   trait HabtmAssociationSupport { self: ActiveRecord =>
     protected def hasAndBelongsToMany[T <: ActiveRecord]
-      (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
+      (implicit m: ClassTag[T]): HasAndBelongsToManyAssociation[this.type, T] =
       hasAndBelongsToMany[T](Map.empty[String, Any])(m)
         .asInstanceOf[HasAndBelongsToManyAssociation[this.type, T]]
 
     protected def hasAndBelongsToMany[T <: ActiveRecord]
       (conditions: Map[String, Any])
-      (implicit m: Manifest[T]): HasAndBelongsToManyAssociation[this.type, T] =
+      (implicit m: ClassTag[T]): HasAndBelongsToManyAssociation[this.type, T] =
     {
-      val name = Config.schema(self.recordCompanion).tableNameFromClasses(self.getClass, m.erasure)
+      val name = Config.schema(self.recordCompanion).tableNameFromClasses(self.getClass, m.runtimeClass)
       val companion = new IntermediateRecordCompanion {
         val tableName = name
       }

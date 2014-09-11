@@ -3,10 +3,13 @@ package com.github.aselab.activerecord.reflections
 import com.github.aselab.activerecord._
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
-import scala.reflect.Manifest
+import scala.reflect.ClassTag
 import scala.util.control.Exception._
 import annotations._
 import scala.tools.scalap.scalax.rules.scalasig._
+import scala.language.reflectiveCalls
+import scala.language.existentials
+import scala.reflect.ClassTag
 
 class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   import ClassInfo._
@@ -108,13 +111,13 @@ case class FieldInfo(
   lazy val isUnique = hasAnnotation[Unique]
   lazy val isModel = ReflectionUtil.isModel(fieldType)
 
-  def getAnnotation[T](implicit m: Manifest[T]): T =
-    annotationMap(m.erasure).asInstanceOf[T]
+  def getAnnotation[T](implicit m: ClassTag[T]): T =
+    annotationMap(m.runtimeClass).asInstanceOf[T]
 
-  def hasAnnotation[T](implicit m: Manifest[T]): Boolean =
-    annotationMap.isDefinedAt(m.erasure)
+  def hasAnnotation[T](implicit m: ClassTag[T]): Boolean =
+    annotationMap.isDefinedAt(m.runtimeClass)
 
-  def is[T](implicit m: Manifest[T]): Boolean = fieldType == m.erasure
+  def is[T](implicit m: ClassTag[T]): Boolean = fieldType == m.runtimeClass
 
   def setValue(model: Any, value: Any) {
     model.setValue(name, if (isOption) value.toOption else value)
@@ -249,9 +252,9 @@ trait ReflectionUtil {
       f.set(o, value)
     }
 
-    def getFields[T](implicit m: Manifest[T]): Array[Field] =
+    def getFields[T](implicit m: ClassTag[T]): Array[Field] =
       o.getClass.getDeclaredFields.filter {
-        f => m.erasure.isAssignableFrom(f.getType)
+        f => m.runtimeClass.isAssignableFrom(f.getType)
       }
 
     private def convertToOption[T](v: Any) = v match {

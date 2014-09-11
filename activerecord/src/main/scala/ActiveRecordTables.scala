@@ -9,6 +9,7 @@ import mojolly.inflector.InflectorImports._
 import java.io.{PrintWriter, StringWriter}
 import reflections.ReflectionUtil._
 import java.sql.Connection
+import scala.language.existentials
 
 /**
  * Base class of database schema.
@@ -208,12 +209,12 @@ trait ActiveRecordTables extends Schema {
   }
 
   def table[T <: AR]()(implicit m: Manifest[T]): Table[T] =
-    table(tableNameFromClass(m.erasure))(m)
+    table(tableNameFromClass(m.runtimeClass))(m)
 
   def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
     val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
 
-    val c = classToARCompanion[T](m.erasure)
+    val c = classToARCompanion[T](m.runtimeClass)
     val fields = c.fieldInfo.values.toSeq
     import annotations._
 

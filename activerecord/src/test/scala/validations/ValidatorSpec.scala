@@ -3,6 +3,7 @@ package com.github.aselab.activerecord.validations
 import org.specs2.mutable._
 import org.specs2.mock._
 import com.github.aselab.activerecord._
+import scala.language.reflectiveCalls
 
 object ValidatorSpec extends Specification with Mockito {
   import annotation.meta._
