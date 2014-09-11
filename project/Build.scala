@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.3.0"
+  val _version = "0.3.1"
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String) = Def.setting {
