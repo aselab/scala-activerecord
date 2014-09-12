@@ -5,8 +5,10 @@ import reflections._
 import java.util.Date
 import java.sql.Timestamp
 import org.squeryl.dsl._
+import scala.reflect._
+import scala.reflect.runtime.universe._
 
-abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTypeMode)(implicit m: Manifest[B]) {
+abstract class CustomTypeMapper[A: TypeTag, B: ClassTag](primitiveTypeMode: org.squeryl.PrimitiveTypeMode) {
   def fromJdbc(t: A): B
   def toJdbc(t: B): A
   def defaultValue: B
@@ -61,7 +63,20 @@ abstract class CustomTypeMapper[A, B](primitiveTypeMode: org.squeryl.PrimitiveTy
   implicit def bigDecimalOption(implicit ev: A =:= BigDecimal) =
     new OptionConverter[BigDecimal, TBigDecimal, TOptionBigDecimal]
 
-  Option(formConverter).foreach(f => FormConverter.register(m.erasure, f))
-  ClassInfo.factories.register(m.erasure, {() => defaultValue.asInstanceOf[AnyRef]})
+  // register JDBC mapper in NonPrimitiveJdbcMapper initilized
+  // https://github.com/squeryl/squeryl/blob/0.9.6-RC3/src/main/scala/org/squeryl/dsl/TypedExpression.scala#L291
+  private val _register = typeTag[A] match {
+    case t if t.tpe =:= typeOf[String] => _string
+    case t if t.tpe =:= typeOf[Date] => _date
+    case t if t.tpe =:= typeOf[Timestamp] => _timestamp
+    case t if t.tpe =:= typeOf[Int] => _int
+    case t if t.tpe =:= typeOf[Long] => _long
+    case t if t.tpe =:= typeOf[Double] => _double
+    case t if t.tpe =:= typeOf[Float] => _float
+    case t if t.tpe =:= typeOf[BigDecimal] => _bigDecimal
+  }
+
+  Option(formConverter).foreach(f => FormConverter.register(classTag[B].runtimeClass, f))
+  ClassInfo.factories.register(classTag[B].runtimeClass, {() => defaultValue.asInstanceOf[AnyRef]})
 }
 

@@ -7,7 +7,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.github.nscala_time.time.Imports._
 
 trait JodaTimeSupport { self: org.squeryl.PrimitiveTypeMode =>
-  implicit val jodaTimeMapper = new CustomTypeMapper[Timestamp, DateTime](self) {
+  val jodaTimeMapper = new CustomTypeMapper[Timestamp, DateTime](self) {
     def fromJdbc(t: Timestamp) = new DateTime(t)
     def toJdbc(t: DateTime) = new Timestamp(t.getMillis)
 
