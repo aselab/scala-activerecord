@@ -60,7 +60,8 @@ object ActiveRecordBuild extends Build {
     pomExtra := pomXml,
     shellPrompt := {
       (state: State) => Project.extract(state).currentProject.id + "> "
-    }
+    },
+    updateOptions := updateOptions.value.withConsolidatedResolution(true)
   ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
