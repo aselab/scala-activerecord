@@ -104,13 +104,12 @@ object ActiveRecordBuild extends Build {
   lazy val macros = Project("macro", file("macro"),
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord-macro",
-      libraryDependencies <++= (scalaVersion) { scalaVersion =>
-        Seq(
-          "org.scala-lang" % "scala-reflect" % scalaVersion % "compile",
-          "org.scala-lang" % "scala-compiler" % scalaVersion % "optional"
-        )
-      })
+      libraryDependencies := Seq(
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
+        "org.scala-lang" % "scala-compiler" % scalaVersion.value % "optional"
+      )
     )
+  )
 
   lazy val specs = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-specs",
