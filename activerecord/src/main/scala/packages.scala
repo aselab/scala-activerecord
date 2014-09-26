@@ -1,5 +1,6 @@
 package com.github.aselab.activerecord
 
+import scala.language.experimental.macros
 import ActiveRecord._
 import reflections._
 
@@ -7,14 +8,10 @@ object dsl extends org.squeryl.PrimitiveTypeMode
   with inner.Annotations with inner.DSL with inner.Types {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
-  private def deprecateMessage(s: String) =
-    s"dsl#${s} is deprecated and causes runtime error. use ActiveRecordCompanion#${s} instead."
 
-  @deprecated(deprecateMessage("transaction"), "0.3.0")
-  override def transaction[A](a: => A): A = sys.error(deprecateMessage("transaction"))
+  override def transaction[A](a: => A): A = macro MethodMacros.unsupportedInTransaction[A]
   override def transaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.transaction(sf)(a)
-  @deprecated(deprecateMessage("inTransaction"), "0.3.0")
-  override def inTransaction[A](a: => A): A = sys.error(deprecateMessage("inTransaction"))
+  override def inTransaction[A](a: => A): A = macro MethodMacros.unsupportedInTransaction[A]
   override def inTransaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.inTransaction(sf)(a)
 }
 

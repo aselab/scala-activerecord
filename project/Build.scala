@@ -99,7 +99,18 @@ object ActiveRecordBuild extends Build {
       TestTables.initialize(Map("schema" -> "com.github.aselab.activerecord.models.TestTables"))
       """
     )
-  )
+  ) dependsOn(macros)
+
+  lazy val macros = Project("macro", file("macro"),
+    settings = defaultSettings ++ Seq(
+      name := "scala-activerecord-macro",
+      libraryDependencies <++= (scalaVersion) { scalaVersion =>
+        Seq(
+          "org.scala-lang" % "scala-reflect" % scalaVersion % "compile",
+          "org.scala-lang" % "scala-compiler" % scalaVersion % "optional"
+        )
+      })
+    )
 
   lazy val specs = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-specs",
