@@ -43,7 +43,8 @@ object ActiveRecordBuild extends Build {
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
       "com.h2database" % "h2" % "1.4.180" % "test",
       "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
-      "junit" % "junit" % "4.11" % "test"
+      "junit" % "junit" % "4.11" % "test",
+      "org.json4s" %% "json4s-native" % "3.2.10"
     ),
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,

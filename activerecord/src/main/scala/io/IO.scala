@@ -12,6 +12,12 @@ trait IO extends Validatable { this: ProductModel =>
     this.getOption[Any](f.name).map(f.name -> _)
   }.toMap
 
+  def toMap(onlyFields: List[String]): Map[String, Any] = onlyFields.flatMap { name =>
+    this.getOption[Any](name).map(name -> _)
+  }.toMap
+
+  def toMap(onlyFields: String*): Map[String, Any] = toMap(onlyFields.toList)
+
   def toFormValues: Map[String, String] = toFormValues(None)
 
   def toFormValues(prefix: Option[String]): Map[String, String] = {

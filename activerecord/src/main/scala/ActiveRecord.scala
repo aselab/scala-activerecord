@@ -3,11 +3,11 @@ package com.github.aselab.activerecord
 import com.github.aselab.activerecord.dsl._
 import inner._
 
-trait ActiveModel extends ProductModel with io.IO with validations.ValidationSupport {
+trait ActiveModel extends ProductModel with io.IO with io.JsonSerializer with validations.ValidationSupport {
   def isNewRecord: Boolean = true
 }
 
-trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] {
+trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] with io.JsonSupport[T] {
   override def newInstance: T = super.newInstance
   def newInstance(data: Map[String, Any]): T = newInstance.assign(data)
 }

@@ -5,7 +5,7 @@ import ActiveRecord._
 import reflections._
 
 object dsl extends org.squeryl.PrimitiveTypeMode
-  with inner.Annotations with inner.DSL with inner.Types {
+  with inner.Annotations with inner.DSL with inner.Types with io.JsonImplicits {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
 
