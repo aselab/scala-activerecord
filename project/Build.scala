@@ -5,9 +5,9 @@ object ActiveRecordBuild extends Build {
   val _version = "0.3.1"
   val isRelease = System.getProperty("release") == "true"
 
-  def specs2(scope: String) = Def.setting {
-    val v = "2.4.2"
-    "org.specs2" %% "specs2" % v % scope
+  def specs2(scope: String, name: String = "core") = Def.setting {
+    val v = if (scalaBinaryVersion.value == "2.11") "2.4.6" else "2.4.5"
+    "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
   def play20(app: String, scope: String) = Def.setting {
@@ -40,8 +40,9 @@ object ActiveRecordBuild extends Build {
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
+      specs2("test", "mock").value,
       "org.mockito" % "mockito-all" % "1.9.5" % "test",
-      "com.h2database" % "h2" % "1.4.180" % "test",
+      "com.h2database" % "h2" % "1.4.181" % "test",
       "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
       "junit" % "junit" % "4.11" % "test",
       "org.json4s" %% "json4s-native" % "3.2.10"
@@ -62,7 +63,7 @@ object ActiveRecordBuild extends Build {
     shellPrompt := {
       (state: State) => Project.extract(state).currentProject.id + "> "
     },
-    updateOptions := updateOptions.value.withConsolidatedResolution(true)
+    ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
   ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
