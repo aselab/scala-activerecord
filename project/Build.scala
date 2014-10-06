@@ -46,7 +46,7 @@ object ActiveRecordBuild extends Build {
       "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
       "junit" % "junit" % "4.11" % "test",
       "org.json4s" %% "json4s-native" % "3.2.10"
-    ),
+    ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,
     publishTo := {
