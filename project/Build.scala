@@ -35,8 +35,8 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.11.2",
-    crossScalaVersions := Seq("2.11.2", "2.10.4"),
+    scalaVersion := "2.11.4",
+    crossScalaVersions := Seq("2.11.4", "2.10.4"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
