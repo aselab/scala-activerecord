@@ -48,7 +48,21 @@ trait IO extends Validatable { this: ProductModel =>
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
       val value = if (info.isOption) Some(v).filter(_ != "") else v
-      this.setValue(k, value)
+      (value, _companion.fieldInfo(k)) match {
+        case (v: BigInt, FieldInfo(name, klass, _, _, _)) if klass == classOf[Int] => this.setValue(k, v.toInt)
+        case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[IO].isAssignableFrom(klass) =>
+          val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
+          try {
+            this.setValue(k, if (isSeq) {
+              v.asInstanceOf[List[Map[String, Any]]].map(companion.assign)
+            } else {
+              companion.assign(v.asInstanceOf[Map[String, Any]])
+            })
+          } catch {
+            case e => this.setValue(k, value)
+          }
+        case _ => this.setValue(k, value)
+      }
     }
     this
   }
@@ -143,6 +157,11 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
 
   def bind(data: Map[String, String])(implicit source: T = self.newInstance): T = {
     source.assignFormValues(data)
+    source
+  }
+
+  def assign(data: Map[String, Any])(implicit source: T = self.newInstance): T = {
+    source.assign(data)
     source
   }
 

@@ -38,7 +38,7 @@ trait JsonSerializer { self: IO =>
   def fromJson(json: String): self.type = fromJValue(JsonMethods.parse(json))
 
   def fromJValue(jvalue: JValue): self.type =
-    assignFormValues(jvalue.values.asInstanceOf[Map[String, Any]].mapValues(_.toString))
+    assign(jvalue.values.asInstanceOf[Map[String, Any]])
 }
 
 trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>
@@ -47,10 +47,10 @@ trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>
   def fromArrayJson(json: String): List[T] = fromJArray(JsonMethods.parse(json))
 
   def fromJValue(jvalue: JValue): T =
-    bind(jvalue.values.asInstanceOf[Map[String, Any]].mapValues(_.toString))
+    assign(jvalue.values.asInstanceOf[Map[String, Any]])
 
   def fromJArray(jarray: JValue): List[T] =
-    jarray.values.asInstanceOf[List[Map[String, Any]]].map(m => bind(m.mapValues(_.toString)))
+    jarray.values.asInstanceOf[List[Map[String, Any]]].map(m => assign(m))
 }
 
 trait JsonImplicits { self: DSL =>

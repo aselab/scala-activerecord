@@ -141,6 +141,15 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m must equalTo(PrimitiveModel.newModel(5))
     }
 
+    "assgin(list)" in {
+      val m = ListModel.newInstance
+      m.assign(Map(
+        "l1" -> List("aa", "bb", "cc"),
+        "l2" -> List(1, 2, 3)
+      ))
+      m must equalTo(ListModel(List("aa", "bb", "cc"), List(1, 2, 3)))
+    }
+
     "assignFormValues" in {
       "primitive types" in {
         val m = PrimitiveModel.newInstance

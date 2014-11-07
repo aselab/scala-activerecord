@@ -53,6 +53,26 @@ object JsonSupportSpec extends DatabaseSpecification {
 
       User.fromJArray(jarray) mustEqual List(User("foo", true), User("bar", false))
     }
+
+    "fromJson(list)" >> {
+      val m = ListModel.newInstance
+      val json = ListModel(List("aa", "bb", "cc"), List(1, 2, 3)).toJson
+      ListModel.fromJson(json) mustEqual  ListModel(List("aa", "bb", "cc"), List(1, 2, 3))
+    }
+
+    "fromJson(nest)" >> {
+      val m = ComplexModel(
+        1211,
+        NestModel(53,ListModel(List("vv", "ss"),List(33, 44))),
+        List(
+          NestModel(55, ListModel(List("f", "e"),List(4, 5))),
+          NestModel(111, ListModel( List("c", "d"), List(3, 5)))
+        )
+      )
+      val json = m.toJson
+      json mustEqual """{"int":1211,"nest":{"int":53,"list":{"l1":["vv","ss"],"l2":[33,44]}},"nestlist":[{"int":55,"list":{"l1":["f","e"],"l2":[4,5]}},{"int":111,"list":{"l1":["c","d"],"l2":[3,5]}}]}"""
+      ComplexModel.newInstance.fromJson(json) mustEqual m
+    }
   }
 
   "JsonImplicits" should {

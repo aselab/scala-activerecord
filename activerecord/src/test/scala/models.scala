@@ -193,3 +193,34 @@ case class OptimisticModel(var field: String) extends ActiveRecord with Optimist
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
 
+case class ListModel(l1: List[String], l2: List[Int]) extends ActiveModel
+object ListModel extends ActiveModelCompanion[ListModel] {
+  def create(addErrors: (String, String)*) = {
+    val l = ListModel(Nil, Nil)
+    addErrors.foreach{ case (k, v) => l.errors.add(k, v) }
+    l
+  }
+}
+
+case class NestModel(
+  @Required int: Int,
+  list: ListModel
+) extends ActiveModel {
+  def this() = this(1, ListModel(List("a", "b"), List(1, 2)))
+}
+object NestModel extends ActiveModelCompanion[NestModel] {
+  def create(l: ListModel, addErrors: (String, String)*) = {
+    val n = NestModel(0, l)
+    addErrors.foreach{ case (k, v) => n.errors.add(k, v) }
+    n
+  }
+}
+
+case class ComplexModel(
+  @Required int: Int,
+  nest: NestModel,
+  nestlist: List[NestModel]
+) extends ActiveModel {
+  def this() = this(1, new NestModel, List(new NestModel, new NestModel))
+}
+object ComplexModel extends ActiveModelCompanion[ComplexModel]
