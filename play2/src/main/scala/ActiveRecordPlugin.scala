@@ -6,7 +6,10 @@ import Play.current
 class ActiveRecordPlugin(app: Application) extends Plugin {
   implicit val classLoader = Play.application.classloader
   lazy val activeRecordTables = current.configuration.getConfig("schema")
-    .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find)
+    .map(_.keys).getOrElse{
+			current.configuration.getString("activerecord.schema").map(List(_))
+				.getOrElse(List("models.Tables"))
+		}.map(ActiveRecordTables.find)
 
   override def onStart() {
     activeRecordTables.foreach(_.initialize)
