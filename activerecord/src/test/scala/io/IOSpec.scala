@@ -150,6 +150,36 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m must equalTo(ListModel(List("aa", "bb", "cc"), List(1, 2, 3)))
     }
 
+    "assgin(None)" in {
+      val m = PrimitiveModel.newInstance
+      m.assign(Map(
+        "oint" -> "",
+        "ostring" -> None,
+        "odate" -> None
+      ))
+      m.oint must beNone
+      m.ostring must beNone
+      m.odate must beNone
+    }
+
+    "assgin(Some)" in {
+      val m = PrimitiveModel.newInstance
+      m.assign(Map(
+        "oint" -> Some(1),
+        "ostring" -> Some("aa")
+      ))
+      m.oint must beSome(1)
+      m.ostring must beSome("aa")
+    }
+
+    "assgin(blank)" in {
+      val m = PrimitiveModel.newInstance
+      m.assign(Map(
+        "ostring" -> Some("")
+      ))
+      m.ostring must beSome("")
+    }
+
     "assignFormValues" in {
       "primitive types" in {
         val m = PrimitiveModel.newInstance

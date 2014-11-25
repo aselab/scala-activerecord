@@ -47,7 +47,14 @@ trait IO extends Validatable { this: ProductModel =>
   def assign(data: Map[String, Any]): this.type = {
     data.foreach{ case (k, v) =>
       val info = _companion.fieldInfo(k)
-      val value = if (info.isOption) Some(v).filter(_ != "") else v
+      val value = if(info.isOption) {
+        v match {
+          case s:Some[_] => s
+          case "" | None => None
+          case _ => Some(v)
+        }
+      } else v
+
       (value, _companion.fieldInfo(k)) match {
         case (v: BigInt, FieldInfo(name, klass, _, _, _)) if klass == classOf[Int] => this.setValue(k, v.toInt)
         case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[IO].isAssignableFrom(klass) =>
