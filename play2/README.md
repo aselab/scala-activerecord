@@ -1,4 +1,8 @@
-# Scala ActiveRecord Play2.1 Plugin
+# Scala ActiveRecord Play2.1+ Plugin
+
+## Sample code
+
+https://github.com/aselab/scala-activerecord-sample/tree/master/play2x
 
 ## Usage
 
@@ -52,7 +56,7 @@ db.activerecord.user="sa"
 db.activerecord.password=""
 
 # Schema definition class
-activerecord.schema=models.Tables
+schema.models.Tables=activerecord
 ```
 
 ### PlayFormSupport(Optional)
@@ -91,3 +95,52 @@ def update(id: Long) = Action { implicit request =>
   }
 }
 ```
+
+## Multiple database support (optional)
+
+### Sample code
+
+https://github.com/aselab/scala-activerecord-sample/tree/master/multiple-schema-app
+
+If the schema, `models.Tables1` and `models.Tables2`, such as the following are defined:
+
+```scala
+package models
+
+import com.github.aselab.activerecord._
+import com.github.aselab.activerecord.dsl._
+
+object Tables1 extends ActiveRecordTables {
+  val users = table[User]
+}
+
+object Tables2 extends ActiveRecordTables {
+  val groups = table[Group]
+}
+```
+
+Configuration is as follows:
+
+#### conf/application.conf
+
+```
+# Database configuration
+# ~~~~~ 
+#
+
+# Scala ActiveRecord configurations
+db.schema1.driver=org.h2.Driver
+db.schema1.url="jdbc:h2:mem:db1"
+db.schema1.user="sa"
+db.schema1.password=""
+
+db.schema2.driver=org.h2.Driver
+db.schema2.url="jdbc:h2:mem:db2"
+db.schema2.user="sa"
+db.schema2.password=""
+
+# Schema definition class
+schema.models.Tables1=schema1
+schema.models.Tables2=schema2
+```
+
