@@ -55,7 +55,7 @@ trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>
 
 trait JsonImplicits { self: DSL =>
 
-  class IterableJsonSerializer[T <: AR : ClassTag](list: Iterable[T]) {
+  class IterableJsonSerializer[T <: ActiveModel: ClassTag](list: Iterable[T]) {
     private implicit val format =  DefaultFormats
 
     def asJson: JValue = Extraction.decompose(list.map(_.toMap))
@@ -72,14 +72,14 @@ trait JsonImplicits { self: DSL =>
     def toJson(onlyFields: String*): String = toJson(onlyFields.toList)
   }
 
-  implicit def toJsonable[T <: AR : ClassTag](list: Iterable[T]) =
+  implicit def toJsonable[T <: ActiveModel: ClassTag](list: Iterable[T]) =
     new IterableJsonSerializer(list)
 
   // for Scala 2.11+ only
-  implicit def toJsonable[T <: AR: ClassTag, ILike <% Iterable[T]](list: ILike) =
+  implicit def toJsonable[T <: ActiveModel: ClassTag, ILike <% Iterable[T]](list: ILike) =
     new IterableJsonSerializer(list)
 
-  implicit class GroupByJsonable[T <: AR: ClassTag](grouped: Map[_, List[T]]) {
+  implicit class GroupByJsonable[T <: ActiveModel: ClassTag](grouped: Map[_, List[T]]) {
     private implicit val format =  DefaultFormats
 
     def toJson: String = Serialization.write(grouped.map{ case (k, v) => (k.toString, v.asJson) })
