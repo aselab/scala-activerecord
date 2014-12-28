@@ -279,6 +279,23 @@ trait ReflectionUtil {
   def isSeq(clazz: Class[_]): Boolean = classOf[Seq[_]].isAssignableFrom(clazz)
   def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
   def isModel(clazz: Class[_]): Boolean = classOf[inner.ProductModel].isAssignableFrom(clazz)
+  def toOption(value: Any): Option[_] = value match {
+    case null | None => None
+    case Some(v) => Some(v)
+    case v => Some(v)
+  }
+
+  def isPrimitiveNumeric(clazz: Class[_]): Boolean = Seq(
+    classOf[java.lang.Integer], classOf[Int],
+    classOf[java.lang.Long], classOf[Long],
+    classOf[java.lang.Float], classOf[Float],
+    classOf[java.lang.Double], classOf[Double]
+  ).exists(_ == clazz)
+
+  def isBoolean(clazz: Class[_]): Boolean = Seq(
+    classOf[java.lang.Boolean],
+    classOf[Boolean]
+  ).exists(_ == clazz)
 }
 
 object ReflectionUtil extends ReflectionUtil

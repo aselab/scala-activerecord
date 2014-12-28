@@ -3,7 +3,7 @@ package com.github.aselab.activerecord
 import com.github.aselab.activerecord.dsl._
 import inner._
 
-trait ActiveModel extends ProductModel with io.IO with io.JsonSerializer with validations.ValidationSupport {
+trait ActiveModel extends ProductModel with io.FormSerializer with io.JsonSerializer with validations.ValidationSupport {
   def isNewRecord: Boolean = true
 }
 

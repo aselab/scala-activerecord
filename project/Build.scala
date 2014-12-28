@@ -45,7 +45,7 @@ object ActiveRecordBuild extends Build {
       "com.h2database" % "h2" % "1.4.181" % "test",
       "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
       "junit" % "junit" % "4.11" % "test",
-      "org.json4s" %% "json4s-native" % "3.2.10"
+      "org.json4s" %% "json4s-native" % "3.2.11"
     ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,
