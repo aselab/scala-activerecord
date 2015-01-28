@@ -77,7 +77,7 @@ trait ActiveRecordTables extends Schema {
     c.getSimpleName.camelize + "Id"
 
   protected def execute(sql: String, logging: Boolean = true): Unit = inTransaction {
-    if (logging) Config.logger.debug(sql)
+    if (logging) config.logger.debug(sql)
     val connection = Session.currentSession.connection
     val s = connection.createStatement
     try {
@@ -110,7 +110,7 @@ trait ActiveRecordTables extends Schema {
     if (!_initialized) {
       configOption = Some(loadConfig(config))
       Config.registerSchema(this)
-      if (Config.autoCreate) this.transaction { if (!isCreated) create }
+      if (this.config.autoCreate) this.transaction { if (!isCreated) create }
     }
 
     _initialized = true
@@ -125,8 +125,8 @@ trait ActiveRecordTables extends Schema {
 
   /** cleanup database resources */
   def cleanup: Unit = {
-    if (Config.autoDrop) drop
-    Config.cleanup
+    if (config.autoDrop) drop
+    config.cleanup
     sessionStack.foreach { case (s1, s2) => s1.foreach(_.cleanup); s2.cleanup }
     sessionStack.clear
     _initialized = false
@@ -140,10 +140,10 @@ trait ActiveRecordTables extends Schema {
   def newSession: AbstractSession = {
     val connectionFunc = () => {
       val c = config.connection
-      Config.logger.trace(Thread.currentThread.getStackTrace.toStream.drop(3).filterNot { se =>
+      config.logger.trace(Thread.currentThread.getStackTrace.toStream.drop(3).filterNot { se =>
         se.getClassName.startsWith("com.github.aselab") || se.getClassName.startsWith("org.squeryl")
       }.take(10).mkString("[StackTrace]\n  ", "\n  ", ""))
-      Config.logger.debug("[URL] " + c.getMetaData.getURL)
+      config.logger.debug("[URL] " + c.getMetaData.getURL)
       c
     }
     ActiveRecordSession(connectionFunc, config.adapter, this)
