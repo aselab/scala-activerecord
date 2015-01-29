@@ -140,10 +140,10 @@ object ActiveRecordBuild extends Build {
 
   lazy val scalatra = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-scalatra",
-    resolvers += "Akka Repo" at "http://repo.akka.io/repository",
     libraryDependencies ++= Seq(
       "org.scalatra" %% "scalatra" % "2.3.0" % "provided",
-      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
+      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     )
   ).dependsOn(core)
 
