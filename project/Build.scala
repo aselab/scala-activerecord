@@ -6,7 +6,7 @@ object ActiveRecordBuild extends Build {
   val isRelease = System.getProperty("release") == "true"
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "2.4.6" else "2.4.5"
+    val v = if (scalaBinaryVersion.value == "2.11") "2.4.15" else "2.4.5"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
@@ -35,17 +35,14 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.11.4",
-    crossScalaVersions := Seq("2.11.4", "2.10.4"),
+    scalaVersion := "2.11.5",
+    crossScalaVersions := Seq("2.11.5", "2.10.4"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
       specs2("test", "mock").value,
-      "org.mockito" % "mockito-all" % "1.9.5" % "test",
-      "com.h2database" % "h2" % "1.4.181" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
-      "junit" % "junit" % "4.11" % "test",
-      "org.json4s" %% "json4s-native" % "3.2.11"
+      "com.h2database" % "h2" % "1.4.185" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.1.2" % "test"
     ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,
@@ -89,9 +86,10 @@ object ActiveRecordBuild extends Build {
         "com.typesafe" % "config" % "1.2.1",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "1.4.0",
-        "commons-validator" % "commons-validator" % "1.4.0",
-        "org.slf4j" % "slf4j-api" % "1.7.7"
+        "com.github.nscala-time" %% "nscala-time" % "1.6.0",
+        "commons-validator" % "commons-validator" % "1.4.1",
+        "org.json4s" %% "json4s-native" % "3.2.11",
+        "org.slf4j" % "slf4j-api" % "1.7.10"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
