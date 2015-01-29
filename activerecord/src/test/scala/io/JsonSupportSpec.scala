@@ -25,14 +25,49 @@ object JsonSupportSpec extends DatabaseSpecification {
       User("foo", true).toJson("name", "id", "isNewRecord") mustEqual """{"name":"foo","id":0,"isNewRecord":true}"""
     }
 
+    "toJson(Date)" >> {
+      PrimitiveModel.newModel(5).toJson("date") mustEqual """{"date":"1970-01-06"}"""
+    }
+
+    "toJson(Timestamp)" >> {
+      PrimitiveModel.newModel(5).toJson("timestamp") mustEqual """{"timestamp":"1970-01-01T00:00:00.005Z"}"""
+    }
+
+    "toJson(UUID)" >> {
+      PrimitiveModel.newModel(5).toJson("uuid") mustEqual """{"uuid":"00000000-0000-0005-0000-000000000005"}"""
+    }
+
     "fromJson" >> {
       User("hoge", false).fromJson("""{"name":"foo","isAdmin":true}""") mustEqual User("foo", true)
+    }
+
+    "fromJson(Date)" >> {
+      PrimitiveModel.newInstance.fromJson("""{"date":"1970-01-06"}""").date mustEqual PrimitiveModel.newModel(5).date
+    }
+
+    "fromJson(Timestamp)" >> {
+      PrimitiveModel.newInstance.fromJson("""{"timestamp":"1970-01-01T00:00:00.005Z"}""").timestamp mustEqual PrimitiveModel.newModel(5).timestamp
+    }
+
+    "fromJson(UUID)" >> {
+      PrimitiveModel.newInstance.fromJson("""{"uuid":"00000000-0000-0005-0000-000000000005"}""").uuid mustEqual PrimitiveModel.newModel(5).uuid
     }
   }
 
   "JsonSupport" should {
     "fromJson" >> {
       User.fromJson("""{"name":"foo","isAdmin":true}""") mustEqual User("foo", true)
+    }
+
+    "fromJson(PrimitiveModel)" >> {
+      val json = PrimitiveModel.newModel(10).toJson
+      json mustEqual """
+         |{"oboolean":false,"bigDecimal":"10","otimestamp":"1970-01-01T00:00:00.010Z","timestamp":"1970-01-01T00:00:00.010Z",
+         |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"string":"string10",
+         |"ostring":"string10","obigDecimal":"10","odate":"1970-01-11","double":10.0,"long":10,"boolean":false,
+         |"date":"1970-01-11","int":10,"oint":10,"odouble":10.0}
+      """.stripMargin.replaceAll("\n", "").trim
+      PrimitiveModel.fromJson(json) mustEqual PrimitiveModel.newModel(10)
     }
 
     "fromArrayJson" >> {
