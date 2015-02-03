@@ -388,6 +388,37 @@ trait Relations {
         queryable, c1.table, c2.table, c3.table, on.tupled
       )(manifest)
     }
+
+    def joins[J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR](
+      on: (T, J1, J2, J3, J4) => (LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean)
+    )(implicit m1: ClassTag[J1], m2: ClassTag[J2], m3: ClassTag[J3], m4: ClassTag[J4]): Relation5[T, J1, J2, J3, J4, S] = {
+      val c1 = classToARCompanion[J1](m1.runtimeClass)
+      val c2 = classToARCompanion[J2](m2.runtimeClass)
+      val c3 = classToARCompanion[J3](m3.runtimeClass)
+      val c4 = classToARCompanion[J4](m4.runtimeClass)
+
+      Relation5(
+        Parameters[T, (T, J1, J2, J3, J4), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
+          wrapTuple1[(T, J1, J2, J3, J4), S](selector), includeAssociations, pages, isUnique),
+        queryable, c1.table, c2.table, c3.table, c4.table, on.tupled
+      )(manifest)
+    }
+
+    def joins[J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR, J5 <: AR](
+      on: (T, J1, J2, J3, J4, J5) => (LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean)
+    )(implicit m1: ClassTag[J1], m2: ClassTag[J2], m3: ClassTag[J3], m4: ClassTag[J4], m5: ClassTag[J5]): Relation6[T, J1, J2, J3, J4, J5, S] = {
+      val c1 = classToARCompanion[J1](m1.runtimeClass)
+      val c2 = classToARCompanion[J2](m2.runtimeClass)
+      val c3 = classToARCompanion[J3](m3.runtimeClass)
+      val c4 = classToARCompanion[J4](m4.runtimeClass)
+      val c5 = classToARCompanion[J5](m5.runtimeClass)
+
+      Relation6(
+        Parameters[T, (T, J1, J2, J3, J4, J5), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
+          wrapTuple1[(T, J1, J2, J3, J4, J5), S](selector), includeAssociations, pages, isUnique),
+        queryable, c1.table, c2.table, c3.table, c4.table, c5.table, on.tupled
+      )(manifest)
+    }
   }
 
   case class Relation2[T <: AR, J1 <: AR, S](
@@ -473,6 +504,69 @@ trait Relations {
         val t = (m, j1, j2, j3)
         val (on1, on2, on3) = on(t)
         f(t).on(on1, on2, on3)
+      }
+  }
+
+  case class Relation5[T <: AR, J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR, S](
+    parameters: Parameters[T, (T, J1, J2, J3, J4), S],
+    queryable: Queryable[T],
+    joinTable1: Queryable[J1],
+    joinTable2: Queryable[J2],
+    joinTable3: Queryable[J3],
+    joinTable4: Queryable[J4],
+    on: ((T, J1, J2, J3, J4)) => (LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean)
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
+    type JoinedType = (T, J1, J2, J3, J4)
+
+    protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
+      Relation5(params, queryable, joinTable1, joinTable2, joinTable3, joinTable4, on)
+
+    def where(condition: (T, J1, J2, J3, J4) => LogicalBoolean): this.type =
+      copyParams(conditions = conditions :+ condition.tupled)
+
+    def select[R](selector: (T, J1, J2, J3, J4) => R): Relation[T, R] =
+      copyParams(selector = selector.tupled)
+
+    def orderBy(conditions: ((T, J1, J2, J3, J4) => ExpressionNode)*): this.type =
+      copyParams(orders = orders ++ conditions.toList.map(_.tupled))
+
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
+      join(queryable, joinTable1, joinTable2, joinTable3, joinTable4) {(m, j1, j2, j3, j4) =>
+        val t = (m, j1, j2, j3, j4)
+        val (on1, on2, on3, on4) = on(t)
+        f(t).on(on1, on2, on3, on4)
+      }
+  }
+
+  case class Relation6[T <: AR, J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR, J5 <: AR, S](
+    parameters: Parameters[T, (T, J1, J2, J3, J4, J5), S],
+    queryable: Queryable[T],
+    joinTable1: Queryable[J1],
+    joinTable2: Queryable[J2],
+    joinTable3: Queryable[J3],
+    joinTable4: Queryable[J4],
+    joinTable5: Queryable[J5],
+    on: ((T, J1, J2, J3, J4, J5)) => (LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean, LogicalBoolean)
+  )(implicit val manifest: ClassTag[T]) extends Relation[T, S] {
+    type JoinedType = (T, J1, J2, J3, J4, J5)
+
+    protected def copyParams[R](params: Parameters[T, JoinedType, R]) =
+      Relation6(params, queryable, joinTable1, joinTable2, joinTable3, joinTable4, joinTable5, on)
+
+    def where(condition: (T, J1, J2, J3, J4, J5) => LogicalBoolean): this.type =
+      copyParams(conditions = conditions :+ condition.tupled)
+
+    def select[R](selector: (T, J1, J2, J3, J4, J5) => R): Relation[T, R] =
+      copyParams(selector = selector.tupled)
+
+    def orderBy(conditions: ((T, J1, J2, J3, J4, J5) => ExpressionNode)*): this.type =
+      copyParams(orders = orders ++ conditions.toList.map(_.tupled))
+
+    protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
+      join(queryable, joinTable1, joinTable2, joinTable3, joinTable4, joinTable5) {(m, j1, j2, j3, j4, j5) =>
+        val t = (m, j1, j2, j3, j4, j5)
+        val (on1, on2, on3, on4, on5) = on(t)
+        f(t).on(on1, on2, on3, on4, on5)
       }
   }
 }

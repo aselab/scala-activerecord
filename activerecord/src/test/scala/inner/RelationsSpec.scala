@@ -194,6 +194,29 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
           (p.string === foo.name, p.string === bar.name, p.string === baz.name)
         ).where((_, f, _, _) => f.name === foo.name).headOption mustEqual model
       }
+
+      "four tables" >> {
+        val foo = Foo("string50").create
+        val bar = Bar("string50").create
+        val baz = Baz("string50").create
+        val user = User("string50").create
+        val model = PrimitiveModel.findBy("string", foo.name)
+        PrimitiveModel.joins[Foo, Bar, Baz, User]((p, foo, bar, baz, user) =>
+          (p.string === foo.name, p.string === bar.name, p.string === baz.name, p.string === user.name)
+        ).where((_, _, _, _, u) => u.name === foo.name).headOption mustEqual model
+      }
+
+      "five tables" >> {
+        val foo = Foo("string50").create
+        val bar = Bar("string50").create
+        val baz = Baz("string50").create
+        val user = User("string50").create
+        val group = Group("string50").create
+        val model = PrimitiveModel.findBy("string", foo.name)
+        PrimitiveModel.joins[Foo, Bar, Baz, User, Group]((p, foo, bar, baz, user, group) =>
+          (p.string === foo.name, p.string === bar.name, p.string === baz.name, p.string === user.name, p.string === group.name)
+        ).where((_, _, _, _, _, g) => g.name === foo.name).headOption mustEqual model
+      }
     }
 
     "toSql" >> {
