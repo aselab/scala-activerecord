@@ -9,7 +9,6 @@ import com.jolbox.bonecp._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
-import reflections.ReflectionUtil._
 import scala.collection.JavaConversions._
 import org.joda.time.format._
 import org.joda.time.DateTimeZone

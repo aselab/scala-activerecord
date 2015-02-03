@@ -2,7 +2,6 @@ package com.github.aselab.activerecord
 
 import java.sql.Connection
 import org.squeryl.internals.DatabaseAdapter
-import com.typesafe.config._
 import play.api.Play.current
 import java.util.{Locale, TimeZone}
 

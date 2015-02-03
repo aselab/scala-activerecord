@@ -1,7 +1,5 @@
 package com.github.aselab.activerecord
 
-import org.specs2.mutable._
-
 import dsl._
 import models._
 

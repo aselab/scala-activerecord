@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.execute._
 import org.specs2.specification._
 
 trait AutoRollback extends BeforeAfterExample { self: ActiveRecordSpecification =>

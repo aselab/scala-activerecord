@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord
 
-import org.specs2.mutable._
 import models._
 import java.util.Date
 import java.sql.Timestamp

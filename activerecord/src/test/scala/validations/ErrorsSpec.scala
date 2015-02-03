@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord.validations
 
-import org.specs2.mutable._
 import org.specs2.mock._
 
 import java.util.Locale

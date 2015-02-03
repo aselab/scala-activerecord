@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord.validations
 
-import org.specs2.mutable._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
 import com.github.aselab.activerecord._

@@ -8,7 +8,6 @@ import ActiveRecord._
 import reflections._
 import ReflectionUtil._
 import scala.language.reflectiveCalls
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 trait Relations {
@@ -154,7 +153,7 @@ trait Relations {
      * @param count max count
      */
     def page(offset: Int, count: Int): this.type =
-      copyParams(pages = Some(offset, count))
+      copyParams(pages = Some((offset, count)))
   }
 
   trait Relation[T <: AR, S] extends QuerySupport[T, S] {

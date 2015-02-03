@@ -2,7 +2,6 @@ package com.github.aselab.activerecord.validations
 
 import com.github.aselab.activerecord._
 import inner._
-import reflections._
 import java.lang.annotation.Annotation
 import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable

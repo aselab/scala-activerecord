@@ -1,8 +1,6 @@
 package com.github.aselab.activerecord
 
 import scala.language.experimental.macros
-import ActiveRecord._
-import reflections._
 
 object dsl extends org.squeryl.PrimitiveTypeMode
   with inner.Annotations with inner.DSL with inner.Types with io.JsonImplicits {
@@ -26,7 +24,6 @@ package object aliases {
 }
 
 package object support {
-  import ReflectionUtil._
   type PF = PartialFunction[String, Class[_]]
 
   val primitiveClasses: PF = {

@@ -1,7 +1,5 @@
 package com.github.aselab.activerecord.inner
 
-import org.specs2.mutable._
-
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import models._

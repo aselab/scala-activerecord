@@ -1,13 +1,9 @@
 package com.github.aselab.activerecord
 
-import aliases._
-import io._
-import inner._
 import scala.reflect.ClassTag
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
-import play.api.i18n._
 import play.api.templates.Html
 import _root_.views.html.{helper => playhelper}
 import _root_.views.html.helper._

@@ -2,7 +2,6 @@ package com.github.aselab.activerecord
 
 import play.api._
 import play.api.test._
-import com.github.aselab.activerecord._
 
 trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
   // override application.conf settings
