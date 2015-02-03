@@ -125,8 +125,10 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
         (m1, m2) => m1.int === m2.int
       )
 
-      joined.compute(m => countDistinct(m.int)) mustEqual 1
-      joined.compute((m1, m2) => avg(m2.int)) must beSome(50)
+      joined.compute{ case (m1, m2) => countDistinct(m1.int) } mustEqual 1
+      joined.compute{ case (m1, m2) => avg(m2.int) } must beSome(50)
+      joined.avg{ case (m1, m2) => m2.int } must beSome(50)
+      joined.sum{ case (m1, m2) => m2.int } must beSome(150)
     }
 
     "#max" >> {

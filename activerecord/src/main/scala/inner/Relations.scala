@@ -11,6 +11,8 @@ import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 
 trait Relations {
+  implicit def Tuple1ToT[T](tuple1: Tuple1[T]): T = tuple1._1
+
   case class Parameters[T <: AR, JoinedType <: {def _1: T}, S](
     conditions: List[JoinedType => LogicalBoolean] = Nil,
     orders: List[JoinedType => ExpressionNode] = Nil,
@@ -296,35 +298,35 @@ trait Relations {
       }
     }
 
-    def compute[T1](e: T => TypedExpression[T1, _]): T1 = companion.inTransaction {
-      toQuery(t => whereScope(t).compute(e(t._1)))
+    def compute[T1](e: JoinedType => TypedExpression[T1, _]): T1 = companion.inTransaction {
+      toQuery(t => whereScope(t).compute(e(t)))
     }
 
-    def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.max(e(m))(f))
 
-    def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.min(e(m))(f))
 
     def average[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-      (e: T => TypedExpression[A1, T1])
+      (e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.avg(e(m))(f))
 
-    def max[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def max[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 = maximum(e)(f)
 
-    def min[T2 >: TOption, T1 <: T2, A1, A2](e: T => TypedExpression[A1, T1])
+    def min[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 = minimum(e)(f)
 
     def avg[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-      (e: T => TypedExpression[A1, T1])
+      (e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 = average(e)(f)
 
     def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1, A2]
-      (e: T => TypedExpression[A1, T1])
+      (e: JoinedType => TypedExpression[A1, T1])
       (implicit f: TypedExpressionFactory[A2, T2]): A2 =
         compute(m => dsl.sum(e(m))(f))
 
@@ -408,9 +410,6 @@ trait Relations {
     def orderBy(conditions: ((T, J1) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
 
-    def compute[T1](e: (T, J1) => TypedExpression[T1, _]): T1 =
-      toQuery(t => whereScope(t).compute(e.tupled(t)))
-
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable) {(m, j1) =>
         val t = (m, j1)
@@ -438,9 +437,6 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1, J2) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
-
-    def compute[T1](e: (T, J1, J2) => TypedExpression[T1, _]): T1 =
-      toQuery(t => whereScope(t).compute(e.tupled(t)))
 
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2) {(m, j1, j2) =>
@@ -471,9 +467,6 @@ trait Relations {
 
     def orderBy(conditions: ((T, J1, J2, J3) => ExpressionNode)*): this.type =
       copyParams(orders = orders ++ conditions.toList.map(_.tupled))
-
-    def compute[T1](e: (T, J1, J2, J3) => TypedExpression[T1, _]): T1 =
-      toQuery(t => whereScope(t).compute(e.tupled(t)))
 
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       join(queryable, joinTable1, joinTable2, joinTable3) {(m, j1, j2, j3) =>
