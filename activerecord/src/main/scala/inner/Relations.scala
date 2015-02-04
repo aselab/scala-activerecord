@@ -337,6 +337,59 @@ trait Relations {
     ))
 
     def toSql: String = companion.inTransaction { toQuery.statement }
+
+    def group[R](groupScope: JoinedType => TypedExpression[R, _]) = GroupRelation1(groupScope)
+
+    case class GroupRelation1[R, T <: AR, S](
+      groupScope: JoinedType => TypedExpression[R, _],
+      havingConditions: List[JoinedType => LogicalBoolean] = Nil
+    ) {
+      def compute[V](e: JoinedType => TypedExpression[V, _]): Map[R, V] = companion.inTransaction {
+        queryToIterable(toQuery { t =>
+          val groupByScope = whereScope(t).groupBy(groupScope(t))
+          havingScope(t, groupByScope).compute(e(t))
+        }).map(g => (g.key, g.measures)).toMap
+      }
+
+      def having(h: JoinedType => LogicalBoolean) =
+        this.copy(havingConditions = havingConditions :+ h)
+
+      def havingScope(t: JoinedType, scope: GroupByState[R]) = if (havingConditions.isEmpty) {
+        scope
+      } else {
+        scope.having(LogicalBoolean.and(havingConditions.map(_.apply(t))))
+      }
+
+      def count = compute(e => dsl.count)
+
+      def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
+          compute(m => dsl.max(e(m))(f))
+
+      def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
+          compute(m => dsl.min(e(m))(f))
+
+      def average[T2 >: TOptionFloat, T1 <: T2, A1, A2]
+        (e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
+          compute(m => dsl.avg(e(m))(f))
+
+      def max[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = maximum(e)(f)
+
+      def min[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = minimum(e)(f)
+
+      def avg[T2 >: TOptionFloat, T1 <: T2, A1, A2]
+        (e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = average(e)(f)
+
+      def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1, A2]
+        (e: JoinedType => TypedExpression[A1, T1])
+        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
+          compute(m => dsl.sum(e(m))(f))
+    }
   }
 
   case class Relation1[T <: AR, S](

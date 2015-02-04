@@ -24,4 +24,5 @@ trait Types {
   type OrderByArg = org.squeryl.dsl.ast.OrderByArg
   type ExpressionNode = org.squeryl.dsl.ast.ExpressionNode
   type UpdateAssignment = org.squeryl.dsl.ast.UpdateAssignment
+  type GroupByState[R] = org.squeryl.dsl.fsm.GroupByState[R]
 }
