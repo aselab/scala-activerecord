@@ -22,6 +22,7 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val bazs = table[Baz]
   val profiles = table[Profile]
   val addresses = table[Address]
+  val items = table[Item]
 
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
@@ -224,3 +225,7 @@ case class ComplexModel(
   def this() = this(1, new NestModel, List(new NestModel, new NestModel))
 }
 object ComplexModel extends ActiveModelCompanion[ComplexModel]
+
+case class Item(name: String, price: Int) extends ActiveRecord
+
+object Item extends ActiveRecordCompanion[Item]

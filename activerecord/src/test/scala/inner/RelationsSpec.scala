@@ -2,6 +2,7 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
+import org.specs2.specification.Scope
 import models._
 import java.sql.Timestamp
 
@@ -166,6 +167,56 @@ object RelationsSpec extends DatabaseSpecification with AutoRollback {
     "#distinct" >> {
       PrimitiveModel.newModel(1).save
       PrimitiveModel.where(_.string === "string1").select(_.string).distinct.count mustEqual 1
+    }
+
+    "#group" >> {
+      trait testData extends Scope {
+        Seq(Item("apple", 100), Item("apple", 150)).foreach(_.create)
+        Item("orange", 200).create
+        Seq(Item("coffee", 50), Item("coffee", 20), Item("coffee", 80)).foreach(_.create)
+      }
+
+      "#count" >> new testData {
+        Item.group(_.name).count mustEqual Map("apple" -> 2, "orange" -> 1, "coffee" -> 3)
+      }
+
+      "#compute" >> new testData {
+        Item.group(_.name).compute(item => sum(item.price) + avg(item.price)) mustEqual
+          Map("apple" -> Some(375.0), "orange" -> Some(400.0), "coffee" -> Some(200.0))
+      }
+
+      "#average" >> new testData {
+        Item.group(_.name).average(_.price) mustEqual Map("apple" -> Some(125.0), "orange" -> Some(200.0), "coffee" -> Some(50.0))
+      }
+
+      "#avg" >> new testData {
+        Item.group(_.name).avg(_.price) mustEqual Map("apple" -> Some(125.0), "orange" -> Some(200.0), "coffee" -> Some(50.0))
+      }
+
+      "#sum" >> new testData {
+        Item.group(_.name).sum(_.price) mustEqual Map("apple" -> Some(250), "orange" -> Some(200), "coffee" -> Some(150))
+      }
+
+      "#maximum" >> new testData {
+        Item.group(_.name).maximum(_.price) mustEqual Map("apple" -> Some(150), "orange" -> Some(200), "coffee" -> Some(80))
+      }
+
+      "#max" >> new testData {
+        Item.group(_.name).max(_.price) mustEqual Map("apple" -> Some(150), "orange" -> Some(200), "coffee" -> Some(80))
+      }
+
+      "#minimum" >> new testData {
+        Item.group(_.name).minimum(_.price) mustEqual Map("apple" -> Some(100), "orange" -> Some(200), "coffee" -> Some(20))
+      }
+
+      "#min" >> new testData {
+        Item.group(_.name).min(_.price) mustEqual Map("apple" -> Some(100), "orange" -> Some(200), "coffee" -> Some(20))
+      }
+
+      "#having" >> new testData {
+        Item.group(_.name).having(_.name === "apple").min(_.price) mustEqual Map("apple" -> Some(100))
+        Item.group(_.name).having(item => avg(item.price) > 100.0).min(_.price) mustEqual Map("apple" -> Some(100), "orange" -> Some(200))
+      }
     }
 
     "#joins" >> {
