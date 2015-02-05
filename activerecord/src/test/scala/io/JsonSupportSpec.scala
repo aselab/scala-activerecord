@@ -6,6 +6,11 @@ import models._
 import org.json4s._
 
 object JsonSupportSpec extends DatabaseSpecification {
+  override def beforeAll = {
+    super.beforeAll
+    TestTables.createTestData
+  }
+
   "JsonSerializer " should {
     "asJson" >> {
       User("foo", true).asJson mustEqual JObject(List(JField("name",JString("foo")), JField("isAdmin",JBool(true))))
@@ -65,6 +70,18 @@ object JsonSupportSpec extends DatabaseSpecification {
          |{"oboolean":false,"bigDecimal":"10","otimestamp":"1970-01-01T00:00:00.010Z","timestamp":"1970-01-01T00:00:00.010Z",
          |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"string":"string10",
          |"ostring":"string10","obigDecimal":"10","odate":"1970-01-11","double":10.0,"long":10,"boolean":false,
+         |"date":"1970-01-11","int":10,"oint":10,"odouble":10.0}
+      """.stripMargin.replaceAll("\n", "").trim
+      PrimitiveModel.fromJson(json) mustEqual PrimitiveModel.newModel(10)
+    }
+
+    "fromJson(PrimitiveModel:persisted)" >> {
+      val m = PrimitiveModel.newModel(10).create
+      val json = m.toJson
+      json mustEqual s"""
+         |{"oboolean":false,"bigDecimal":"10","otimestamp":"1970-01-01T00:00:00.010Z","timestamp":"1970-01-01T00:00:00.010Z",
+         |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"string":"string10",
+         |"ostring":"string10","obigDecimal":"10","odate":"1970-01-11","double":10.0,"long":10,"id":${m.id},"boolean":false,
          |"date":"1970-01-11","int":10,"oint":10,"odouble":10.0}
       """.stripMargin.replaceAll("\n", "").trim
       PrimitiveModel.fromJson(json) mustEqual PrimitiveModel.newModel(10)
@@ -132,7 +149,6 @@ object JsonSupportSpec extends DatabaseSpecification {
     }
 
     "toJson(parameters)" >> {
-      TestTables.createTestData
       PrimitiveModel.where(_.id.~ < 3).toList.toJson("string", "oint") mustEqual """[{"string":"string1","oint":1},{"string":"string2","oint":2}]"""
     }
 

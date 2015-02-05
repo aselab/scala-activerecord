@@ -35,6 +35,7 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
     classOf[java.lang.Double] -> doubleHandler,
     classOf[Double] -> doubleHandler,
     classOf[java.util.Date] -> dateHandler,
+    classOf[java.sql.Date] -> dateHandler,
     classOf[java.sql.Timestamp] -> timestampHandler,
     classOf[java.util.UUID] -> uuidHandler,
     classOf[BigDecimal] -> bigDecimalHandler
