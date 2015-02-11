@@ -1,9 +1,12 @@
 > generate model Group name:string
+> compile
 $ exists app/models/Group.scala
 $ exists app/models/Tables.scala
 > generate controller home index
+> compile
 $ exists app/controllers/Home.scala
 > generate scaffold Project name:string
+> compile
 $ exists app/models/Project.scala
 $ exists app/controllers/Projects.scala
 $ exists app/views/projects/index.scala.html

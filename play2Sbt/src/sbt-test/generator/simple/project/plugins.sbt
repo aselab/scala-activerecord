@@ -4,6 +4,6 @@ val _version = Option(System.getProperty("version")).getOrElse(
 
 addSbtPlugin("com.github.aselab" % "scala-activerecord-play2-sbt" % _version)
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.7")
 
 resolvers += Resolver.sonatypeRepo("snapshots")

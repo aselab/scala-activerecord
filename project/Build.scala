@@ -5,6 +5,10 @@ object ActiveRecordBuild extends Build {
   val _version = "0.3.1"
   val isRelease = System.getProperty("release") == "true"
 
+  val originalJvmOptions = sys.process.javaVmArguments.filter(
+    a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
+  )
+
   def specs2(scope: String, name: String = "core") = Def.setting {
     val v = if (scalaBinaryVersion.value == "2.11") "2.4.15" else "2.4.5"
     "org.specs2" %% s"specs2-${name}" % v % scope
@@ -69,7 +73,9 @@ object ActiveRecordBuild extends Build {
       sbtPlugin := true,
       crossScalaVersions := Seq("2.10.4"),
       ScriptedPlugin.scriptedBufferLog := false,
-      ScriptedPlugin.scriptedLaunchOpts += "-Dversion=" + version.value,
+      ScriptedPlugin.scriptedLaunchOpts := { ScriptedPlugin.scriptedLaunchOpts.value ++
+        originalJvmOptions :+ s"-Dversion=${version.value}"
+      },
       watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
     )
 

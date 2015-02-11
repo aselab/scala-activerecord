@@ -1,7 +1,3 @@
-import play.Project._
-
-playScalaSettings
-
 activerecordPlaySettings
 
 val _version = Option(System.getProperty("version")).getOrElse(
@@ -10,11 +6,17 @@ val _version = Option(System.getProperty("version")).getOrElse(
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies ++= Seq(
-  "com.github.aselab" %% "scala-activerecord" % _version,
-  "com.github.aselab" %% "scala-activerecord-play2" % _version,
-  jdbc,
-  "com.h2database" % "h2" % "1.3.172"
+lazy val root = Project("root", file(".")).enablePlugins(PlayScala).settings(
+  scalaVersion := "2.11.5",
+  javaOptions ++= sys.process.javaVmArguments.filter(
+    a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
+  ),
+  libraryDependencies ++= Seq(
+    "com.github.aselab" %% "scala-activerecord" % _version,
+    "com.github.aselab" %% "scala-activerecord-play2" % _version,
+    jdbc,
+    "com.h2database" % "h2" % "1.4.185"
+  )
 )
 
-templatesImport += "com.github.aselab.activerecord.views.dsl._"
+TwirlKeys.templateImports += "com.github.aselab.activerecord.views.dsl._"

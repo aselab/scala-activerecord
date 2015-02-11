@@ -1,4 +1,5 @@
 > generate controller person get:/ post:/
+> compile
 $ exists src/main/scala/controllers/Person.scala
 > generate model person name:string:required age:int
 $ exists src/main/scala/models/Person.scala

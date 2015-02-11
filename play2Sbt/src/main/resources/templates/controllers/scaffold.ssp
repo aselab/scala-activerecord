@@ -31,7 +31,7 @@ object ${controller} extends Controller {
     ${model}.form.bindFromRequest.fold(
       errors => BadRequest(${view}.edit(errors, routes.${controller}.create)), {
       ${instance} =>
-        transaction { ${instance}.save }
+        ${model}.transaction { ${instance}.save }
         Redirect(routes.${controller}.show(${instance}.id))
     })
   }
@@ -49,7 +49,7 @@ object ${controller} extends Controller {
         ${model}.form(${instance}).bindFromRequest.fold(
           errors => BadRequest(${view}.edit(errors, routes.${controller}.update(id))), {
           ${instance} =>
-            transaction { ${instance}.save }
+            ${model}.transaction { ${instance}.save }
             Redirect(routes.${controller}.index)
         })
       case _ => NotFound
@@ -59,7 +59,7 @@ object ${controller} extends Controller {
   def delete(id: Long) = Action {
     ${model}.find(id) match {
       case Some(${instance}) =>
-        transaction { ${instance}.delete }
+        ${model}.transaction { ${instance}.delete }
         Ok
       case _ => NotFound
     }
