@@ -141,9 +141,9 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m must equalTo(PrimitiveModel.newModel(5))
     }
 
-    "assgin(Map)" in {
+    "unsafeAssgin(Map)" in {
       val m = PrimitiveModel.newInstance
-      m.assign(Map(
+      m.unsafeAssign(Map(
         "boolean" -> true,
         "oboolean" -> true,
         "timestamp" -> new Timestamp(5L),
@@ -169,40 +169,38 @@ object IOSpec extends DatabaseSpecification with Mockito {
 
     "assgin(list)" in {
       val m = ListModel.newInstance
-      m.assign(Map(
+      m.assign(
         "l1" -> List("aa", "bb", "cc"),
         "l2" -> List(1, 2, 3)
-      ))
+      )
       m must equalTo(ListModel(List("aa", "bb", "cc"), List(1, 2, 3)))
     }
 
     "assgin(None)" in {
       val m = PrimitiveModel.newInstance
-      m.assign(Map(
-        "oint" -> "",
+      m.assign(
         "ostring" -> None,
         "odate" -> None
-      ))
-      m.oint must beNone
+      )
       m.ostring must beNone
       m.odate must beNone
     }
 
     "assgin(Some)" in {
       val m = PrimitiveModel.newInstance
-      m.assign(Map(
+      m.assign(
         "oint" -> Some(1),
         "ostring" -> Some("aa")
-      ))
+      )
       m.oint must beSome(1)
       m.ostring must beSome("aa")
     }
 
     "assgin(blank)" in {
       val m = PrimitiveModel.newInstance
-      m.assign(Map(
+      m.assign(
         "ostring" -> Some("")
-      ))
+      )
       m.ostring must beSome("")
     }
 

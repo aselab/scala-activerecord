@@ -37,9 +37,9 @@ trait IO extends Validatable { this: ProductModel =>
   import scala.language.experimental.macros
   def assign(data: (String, Any)*): this.type = macro MethodMacros.assign[this.type]
 
-  def assign(data: Map[String, Any]): this.type = assign(data, (v: Any, f: FieldInfo) => v)
+  def unsafeAssign(data: Map[String, Any]): this.type = unsafeAssign(data, (v: Any, f: FieldInfo) => v)
 
-  def assign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any): this.type = {
+  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any): this.type = {
     val fieldInfo = _companion.fieldInfo
     data.foreach { case (k, v) =>
       val info = fieldInfo(k)

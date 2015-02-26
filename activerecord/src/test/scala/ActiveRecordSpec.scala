@@ -22,10 +22,6 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       User.newInstance("name" -> "alice", "isAdmin" -> true) mustEqual User("alice", true)
     }
 
-    "#newInstance(Map)" >> {
-      User.newInstance(Map("name" -> "alice", "isAdmin" -> true)) mustEqual User("alice", true)
-    }
-
     "#table returns corresponding table" >> {
       PrimitiveModel.table mustEqual TestTables.primitiveModels
     }

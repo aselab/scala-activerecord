@@ -39,7 +39,7 @@ trait TypeSafeAssignable {
     val modelType = c.weakTypeOf[T]
     val thisScope = c.prefix.tree
     validateFields(c)(params, modelType)
-    q"$thisScope.newInstance(Map(..$params))"
+    q"$thisScope.newInstance.unsafeAssign(Map(..$params))"
   }
 
   def assign[T: c.WeakTypeTag](c: whitebox.Context)(data: c.Expr[(String, Any)]*): c.Tree = {
@@ -47,6 +47,6 @@ trait TypeSafeAssignable {
     val params = data.map(_.tree)
     val thisScope = c.prefix.tree
     validateFields(c)(params, thisScope.tpe)
-    q"$thisScope.assign(Map(..$params))"
+    q"$thisScope.unsafeAssign(Map(..$params))"
   }
 }

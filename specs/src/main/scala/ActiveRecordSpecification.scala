@@ -46,7 +46,7 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
 
     def define(m: (String, Any)*): Unit = define(m.toMap)
 
-    def create(name: String, m: Map[String, Any]): T = factory(name).apply.assign(m).create
+    def create(name: String, m: Map[String, Any]): T = factory(name).apply.unsafeAssign(m).create
 
     def create(name: String, m: (String, Any)*): T = create(name, m.toMap)
 
@@ -56,7 +56,7 @@ trait ActiveRecordSpecification extends BeforeAfterAllExamples {
 
     def create: T = create()
 
-    def factory(name: String, m: Map[String, Any] = Map()) = {() => companion.newInstance(factories(name) ++ m)}
+    def factory(name: String, m: Map[String, Any] = Map()) = {() => companion.newInstance.unsafeAssign(factories(name) ++ m)}
   }
 
   def config: Map[String, String] = Map()

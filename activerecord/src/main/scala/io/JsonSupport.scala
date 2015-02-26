@@ -46,7 +46,7 @@ trait JsonSerializer extends FormSerializer { self: ProductModel =>
   def fromJson(json: String): this.type = fromJValue(JsonMethods.parse(json))
 
   def fromJValue(jvalue: JValue): this.type =
-    assign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc(_, _))
+    unsafeAssign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc(_, _))
 }
 
 trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>
@@ -55,10 +55,10 @@ trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>
   def fromArrayJson(json: String): List[T] = fromJArray(JsonMethods.parse(json))
 
   def fromJValue(jvalue: JValue): T =
-    assign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc)
+    unsafeAssign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc)
 
   def fromJArray(jarray: JValue): List[T] =
-    jarray.values.asInstanceOf[List[Map[String, Any]]].map(m => assign(m, JsonSerializer.assignFunc))
+    jarray.values.asInstanceOf[List[Map[String, Any]]].map(m => unsafeAssign(m, JsonSerializer.assignFunc))
 }
 
 trait JsonImplicits { self: DSL =>

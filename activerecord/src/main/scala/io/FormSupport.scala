@@ -17,13 +17,13 @@ object FormSerializer {
         value
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && !isSeq =>
         val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
-        companion.assign(v.asInstanceOf[Map[String, Any]], assignFunc)
+        companion.unsafeAssign(v.asInstanceOf[Map[String, Any]], assignFunc)
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && isSeq =>
         if (v.asInstanceOf[List[_]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
           value
         } else {
           val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
-          v.asInstanceOf[List[Map[String, Any]]].map(companion.assign(_, assignFunc))
+          v.asInstanceOf[List[Map[String, Any]]].map(companion.unsafeAssign(_, assignFunc))
         }
       case _ => value
     }
@@ -70,7 +70,7 @@ trait FormSerializer extends IO { self: ProductModel =>
   }
 
   def assignFormValues(data: Map[String, String]): this.type = {
-    assign(_companion.fieldInfo.flatMap {
+    unsafeAssign(_companion.fieldInfo.flatMap {
       case (name, info) =>
         def converter = FormConverter.get(info.fieldType).getOrElse(
           throw ActiveRecordException.unsupportedType(name)
@@ -151,13 +151,13 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
         value
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && !isSeq =>
         val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
-        companion.assign(v.asInstanceOf[Map[String, Any]], (v, k) => v)
+        companion.unsafeAssign(v.asInstanceOf[Map[String, Any]], (v, k) => v)
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && isSeq =>
         if (v.asInstanceOf[List[_]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
           value
         } else {
           val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
-          v.asInstanceOf[List[Map[String, Any]]].map(companion.assign(_, (v, k) => v))
+          v.asInstanceOf[List[Map[String, Any]]].map(companion.unsafeAssign(_, (v, k) => v))
         }
       case _ => value
     }
@@ -168,8 +168,8 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
     source
   }
 
-  def assign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any)(implicit source: T = self.newInstance): T = {
-    source.assign(data, assignFunc)
+  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any)(implicit source: T = self.newInstance): T = {
+    source.unsafeAssign(data, assignFunc)
     source
   }
 

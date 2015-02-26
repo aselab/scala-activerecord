@@ -12,8 +12,6 @@ trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] wi
 
   import scala.language.experimental.macros
   def newInstance(data: (String, Any)*): T = macro MethodMacros.newInstance[T]
-
-  def newInstance(data: Map[String, Any]): T = newInstance.assign(data)
 }
 
 trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.AssociationSupport
@@ -74,7 +72,7 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     super.toMap
   }
 
-  override def assign(data: Map[String, Any]): this.type = super.assign(data - "id")
+  override def unsafeAssign(data: Map[String, Any]): this.type = super.unsafeAssign(data - "id")
 
   def recordInDatabase: Option[this.type] = recordCompanion.find(id)
 }
@@ -212,7 +210,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /** Unique annotated fields */
   lazy val uniqueFields = fields.filter(_.isUnique)
 
-  def fromMap(data: Map[String, Any]): T = newInstance.assign(data)
+  def fromMap(data: Map[String, Any]): T = newInstance.unsafeAssign(data)
 }
 
 /**
