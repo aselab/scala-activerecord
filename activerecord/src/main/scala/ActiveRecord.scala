@@ -9,6 +9,10 @@ trait ActiveModel extends ProductModel with io.FormSerializer with io.JsonSerial
 
 trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] with io.JsonSupport[T] {
   override def newInstance: T = super.newInstance
+
+  import scala.language.experimental.macros
+  def newInstance(data: (String, Any)*): T = macro MethodMacros.newInstance[T]
+
   def newInstance(data: Map[String, Any]): T = newInstance.assign(data)
 }
 

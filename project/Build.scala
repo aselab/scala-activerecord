@@ -10,7 +10,7 @@ object ActiveRecordBuild extends Build {
   )
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "2.4.15" else "2.4.5"
+    val v = if (scalaBinaryVersion.value == "2.11") "2.4.16" else "2.4.5"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
@@ -64,7 +64,10 @@ object ActiveRecordBuild extends Build {
     shellPrompt := {
       (state: State) => Project.extract(state).currentProject.id + "> "
     },
-    ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+    ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+    javaOptions ++= sys.process.javaVmArguments.filter(
+      a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
+    )
   ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
@@ -92,7 +95,7 @@ object ActiveRecordBuild extends Build {
         "com.typesafe" % "config" % "1.2.1",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "1.6.0",
+        "com.github.nscala-time" %% "nscala-time" % "1.8.0",
         "commons-validator" % "commons-validator" % "1.4.1",
         "org.json4s" %% "json4s-native" % "3.2.11",
         "org.slf4j" % "slf4j-api" % "1.7.10"
@@ -113,7 +116,18 @@ object ActiveRecordBuild extends Build {
       libraryDependencies := Seq(
         "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
         "org.scala-lang" % "scala-compiler" % scalaVersion.value % "optional"
-      )
+      ),
+      libraryDependencies := {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+            libraryDependencies.value
+          case Some((2, 10)) =>
+            libraryDependencies.value ++ Seq(
+              compilerPlugin("org.scalamacros" % "paradise" % "2.0.0" cross CrossVersion.full),
+              "org.scalamacros" %% "quasiquotes" % "2.0.0" cross CrossVersion.binary
+            )
+        }
+      }
     )
   )
 

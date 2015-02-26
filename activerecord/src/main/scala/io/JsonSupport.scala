@@ -46,7 +46,7 @@ trait JsonSerializer extends FormSerializer { self: ProductModel =>
   def fromJson(json: String): this.type = fromJValue(JsonMethods.parse(json))
 
   def fromJValue(jvalue: JValue): this.type =
-    assign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc)
+    assign(jvalue.values.asInstanceOf[Map[String, Any]], JsonSerializer.assignFunc(_, _))
 }
 
 trait JsonSupport[T <: ActiveModel] { self: FormSupport[T] =>

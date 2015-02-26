@@ -34,6 +34,9 @@ trait IO extends Validatable { this: ProductModel =>
       FormConverter.get(value.getClass).map(_.serialize(value).toString).getOrElse(value)
     }
 
+  import scala.language.experimental.macros
+  def assign(data: (String, Any)*): this.type = macro MethodMacros.assign[this.type]
+
   def assign(data: Map[String, Any]): this.type = assign(data, (v: Any, f: FieldInfo) => v)
 
   def assign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any): this.type = {
