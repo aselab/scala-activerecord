@@ -1,3 +1,3 @@
 package com.github.aselab.activerecord
 
-object MethodMacros extends Deprecations with TypeSafeAssignable
+private[activerecord] object MethodMacros extends Deprecations with TypeSafeAssignable with TypeSafeFinder

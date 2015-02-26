@@ -200,9 +200,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     case value => inTransaction {
       find(m.id) match {
         case Some(old) if old.getValue[Any](name) != value =>
-          all.findBy(name, value).isEmpty
+          all.unsafeFindBy((name, value)).isEmpty
         case Some(_) => true
-        case None => all.findBy(name, value).isEmpty
+        case None => all.unsafeFindBy((name, value)).isEmpty
       }
     }
   }

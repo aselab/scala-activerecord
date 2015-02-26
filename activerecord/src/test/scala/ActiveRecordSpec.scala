@@ -174,8 +174,8 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         result.head.uuid mustEqual u
       }
 
-      "invalid field name" >> {
-        PrimitiveModel.findAllBy("aaa", 1) must throwA(ActiveRecordException.notFoundField("aaa"))
+      "invalid field name (unsafe)" >> {
+        PrimitiveModel.unsafeFindAllBy("aaa", 1) must throwA(ActiveRecordException.notFoundField("aaa"))
       }
 
       "null, None" >> {

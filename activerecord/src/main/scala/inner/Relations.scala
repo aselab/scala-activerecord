@@ -8,6 +8,7 @@ import ActiveRecord._
 import reflections._
 import ReflectionUtil._
 import scala.language.reflectiveCalls
+import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
 trait Relations {
@@ -221,15 +222,27 @@ trait Relations {
      * {{{
      * findBy("name" -> "abc", "email" -> "abc@foo.bar")
      * }}}
+     * @param conditions fieldname-value tuples
+     */
+    def findBy(conditions: (String, Any)*): Option[S] = macro MethodMacros.findBy[T]
+
+    /**
+     * Search by multiple fieldnames and values and return first record.
+     *
+     * {{{
+     * unsafeFindBy("name" -> "abc", "email" -> "abc@foo.bar")
+     * }}}
      * @param condition fieldname-value tuple
      * @param conditions multiple fieldname-value tuples(optional)
      */
-    def findBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = companion.inTransaction {
-      findAllBy(condition, conditions:_*).headOption
+    def unsafeFindBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = companion.inTransaction {
+      unsafeFindAllBy(condition, conditions:_*).headOption
     }
 
-    def findByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
-      findBy((field, m.getValue(field)),
+    def findByOrCreate(m: T, fields: String*): S = macro MethodMacros.findByOrCreate[T, S]
+
+    def unsafeFindByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
+      unsafeFindBy((field, m.getValue(field)),
         fields.map(f => (f, m.getValue(f))).toSeq:_*).getOrElse(m.create)
     }
 
@@ -239,13 +252,9 @@ trait Relations {
      * {{{
      * findAllBy("name" -> "abc", "email" -> "abc@foo.bar")
      * }}}
-     * @param condition fieldname-value tuple
-     * @param conditions multiple fieldname-value tuples(optional)
+     * @param conditions fieldname-value tuples
      */
-    def findAllBy(condition: (String, Any), conditions: (String, Any)*): this.type =
-      conditions.foldLeft(findAllBy(condition._1, condition._2)) {
-        case (r, cond) => r.findAllBy(cond._1, cond._2)
-      }
+    def findAllBy(conditions: (String, Any)*): this.type = macro MethodMacros.findAllBy[T]
 
     /**
      * Search by fieldname and value and return first record.
@@ -255,9 +264,7 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findBy(name: String, value: Any): Option[S] = companion.inTransaction {
-      findAllBy(name, value).headOption
-    }
+    def findBy(name: String, value: Any): Option[S] = macro MethodMacros.findByArg2[T]
 
     /**
      * Search by fieldname and value.
@@ -267,12 +274,35 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findAllBy(name: String, value: Any): this.type = {
+    def findAllBy(name: String, value: Any): this.type = macro MethodMacros.findAllByArg2[T]
+
+    /**
+     * Search by fieldname and value.
+     * {{{
+     * unsafeFindAllBy("name", "abc")
+     * }}}
+     * @param name field name
+     * @param value field value
+     */
+    def unsafeFindAllBy(name: String, value: Any): this.type = {
       val field = companion.fieldInfo.getOrElse(name,
         throw ActiveRecordException.notFoundField(name)
       )
       where(m => field.toEqualityExpression(m.getValue[Any](name), value))
     }
+
+    /**
+     * Search by fieldname and value.
+     * {{{
+     * unsafeFindAllBy("name", "abc")
+     * }}}
+     * @param name field name
+     * @param value field value
+     */
+    def unsafeFindAllBy(condition: (String, Any), conditions: (String, Any)*): this.type =
+      conditions.foldLeft(unsafeFindAllBy(condition._1, condition._2)) {
+        case (r, cond) => r.unsafeFindAllBy(cond._1, cond._2)
+      }
 
     def orderBy(name: String, order: String): this.type = {
       val field = companion.fieldInfo.getOrElse(name,
