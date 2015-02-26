@@ -141,9 +141,9 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m must equalTo(PrimitiveModel.newModel(5))
     }
 
-    "unsafeAssgin(Map)" in {
+    "assgin(Map)" >> {
       val m = PrimitiveModel.newInstance
-      m.unsafeAssign(Map(
+      m.assign(Map(
         "boolean" -> true,
         "oboolean" -> true,
         "timestamp" -> new Timestamp(5L),

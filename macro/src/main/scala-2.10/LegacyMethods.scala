@@ -19,6 +19,12 @@ trait LegacyMethods {
     c.Expr[T](q"$thisScope.unsafeAssign(Map(..$params))")
   }
 
+  def assignMap[T: c.WeakTypeTag](c: Context)(data: c.Expr[Map[String, Any]]): c.Expr[T] = {
+    import c.universe._
+    val thisScope = c.prefix.tree
+    c.Expr[T](q"$thisScope.unsafeAssign($data)")
+  }
+
   def findAllBy[T: c.WeakTypeTag](c: Context)(conditions: c.Expr[(String, Any)]*): c.Expr[T] = {
     import c.universe._
     val params = conditions.map(_.tree)
