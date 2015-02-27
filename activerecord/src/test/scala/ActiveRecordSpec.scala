@@ -52,7 +52,7 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       PrimitiveModel.findBy("string", "string33").map(_.string) must beSome("string33")
     }
 
-    "#findBy(allows)" >> {
+    "#findBy(arrows)" >> {
       PrimitiveModel.findBy("string" -> "string33", "int" -> 33).map(_.string) must beSome("string33")
     }
 
