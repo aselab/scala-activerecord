@@ -55,6 +55,11 @@ object OneToManyAssociationSpec extends DatabaseSpecification {
       user.group.toOption must beSome(group)
     }
 
+    "find by primary key" >> new TestData {
+      user.group.associate(group)
+      user.group.find(group.id) must beSome(group)
+    }
+
     "configure foreignKey" >> new TestData {
       user.groupByOtherKey.associate(group)
       user.groupByOtherKey.toOption must beSome(group)

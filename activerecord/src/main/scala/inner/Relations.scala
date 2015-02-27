@@ -216,6 +216,8 @@ trait Relations {
       companion.inTransaction { reverse.limit(1).toQuery.headOption }
     }
 
+    def find(id: Any): Option[S] = macro MethodMacros.findById[T]
+
     /**
      * Search by multiple fieldnames and values and return first record.
      *

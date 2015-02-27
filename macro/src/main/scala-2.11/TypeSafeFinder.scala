@@ -46,4 +46,13 @@ trait TypeSafeFinder {
     existsFields(c)(fields, modelType)
     q"$thisScope.unsafeFindByOrCreate($m, ..$fields)"
   }
+
+  def findById[T: c.WeakTypeTag](c: whitebox.Context)(id: c.Tree): c.Tree = {
+    import c.universe._
+    val modelType = c.weakTypeOf[T]
+    val thisScope = c.prefix.tree
+    val idString = "id"
+    validateField(c)(q"$idString", id, modelType)
+    q"""$thisScope.where(_.id === $id).headOption"""
+  }
 }

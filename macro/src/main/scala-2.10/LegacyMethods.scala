@@ -56,4 +56,11 @@ trait LegacyMethods {
     val thisScope = c.prefix.tree
     c.Expr[S](q"$thisScope.unsafeFindByOrCreate($m, ..$fields)")
   }
+
+  def findById[T: c.WeakTypeTag](c: Context)(id: c.Expr[Any]): c.Expr[T] = {
+    import c.universe._
+    val modelType = c.weakTypeOf[T]
+    val thisScope = c.prefix.tree
+    c.Expr[T](q"""$thisScope.where(_.id === $id).headOption""")
+  }
 }
