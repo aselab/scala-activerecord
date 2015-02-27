@@ -8,6 +8,7 @@ object MacroUtils {
     import c.universe._
     params.map {
       case q"scala.this.Predef.ArrowAssoc[${_}]($key).->[${_}]($value)" => (key.toString, value)
+      case q"scala.Tuple2.apply[${_}, ${_}]($key, $value)" => (key.toString, value)
     }
   }
 

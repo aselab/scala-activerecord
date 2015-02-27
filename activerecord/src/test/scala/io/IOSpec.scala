@@ -141,7 +141,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m must equalTo(PrimitiveModel.newModel(5))
     }
 
-    "assgin(Map)" >> {
+    "assgin(Map(k -> v))" >> {
       val m = PrimitiveModel.newInstance
       m.assign(Map(
         "boolean" -> true,
@@ -163,6 +163,32 @@ object IOSpec extends DatabaseSpecification with Mockito {
         "int" -> 5,
         "oint" -> 5,
         "uuid" -> new UUID(5L, 5L)
+      ))
+      m must equalTo(PrimitiveModel.newModel(5))
+    }
+
+    "assgin(Map((k, v)))" >> {
+      val m = PrimitiveModel.newInstance
+      m.assign(Map(
+        ("boolean", true),
+        ("oboolean", true),
+        ("timestamp", new Timestamp(5L)),
+        ("otimestamp", new Timestamp(5L)),
+        ("float", 5.toFloat),
+        ("ofloat", 5.toFloat),
+        ("long", 5L),
+        ("olong", 5L),
+        ("string", "string5"),
+        ("ostring", "string5"),
+        ("bigDecimal", BigDecimal(5)),
+        ("obigDecimal", BigDecimal(5)),
+        ("double", 5.0),
+        ("odouble", 5.0),
+        ("date", new Date(5L * 1000 * 60 * 60 * 24)),
+        ("odate", new Date(5L * 1000 * 60 * 60 * 24)),
+        ("int", 5),
+        ("oint", 5),
+        ("uuid", new UUID(5L, 5L))
       ))
       m must equalTo(PrimitiveModel.newModel(5))
     }
