@@ -95,7 +95,7 @@ trait ActiveRecordTables extends Schema {
     all.headOption.exists{ t =>
       try {
         val name = config.adapter.quoteName(t.prefixedName)
-        execute("select 1 from " + name + " limit 1", false)
+        execute("select 1 from " + name + " where 0 = 1", false)
         true
       } catch {
         case e: Throwable => false
