@@ -2,8 +2,9 @@ package com.github.aselab.activerecord
 
 import org.specs2.mutable._
 import org.specs2.specification._
+import org.specs2.specification.core._
 
-trait AutoRollback extends BeforeAfterExample { self: ActiveRecordSpecification =>
+trait AutoRollback extends BeforeAfterEach { self: ActiveRecordSpecification =>
   def before = self.schema.foreach(_.startTransaction)
   def after = self.schema.reverse.foreach(_.rollback)
 }
@@ -12,9 +13,9 @@ trait BeforeAfterAllExamples extends Specification {
   def beforeAll: Unit
   def afterAll: Unit
   override def map(fs: => Fragments) = {
-    Step {
+    step {
       beforeAll
-    } ^ fs ^ Step {
+    } ^ fs ^ step {
       afterAll
     }
   }

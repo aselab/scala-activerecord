@@ -10,7 +10,7 @@ object ActiveRecordBuild extends Build {
   )
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "2.4.16" else "2.4.5"
+    val v = if (scalaBinaryVersion.value == "2.11") "3.0" else "3.0-M3"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
@@ -41,7 +41,12 @@ object ActiveRecordBuild extends Build {
     organization := "com.github.aselab",
     scalaVersion := "2.11.6",
     crossScalaVersions := Seq("2.11.6", "2.10.4"),
-    resolvers ++= defaultResolvers,
+    resolvers ++= defaultResolvers ++ (
+      if (scalaBinaryVersion.value == "2.10")
+        Seq("Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases")
+      else
+        Nil
+    ),
     libraryDependencies ++= Seq(
       specs2("test").value,
       specs2("test", "mock").value,

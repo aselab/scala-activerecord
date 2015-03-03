@@ -21,7 +21,7 @@ object AutoDdlTestTables extends ActiveRecordTables {
   }
 }
 
-object AutoDdlSpec extends Specification with BeforeExample {
+object AutoDdlSpec extends Specification with BeforeEach {
   sequential
 
   def before = {
