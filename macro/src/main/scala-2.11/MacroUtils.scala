@@ -30,11 +30,12 @@ object MacroUtils {
 
   private[activerecord] def _validateFields(c: whitebox.Context)
     (params: Seq[(String, c.universe.Tree)], modelType: c.universe.Type): Unit = {
+      import c.universe.typeOf
       val fields = modelFields(c)(modelType)
       params.foreach { case (k, v) =>
         val inputType = v.tpe
         fields.get(k) match {
-          case Some(typeSignature) if inputType <:< typeSignature || typeSignature.contains(inputType.typeSymbol) =>
+          case Some(typeSignature) if inputType <:< typeSignature || (typeSignature <:< typeOf[Option[_]] && typeSignature.contains(inputType.typeSymbol)) =>
           case Some(typeSignature) =>
             c.abort(c.enclosingPosition, s"type mismatch for ${k};\n  found   : ${inputType}\n  required: ${typeSignature}")
           case _ => c.abort(c.enclosingPosition, s"value ${k} is not a member of ${modelType}")
