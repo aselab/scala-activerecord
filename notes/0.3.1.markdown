@@ -1,0 +1,18 @@
+## New features
+* Support for JSON serialization and deserialization ([documentation](https://github.com/aselab/scala-activerecord/wiki/Serialization-and-Deserialization#json-serialize-and-deserialize))
+* Support for `groupBy` and `having` ([documentation](https://github.com/aselab/scala-activerecord/wiki/Query-interface#group-and-having))
+* Support for joinning 5 tables
+* Type safety setting of model variables methods `newInstance` and `assign` (*only Scala 2.11.x*)
+
+## Changed
+* Type safety find methods `findBy`, `findAllBy` and `findByOrCreate` (*only Scala 2.11.x*)
+* Display for `dsl#inTransaction` deprecation message at compile-time
+* Form assign should be able to handle Option (#56 by @shota-kobayashi)
+* Bump Scala version (2.11.2 => 2.11.6)
+* Bump library versions
+
+## Fixed
+* Fix bug in `ActiveRecordTables#cleanup` on multiple schemas
+* Fix bug in `ActiveRecordTables#isCreated` for Oracle (#61)
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.3.0...0.3.1)
