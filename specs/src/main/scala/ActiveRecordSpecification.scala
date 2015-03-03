@@ -2,36 +2,22 @@ package com.github.aselab.activerecord
 
 import org.specs2.mutable._
 import org.specs2.specification._
-import org.specs2.specification.core._
 
 trait AutoRollback extends BeforeAfterEach { self: ActiveRecordSpecification =>
-  def before = self.schema.foreach(_.startTransaction)
-  def after = self.schema.reverse.foreach(_.rollback)
+  override def before = self.schema.foreach(_.startTransaction)
+  override def after = self.schema.reverse.foreach(_.rollback)
 }
 
-trait BeforeAfterAllExamples extends Specification {
-  def beforeAll: Unit
-  def afterAll: Unit
-  override def map(fs: => Fragments) = {
-    step {
-      beforeAll
-    } ^ fs ^ step {
-      afterAll
-    }
-  }
-}
-
-trait ActiveRecordSpecification extends BeforeAfterAllExamples {
+trait ActiveRecordSpecification extends Specification with BeforeAfterAll {
   sequential
-
   implicit def toTableList(table: ActiveRecordTables) = Seq(table)
 
-  def beforeAll = {
+  override def beforeAll = {
     System.setProperty("run.mode", "test")
     schema.foreach(_.initialize(config))
   }
 
-  def afterAll = schema.foreach { s => s.transaction {
+  override def afterAll = schema.foreach { s => s.transaction {
     s.drop
     s.cleanup
   }}

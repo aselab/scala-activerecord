@@ -90,14 +90,14 @@ object ActiveRecordConfigSpec extends Specification {
   }
 }
 
-object MultipleSchemaSpec extends BeforeAfterAllExamples {
-  def beforeAll = {
+object MultipleSchemaSpec extends ActiveRecordSpecification {
+  override def beforeAll = {
     System.setProperty("run.mode", "test")
     schema1.Tables.initialize(Map("com.github.aselab.activerecord.schema1.Tables.jdbcurl" -> "jdbc:h2:mem:activerecord-test1"))
     schema2.Tables.initialize(Map("com.github.aselab.activerecord.schema2.Tables.jdbcurl" -> "jdbc:h2:mem:activerecord-test2"))
   }
 
-  def afterAll = {
+  override def afterAll = {
     schema1.Tables.drop
     schema2.Tables.drop
     schema1.Tables.cleanup
