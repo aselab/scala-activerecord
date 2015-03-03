@@ -50,6 +50,8 @@ object ActiveRecordBuild extends Build {
     ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,
+    fork in Test := true,
+    testForkedParallel in Test := true,
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (version.value.trim.endsWith("SNAPSHOT"))
@@ -65,6 +67,7 @@ object ActiveRecordBuild extends Build {
       (state: State) => Project.extract(state).currentProject.id + "> "
     },
     ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+    ivyLoggingLevel := UpdateLogging.DownloadOnly,
     javaOptions ++= sys.process.javaVmArguments.filter(
       a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
     )
@@ -133,7 +136,8 @@ object ActiveRecordBuild extends Build {
 
   lazy val specs = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-specs",
-    libraryDependencies += specs2("provided").value
+    libraryDependencies += specs2("provided").value,
+    resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
   ).dependsOn(core)
 
   lazy val play2 = project.settings(defaultSettings:_*).settings(
