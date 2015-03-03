@@ -33,7 +33,8 @@ object ActiveRecordBuild extends Build {
 
   val defaultResolvers = Seq(
     Resolver.sonatypeRepo("snapshots"),
-    Classpaths.typesafeReleases
+    Classpaths.typesafeReleases,
+    "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
   )
 
   val defaultSettings = super.settings ++ Seq(
@@ -136,8 +137,7 @@ object ActiveRecordBuild extends Build {
 
   lazy val specs = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-specs",
-    libraryDependencies += specs2("provided").value,
-    resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+    libraryDependencies += specs2("provided").value
   ).dependsOn(core)
 
   lazy val play2 = project.settings(defaultSettings:_*).settings(
