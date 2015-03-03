@@ -7,7 +7,7 @@ val _version = Option(System.getProperty("version")).getOrElse(
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val root = Project("root", file(".")).enablePlugins(PlayScala).settings(
-  scalaVersion := "2.11.5",
+  scalaVersion := "2.11.6",
   javaOptions ++= sys.process.javaVmArguments.filter(
     a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
   ),
