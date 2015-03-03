@@ -30,7 +30,6 @@ object MacroUtils {
 
   private[activerecord] def _validateFields(c: whitebox.Context)
     (params: Seq[(String, c.universe.Tree)], modelType: c.universe.Type): Unit = {
-      import c.universe._
       val fields = modelFields(c)(modelType)
       params.foreach { case (k, v) =>
         val inputType = v.tpe
@@ -45,7 +44,6 @@ object MacroUtils {
 
   private[activerecord] def existsFields(c: whitebox.Context)
     (keys: Seq[c.universe.Tree], modelType: c.universe.Type): Unit = {
-      import c.universe._
       val fields = modelFields(c)(modelType)
       keys.foreach { k =>
         if (fields.get(k.toString).isEmpty) {

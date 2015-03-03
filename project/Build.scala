@@ -68,7 +68,7 @@ object ActiveRecordBuild extends Build {
     javaOptions ++= sys.process.javaVmArguments.filter(
       a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
     )
-  ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.Settings
+  ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
     Seq(

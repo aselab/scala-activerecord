@@ -11,7 +11,7 @@ case class StaleObjectException(msg: String) extends ActiveRecordException(msg)
 case class SchemaSettingException(msg: String) extends ActiveRecordException(msg)
 
 object ActiveRecordException {
-  def apply(msg :String) = new ActiveRecordException(msg)
+  def apply(msg :String): ActiveRecordException = new ActiveRecordException(msg)
 
   def notInitialized: ActiveRecordException = apply("Not initialized")
 
@@ -41,7 +41,7 @@ object ActiveRecordException {
   def notFoundField(name: String): ActiveRecordException =
     apply("Cannot find declaration of field: " + name)
 
-  def cannotLoadSchema(schemaClass: String) =
+  def cannotLoadSchema(schemaClass: String): ActiveRecordException =
     apply("Cannot load schema class: " + schemaClass)
 
   def tableNotFound(name: String): SchemaSettingException =

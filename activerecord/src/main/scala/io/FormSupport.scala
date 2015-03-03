@@ -33,7 +33,7 @@ object FormSerializer {
 trait FormSerializer extends IO { self: ProductModel =>
   import ReflectionUtil._
 
-  override def toFieldType(value: Any, fieldInfo: FieldInfo) = {
+  override def toFieldType(value: Any, fieldInfo: FieldInfo): Any = {
     if (fieldInfo.isOption) {
       value match {
         case Some(v) => Some(v)
@@ -72,7 +72,7 @@ trait FormSerializer extends IO { self: ProductModel =>
   def assignFormValues(data: Map[String, String]): this.type = {
     unsafeAssign(_companion.fieldInfo.flatMap {
       case (name, info) =>
-        def converter = FormConverter.get(info.fieldType).getOrElse(
+        lazy val converter = FormConverter.get(info.fieldType).getOrElse(
           throw ActiveRecordException.unsupportedType(name)
         )
 
@@ -134,10 +134,11 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
       (names.headOption, names.tail) match {
         case (Some(name), tail) =>
           c.fieldInfo.get(name).map { info =>
-            if (tail.isEmpty)
+            if (tail.isEmpty) {
               info.isRequired
-            else
+            } else {
               inner(classToCompanion(info.fieldType).asInstanceOf[C], tail)
+            }
           }.getOrElse(false)
         case _ => false
       }

@@ -3,11 +3,18 @@ package com.github.aselab.activerecord
 import com.github.aselab.activerecord.dsl._
 import inner._
 
-trait ActiveModel extends ProductModel with io.FormSerializer with io.JsonSerializer with validations.ValidationSupport {
+trait ActiveModel extends ProductModel
+  with io.FormSerializer
+  with io.JsonSerializer
+  with validations.ValidationSupport
+{
   def isNewRecord: Boolean = true
 }
 
-trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T] with io.FormSupport[T] with io.JsonSupport[T] {
+trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T]
+  with io.FormSupport[T]
+  with io.JsonSupport[T]
+{
   override def newInstance: T = super.newInstance
 
   import scala.language.experimental.macros
@@ -126,9 +133,9 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     schema.getTable(name)
   }
 
-  def inTransaction[T](f: => T): T = schema.inTransaction(f)
+  def inTransaction[R](f: => R): R = schema.inTransaction(f)
 
-  def transaction[T](f: => T): T = schema.transaction(f)
+  def transaction[R](f: => R): R = schema.transaction(f)
 
   /**
    * all search.

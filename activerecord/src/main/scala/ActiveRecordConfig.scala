@@ -80,12 +80,12 @@ trait ActiveRecordConfig {
   def adapter(driverClass: String): DatabaseAdapter = driverClass match {
     case "org.h2.Driver" => new H2Adapter
     case "org.postgresql.Driver" => new PostgreSqlAdapter {
-      override def usePostgresSequenceNamingScheme = true
+      override def usePostgresSequenceNamingScheme: Boolean = true
     }
     case "net.sourceforge.jtds.jdbc.Driver" => new MSSQLServer
     case "com.ibm.db2.jcc.DB2Driver" => new DB2Adapter
     case "com.mysql.jdbc.Driver" => new MySQLAdapter {
-      override def quoteIdentifier(s: String) = "`%s`".format(s)
+      override def quoteIdentifier(s: String): String = "`%s`".format(s)
     }
     case "oracle.jdbc.OracleDriver" => new OracleAdapter
     case "org.apache.derby.jdbc.EmbeddedDriver" => new DerbyAdapter

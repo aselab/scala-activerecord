@@ -42,7 +42,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
 
   def global: Seq[ValidationError] = get("")
 
-  def clear {
+  def clear: Unit = {
     errorList.clear
     changed = true
   }

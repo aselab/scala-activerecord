@@ -20,14 +20,14 @@ object JsonSerializer {
     case _ => deserializeValue(value, fieldInfo)
   }
 
-  def deserializeValue(value: Any, fieldInfo: FieldInfo) =
+  def deserializeValue(value: Any, fieldInfo: FieldInfo): Any =
     FormConverter.get(fieldInfo.fieldType).map(_.deserialize(value.toString)).getOrElse(
       FormSerializer.formAssignFunc(value, fieldInfo)(this.assignFunc)
     )
 }
 
 trait JsonSerializer extends FormSerializer { self: ProductModel =>
-  private implicit def _format = DefaultFormats
+  private[this] implicit def _format = DefaultFormats
 
   def asJson: JValue = Extraction.decompose(toSerializedMap)
 

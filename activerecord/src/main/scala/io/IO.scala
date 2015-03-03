@@ -18,9 +18,9 @@ trait IO extends Validatable { this: ProductModel =>
 
   def toMap(onlyFields: String*): Map[String, Any] = toMap(onlyFields.toList)
 
-  def toSerializedMap = toSerialized(toMap)
+  def toSerializedMap: Map[String, Any] = toSerialized(toMap)
 
-  def toSerializedMap(onlyFields: List[String]) = toSerialized(toMap(onlyFields))
+  def toSerializedMap(onlyFields: List[String]): Map[String, Any] = toSerialized(toMap(onlyFields))
 
   protected def toSerialized(map: Map[String, Any]): Map[String, Any] = map.mapValues {
     case v: Seq[_] => v.map(serializedValue)
