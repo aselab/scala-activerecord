@@ -10,7 +10,7 @@ object ActiveRecordBuild extends Build {
   )
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "3.0" else "3.0-M4-20150227014550-82f068c"
+    val v = if (scalaBinaryVersion.value == "2.11") "3.0" else "3.0-20150306133021-ac0f819"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
@@ -41,7 +41,7 @@ object ActiveRecordBuild extends Build {
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
     scalaVersion := "2.11.6",
-    crossScalaVersions := Seq("2.11.6", "2.10.4"),
+    crossScalaVersions := Seq("2.11.6", "2.10.5"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
@@ -69,16 +69,14 @@ object ActiveRecordBuild extends Build {
     },
     ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
     ivyLoggingLevel := UpdateLogging.DownloadOnly,
-    javaOptions ++= sys.process.javaVmArguments.filter(
-      a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
-    )
+    javaOptions ++= originalJvmOptions
   ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
     Seq(
-      scalaVersion := "2.10.4",
+      scalaVersion := "2.10.5",
       sbtPlugin := true,
-      crossScalaVersions := Seq("2.10.4"),
+      crossScalaVersions := Seq("2.10.5"),
       ScriptedPlugin.scriptedBufferLog := false,
       ScriptedPlugin.scriptedLaunchOpts := { ScriptedPlugin.scriptedLaunchOpts.value ++
         originalJvmOptions :+ s"-Dversion=${version.value}"
@@ -127,8 +125,8 @@ object ActiveRecordBuild extends Build {
             libraryDependencies.value
           case Some((2, 10)) =>
             libraryDependencies.value ++ Seq(
-              compilerPlugin("org.scalamacros" % "paradise" % "2.0.0" cross CrossVersion.full),
-              "org.scalamacros" %% "quasiquotes" % "2.0.0" cross CrossVersion.binary
+              compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
+              "org.scalamacros" %% "quasiquotes" % "2.0.1" cross CrossVersion.binary
             )
         }
       }
