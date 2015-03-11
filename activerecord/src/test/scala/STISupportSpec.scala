@@ -8,8 +8,8 @@ import models._
 object STISupportSpec extends DatabaseSpecification with AutoRollback {
   "STI" should {
     "type" >> {
-      Student.newInstance.`type` mustEqual "Student"
-      Teacher.newInstance.`type` mustEqual "Teacher"
+      Student.newInstance._type mustEqual "Student"
+      Teacher.newInstance._type mustEqual "Teacher"
     }
   }
 
@@ -29,13 +29,13 @@ object STISupportSpec extends DatabaseSpecification with AutoRollback {
     }
 
     "defaultScope" >> {
-      Student.toSql mustEqual PersonView.where(_.`type` === "Student").toSql
-      Teacher.toSql mustEqual PersonView.where(_.`type` === "Teacher").toSql
+      Student.toSql mustEqual PersonView.where(_._type === "Student").toSql
+      Teacher.toSql mustEqual PersonView.where(_._type === "Teacher").toSql
     }
 
     "create" >> new TestData {
       PersonView.size mustEqual 2
-      PersonView.map(_.`type`).toList mustEqual List("Student", "Teacher")
+      PersonView.map(_._type).toList mustEqual List("Student", "Teacher")
       Student.toList mustEqual List(bob)
       Teacher.toList mustEqual List(alice)
     }
