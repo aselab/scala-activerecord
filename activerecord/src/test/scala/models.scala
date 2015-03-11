@@ -24,6 +24,10 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val addresses = table[Address]
   val items = table[Item]
 
+  val people = table[PersonView]("people")
+  val students = table[Student]
+  val teachers = table[Teacher]
+
   val timestamps = table[TimestampsModel]
   val datestamps = table[DatestampsModel]
   val optimistics = table[OptimisticModel]
@@ -229,3 +233,22 @@ object ComplexModel extends ActiveModelCompanion[ComplexModel]
 case class Item(name: String, price: Int) extends ActiveRecord
 
 object Item extends ActiveRecordCompanion[Item]
+
+/**
+ * for Single table inheritance
+ */
+trait Person extends ActiveRecord with STI {
+  val name: String
+  val age: Int
+}
+
+case class PersonView(name: String, age: Int) extends Person
+object PersonView extends ActiveRecordCompanion[PersonView]
+
+trait Children extends Person
+
+case class Student(name: String, age: Int) extends Children
+object Student extends ActiveRecordCompanion[Student] with STISupport[Student]
+
+case class Teacher(name: String, age: Int) extends Person
+object Teacher extends ActiveRecordCompanion[Teacher] with STISupport[Teacher]

@@ -437,6 +437,31 @@ trait Relations {
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R] =
       from(queryable)(m => f(Tuple1(m)))
 
+    /**
+     * Updates all records in the current relation with details given.
+     * This method constructs a single SQL UPDATE statement and sends it straight to the database.
+     * - It does not trigger Active Record callbacks or validations
+     * - It does not use OrderByExpression or Limit
+     */
+    private[activerecord] def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int = companion.inTransaction {
+      dsl.update(companion.table)(m =>
+        whereScope(Tuple1(m)).asInstanceOf[WhereState[Unconditioned]]
+          .setAll(updateAssignments.map(_.apply(m)): _*)
+      )
+    }
+
+    /**
+     * Deletes all records in the current relation with details given.
+     * This method constructs a single SQL DELETE statement and sends it straight to the database.
+     * - It does not trigger Active Record callbacks or validations
+     * - It does not use OrderByExpression or Limit
+     */
+    private[activerecord] def forceDestroyAll(): Int = companion.inTransaction {
+      companion.table.deleteWhere(m =>
+        LogicalBoolean.and(conditions.map(_.apply(Tuple1(m))))
+      )
+    }
+
     def joins[J <: AR](on: (T, J) => LogicalBoolean)
       (implicit m: ClassTag[J]): Relation2[T, J, S] = {
       val c = classToARCompanion[J](m.runtimeClass)

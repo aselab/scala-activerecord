@@ -41,7 +41,7 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     result || (throws && (throw ActiveRecordException.saveFailed(errors)))
   }
 
-  def create:this.type  = create(true)
+  def create: this.type = create(true)
   def create(validate: Boolean): this.type = {
     if (isNewRecord) {
       save(true, validate)
@@ -51,7 +51,7 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     }
   }
 
-  def update:this.type  = update(true)
+  def update: this.type = update(true)
   def update(validate: Boolean): this.type = {
     save(true, validate)
     this
@@ -102,9 +102,9 @@ object ActiveRecord extends inner.Relations with inner.Associations
 
 trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   extends ActiveModelCompanion[T] with inner.CompanionConversion[T] {
+  import reflections.ReflectionUtil.toReflectable
+  import ActiveRecord.Relation1
   import scala.reflect.ClassTag
-  import reflections.ReflectionUtil._
-  import ActiveRecord._
 
   implicit val manifest: ClassTag[T] = ClassTag(targetClass)
 
@@ -125,6 +125,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /** database schema */
   lazy val schema = Config.schema(this)
 
+  def defaultScope: Relation1[T, T] = queryToRelation[T](table)
+
   /**
    * corresponding database table
    */
@@ -140,7 +142,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /**
    * all search.
    */
-  def all: Relation1[T, T] = queryToRelation[T](table)
+  def all: Relation1[T, T] = defaultScope
 
   /**
    * search by id.
@@ -150,31 +152,29 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   /**
    * insert record from model.
    */
-  protected[activerecord] def create(model: T) = inTransaction {
+  protected[activerecord] def create(model: T): Unit = inTransaction {
     table.insert(model)
   }
 
   /**
    * update record from model.
    */
-  protected[activerecord] def update(model: T) = inTransaction {
+  protected[activerecord] def update(model: T): Unit = inTransaction {
     table.update(model)
   }
 
   /**
    * delete record from id.
    */
-  protected[activerecord] def delete(id: K) = inTransaction {
+  protected[activerecord] def delete(id: K): Boolean = inTransaction {
     table.delete(id)
   }
 
-  def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
-    dsl.update(table)(m => setAll(updateAssignments.map(_.apply(m)): _*))
-  }
+  def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int =
+    all.forceUpdateAll(updateAssignments: _*)
 
-  def forceUpdate(condition: T => LogicalBoolean)(updateAssignments: (T => UpdateAssignment)*): Int = inTransaction {
-    dsl.update(table)(m => where(condition(m)).set(updateAssignments.map(_.apply(m)): _*))
-  }
+  def forceUpdate(condition: T => LogicalBoolean)(updateAssignments: (T => UpdateAssignment)*): Int =
+    all.where(condition).forceUpdateAll(updateAssignments: _*)
 
   def forceDeleteAll(): Int = inTransaction {
     table.delete(all.toQuery)

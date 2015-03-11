@@ -7,7 +7,7 @@ import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
 import mojolly.inflector.InflectorImports._
 import java.io.{PrintWriter, StringWriter}
-import reflections.ReflectionUtil._
+import reflections.ReflectionUtil
 import java.sql.Connection
 import scala.language.existentials
 
@@ -15,7 +15,7 @@ import scala.language.existentials
  * Base class of database schema.
  */
 trait ActiveRecordTables extends Schema {
-  import reflections.ReflectionUtil._
+  import ReflectionUtil.{defaultLoader, classToARCompanion, getGenericTypes, toReflectable}
 
   lazy val tableMap = {
     val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[_, _]]
@@ -68,7 +68,10 @@ trait ActiveRecordTables extends Schema {
     propertyName.underscore
 
   override def tableNameFromClass(c: Class[_]): String =
-    c.getSimpleName.underscore.pluralize
+    tableNameFromClass(c.getSimpleName)
+
+  def tableNameFromClass(className: String): String =
+    className.underscore.pluralize
 
   def tableNameFromClasses(c1: Class[_], c2: Class[_]): String =
     Seq(c1, c2).map(tableNameFromClass).sorted.mkString("_")
@@ -208,8 +211,25 @@ trait ActiveRecordTables extends Schema {
     out.toString
   }
 
-  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] =
-    table(tableNameFromClass(m.runtimeClass))(m)
+  private[this] def parentTypes = {
+    val parentTypeSig = ReflectionUtil.runtimeMirror.classSymbol(classOf[STI]).typeSignature
+    (parentTypeSig, parentTypeSig.typeSymbol)
+  }
+
+  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {
+    val typeT = m.runtimeClass.asInstanceOf[Class[T]]
+    val typeTSig = ReflectionUtil.runtimeMirror.classSymbol(typeT).typeSignature
+    val (parentTypeSig, parentType) = parentTypes
+
+    val baseARType = typeTSig.baseClasses.tail.reverse.find { c =>
+      c.typeSignature.baseType(parentType).contains(parentType) && !(c.typeSignature =:= parentTypeSig)
+    }
+    val columnName = baseARType
+      .map(c => tableNameFromClass(c.name.toString))
+      .getOrElse(tableNameFromClass(typeT))
+
+    table(columnName)(m)
+  }
 
   def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
     val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
@@ -242,6 +262,8 @@ case class ActiveRecordSession(
 }
 
 object ActiveRecordTables {
+  import ReflectionUtil.{defaultLoader, classToCompanion}
+
   def find(schemaName: String)(implicit classLoader: ClassLoader = defaultLoader): ActiveRecordTables =
     classToCompanion(schemaName).asInstanceOf[ActiveRecordTables]
 }

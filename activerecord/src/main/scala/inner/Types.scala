@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord.inner
 
 trait Types {
-  type Schema = org.squeryl.Schema
+  type Schema = org.squeryl.CustomSchema
   type Table[T] = org.squeryl.Table[T]
   type Query[T] = org.squeryl.Query[T]
   type Queryable[T] = org.squeryl.Queryable[T]
@@ -11,6 +11,8 @@ trait Types {
   type CompositeKey2[T1, T2] = org.squeryl.dsl.CompositeKey2[T1, T2]
   type SquerylOptimistic = org.squeryl.Optimistic
   type StaleUpdateException = org.squeryl.StaleUpdateException
+  type WhereState[A] = org.squeryl.dsl.fsm.WhereState[A]
+  type Unconditioned = org.squeryl.dsl.fsm.Unconditioned
 
   val LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean
   type LogicalBoolean = org.squeryl.dsl.ast.LogicalBoolean

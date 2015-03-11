@@ -10,6 +10,7 @@ import scala.tools.scalap.scalax.rules.scalasig._
 import scala.language.reflectiveCalls
 import scala.language.existentials
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 
 class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   import ClassInfo._
@@ -189,6 +190,7 @@ case class ScalaSigInfo(clazz: Class[_]) {
 trait ReflectionUtil {
   private def _defaultClassLoader = Thread.currentThread.getContextClassLoader
   def defaultLoader: ClassLoader = Config.classLoader.getOrElse(_defaultClassLoader)
+  def runtimeMirror = universe.runtimeMirror(defaultLoader)
 
   def loadClass(name: String)(
     implicit classLoader: ClassLoader = defaultLoader
