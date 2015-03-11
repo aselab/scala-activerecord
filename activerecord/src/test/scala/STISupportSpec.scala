@@ -23,6 +23,11 @@ object STISupportSpec extends DatabaseSpecification with AutoRollback {
       Seq(Teacher("Alice", 24), Teacher("Taro", 26), Teacher("Hanako", 28)).foreach(_.create)
     }
 
+    "table" >> {
+      Student.table.name mustEqual "people"
+      Teacher.table.name mustEqual "people"
+    }
+
     "defaultScope" >> {
       Student.toSql mustEqual PersonView.where(_.`type` === "Student").toSql
       Teacher.toSql mustEqual PersonView.where(_.`type` === "Teacher").toSql

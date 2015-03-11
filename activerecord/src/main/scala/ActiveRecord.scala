@@ -57,17 +57,17 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     this
   }
 
-  protected def doCreate = {
+  protected def doCreate: Boolean = {
     recordCompanion.create(this)
     true
   }
 
-  protected def doUpdate = {
+  protected def doUpdate: Boolean = {
     recordCompanion.update(this)
     true
   }
 
-  protected def doDelete = {
+  protected def doDelete: Boolean = {
     val result = if (isDeleted) false else recordCompanion.delete(id)
     if (result) _isDeleted = true
     result
