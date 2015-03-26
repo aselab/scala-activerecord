@@ -10,7 +10,7 @@ object ActiveRecordBuild extends Build {
   )
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "3.0" else "3.0-20150306133021-ac0f819"
+    val v = if (scalaBinaryVersion.value == "2.11") "3.2" else "3.1.1"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
