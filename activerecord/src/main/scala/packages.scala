@@ -2,7 +2,7 @@ package com.github.aselab.activerecord
 
 import scala.language.experimental.macros
 
-object dsl extends org.squeryl.PrimitiveTypeMode
+trait dsl extends org.squeryl.PrimitiveTypeMode
   with inner.Annotations with inner.DSL with inner.Types with io.JsonImplicits {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
