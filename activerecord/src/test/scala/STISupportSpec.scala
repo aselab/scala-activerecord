@@ -35,7 +35,8 @@ object STISupportSpec extends DatabaseSpecification with AutoRollback {
 
     "create" >> new TestData {
       PersonView.size mustEqual 2
-      PersonView.map(_._type).toList mustEqual List("Student", "Teacher")
+      PersonView.toList mustEqual List(Student("Bob", 20), Teacher("Alice", 24))
+      PersonView.select(_._type).toList mustEqual List("Student", "Teacher")
       Student.toList mustEqual List(bob)
       Teacher.toList mustEqual List(alice)
     }

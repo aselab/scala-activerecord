@@ -192,6 +192,15 @@ trait ReflectionUtil {
   def defaultLoader: ClassLoader = Config.classLoader.getOrElse(_defaultClassLoader)
   def runtimeMirror = universe.runtimeMirror(defaultLoader)
 
+  def typeSig(typeT: Class[_]) =
+    ReflectionUtil.runtimeMirror.classSymbol(typeT).typeSignature
+
+  def isExtend(t: Class[_], baseTypeSymbol: universe.Symbol): Boolean =
+    isExtend(runtimeMirror.classSymbol(t), baseTypeSymbol)
+
+  def isExtend(typeSymbol: universe.Symbol, baseTypeSymbol: universe.Symbol): Boolean =
+    typeSymbol.typeSignature.baseType(baseTypeSymbol).contains(baseTypeSymbol)
+
   def loadClass(name: String)(
     implicit classLoader: ClassLoader = defaultLoader
   ): Class[_] = classLoader.loadClass(name)

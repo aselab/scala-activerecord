@@ -243,7 +243,7 @@ trait Person extends ActiveRecord with STI {
 }
 
 case class PersonView(name: String, age: Int) extends Person
-object PersonView extends ActiveRecordCompanion[PersonView]
+object PersonView extends ActiveRecordCompanion[Person]
 
 trait Children extends Person
 

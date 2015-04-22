@@ -211,20 +211,9 @@ trait ActiveRecordTables extends Schema {
     out.toString
   }
 
-  private[this] def parentTypes = {
-    val parentTypeSig = ReflectionUtil.runtimeMirror.classSymbol(classOf[STI]).typeSignature
-    (parentTypeSig, parentTypeSig.typeSymbol)
-  }
-
   def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {
     val typeT = m.runtimeClass.asInstanceOf[Class[T]]
-    val typeTSig = ReflectionUtil.runtimeMirror.classSymbol(typeT).typeSignature
-    val (parentTypeSig, parentType) = parentTypes
-
-    val baseARType = typeTSig.baseClasses.tail.reverse.find { c =>
-      c.typeSignature.baseType(parentType).contains(parentType) && !(c.typeSignature =:= parentTypeSig)
-    }
-    val columnName = baseARType
+    val columnName = baseARType(typeT)
       .map(c => tableNameFromClass(c.name.toString))
       .getOrElse(tableNameFromClass(typeT))
 
