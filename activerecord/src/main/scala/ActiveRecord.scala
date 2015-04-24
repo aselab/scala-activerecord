@@ -57,6 +57,10 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     this
   }
 
+  def reload: Option[this.type] = {
+    recordCompanion.find(id)
+  }
+
   protected def doCreate: Boolean = {
     recordCompanion.create(this)
     true

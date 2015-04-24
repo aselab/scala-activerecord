@@ -338,6 +338,16 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       m._companion mustEqual PrimitiveModel
     }
 
+    "be able to reload an object" >> {
+      val m = PrimitiveModel.all.head
+      PrimitiveModel.create(m)
+
+      m.string = "test"
+      m.int = 156
+      m.save
+      m.reload.get must beEqualTo(m)
+    }
+
     "CRUD" >> {
       val m = PrimitiveModel.newModel(5)
       val size = PrimitiveModel.all.size
