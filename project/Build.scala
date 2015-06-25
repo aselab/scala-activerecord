@@ -40,8 +40,8 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.11.6",
-    crossScalaVersions := Seq("2.11.6", "2.10.5"),
+    scalaVersion := "2.11.7",
+    crossScalaVersions := Seq("2.11.7", "2.10.5"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
@@ -97,10 +97,10 @@ object ActiveRecordBuild extends Build {
         "com.typesafe" % "config" % "1.2.1",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "1.8.0",
+        "com.github.nscala-time" %% "nscala-time" % "2.0.0",
         "commons-validator" % "commons-validator" % "1.4.1",
         "org.json4s" %% "json4s-native" % "3.2.11",
-        "org.slf4j" % "slf4j-api" % "1.7.10"
+        "org.slf4j" % "slf4j-api" % "1.7.12"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
