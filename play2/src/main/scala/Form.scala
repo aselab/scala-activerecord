@@ -4,9 +4,10 @@ import scala.reflect.ClassTag
 import play.api.data._
 import play.api.data.Forms._
 import play.api.data.format._
-import play.api.templates.Html
+import play.twirl.api.Html
 import _root_.views.html.{helper => playhelper}
 import _root_.views.html.helper._
+import play.api.i18n.{Messages, I18nSupport}
 
 
 class ActiveModelFormatter[T <: ActiveModel](
@@ -37,7 +38,7 @@ trait PlayFormSupport[T <: ActiveModel] { self: ActiveModelCompanion[T] =>
   def form = Form(mapping(), Map(), Nil, None)
 }
 
-class PlayHelper[T <: ActiveModel](companion: ActiveModelCompanion[T]) {
+class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
   protected def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
     val isRequired = options.collectFirst{ case ('required, v) => v }
       .getOrElse(companion.isRequired(field.name))
@@ -49,16 +50,16 @@ class PlayHelper[T <: ActiveModel](companion: ActiveModelCompanion[T]) {
     }
   }
 
-  def inputText(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
+  def inputText(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
     playhelper.inputText(field, inputOptions(field, options.toSeq):_*)
 
-  def inputPassword(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
+  def inputPassword(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
     playhelper.inputPassword(field, inputOptions(field, options.toSeq):_*)
 
-  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
+  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
     playhelper.select(field, fields, inputOptions(field, options.toSeq):_*)
 
-  def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, lang: play.api.i18n.Lang) =
+  def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
     playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
 
   implicit def fieldConstructor(implicit m: ClassTag[T]) = new FieldConstructor {
@@ -66,11 +67,11 @@ class PlayHelper[T <: ActiveModel](companion: ActiveModelCompanion[T]) {
       val error = if (elements.hasErrors) "error" else ""
       Html(<div class={"control-group %s %s".format(elements.args.get('_class).getOrElse(""), error)} 
         id={elements.args.get('_id).map(_.toString).getOrElse(elements.id + "_field")}>
-        <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.lang.toLocale)}</label>
+        <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.messages.lang.toLocale)}</label>
         <div class="controls">
           {xml.Unparsed(elements.input.body)}
           {if (elements.errors.length > 0) {
-              <span class="help-inline">{elements.errors(elements.lang).mkString(", ")}</span>
+              <span class="help-inline">{elements.errors.mkString(", ")}</span>
           }}
         </div>
       </div>.toString)

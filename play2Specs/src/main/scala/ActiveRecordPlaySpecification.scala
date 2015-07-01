@@ -4,6 +4,8 @@ import play.api._
 import play.api.test._
 
 trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
+  var app: Application = _
+
   // override application.conf settings
   override def config = super.config ++ Map(
     "db.activerecord.driver" -> "org.h2.Driver",
@@ -11,7 +13,8 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
   )
 
   override def beforeAll = {
-    Play.start(FakeApplication(additionalConfiguration = config))
+    app = FakeApplication(additionalConfiguration = config)
+    Play.start(app)
     super.beforeAll
   }
 
@@ -19,7 +22,7 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
     try {
       super.afterAll
     } finally {
-      Play.stop
+      app.stop
     }
   }
 
