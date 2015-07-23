@@ -4,6 +4,8 @@ import java.sql.Connection
 import org.squeryl.internals.DatabaseAdapter
 import play.api.Play.current
 import java.util.{Locale, TimeZone}
+import play.api.i18n.{Messages, I18nSupport}
+
 
 class PlayConfig(
   val schema: ActiveRecordTables,
@@ -55,14 +57,18 @@ class PlayConfig(
   def translator: i18n.Translator = PlayTranslator
 }
 
-object PlayTranslator extends i18n.Translator {
+object PlayTranslator extends i18n.Translator  {
   import play.api.i18n._
+  import play.api.i18n.Messages.Implicits._
 
   def get(key: String, args: Any*)(implicit locale: Locale):Option[String] = {
-    implicit val lang = Lang(locale.getLanguage)
-    if (Messages.messages.get(lang.code).exists(_.isDefinedAt(key))) {
-      Some(Messages(key, args:_*))
+    implicit val lang = Lang(locale.getLanguage, locale.getCountry)
+    val messages = implicitly[Messages]
+
+    if (messages.isDefinedAt(key)) {
+      Some(messages(key))
     } else {
+      implicit val locale = messages.lang.toLocale
       i18n.DefaultTranslator.get(key, args:_*)
     }
   }
