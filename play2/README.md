@@ -110,11 +110,11 @@ package models
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 
-object Tables1 extends ActiveRecordTables {
+object Tables1 extends ActiveRecordTables with PlaySupport {
   val users = table[User]
 }
 
-object Tables2 extends ActiveRecordTables {
+object Tables2 extends ActiveRecordTables with PlaySupport {
   val groups = table[Group]
 }
 ```
