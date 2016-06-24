@@ -40,8 +40,8 @@ object ActiveRecordBuild extends Build {
   val defaultSettings = super.settings ++ Seq(
     version := (if (isRelease) _version else _version + "-SNAPSHOT"),
     organization := "com.github.aselab",
-    scalaVersion := "2.11.7",
-    crossScalaVersions := Seq("2.11.7", "2.10.5"),
+    scalaVersion := "2.11.8",
+    crossScalaVersions := Seq("2.11.8", "2.10.6"),
     resolvers ++= defaultResolvers,
     libraryDependencies ++= Seq(
       specs2("test").value,
@@ -74,9 +74,9 @@ object ActiveRecordBuild extends Build {
 
   val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
     Seq(
-      scalaVersion := "2.10.5",
+      scalaVersion := "2.10.6",
       sbtPlugin := true,
-      crossScalaVersions := Seq("2.10.5"),
+      crossScalaVersions := Seq("2.10.6"),
       ScriptedPlugin.scriptedBufferLog := false,
       ScriptedPlugin.scriptedLaunchOpts := { ScriptedPlugin.scriptedLaunchOpts.value ++
         originalJvmOptions :+ s"-Dversion=${version.value}"
