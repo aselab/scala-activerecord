@@ -10,7 +10,7 @@ object ActiveRecordBuild extends Build {
   )
 
   def specs2(scope: String, name: String = "core") = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "3.2" else "3.1.1"
+    val v = if (scalaBinaryVersion.value == "2.11") "3.3.1" else "3.1.1"
     "org.specs2" %% s"specs2-${name}" % v % scope
   }
 
@@ -46,8 +46,8 @@ object ActiveRecordBuild extends Build {
     libraryDependencies ++= Seq(
       specs2("test").value,
       specs2("test", "mock").value,
-      "com.h2database" % "h2" % "1.4.185" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.1.2" % "test"
+      "com.h2database" % "h2" % "1.4.192" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.1.7" % "test"
     ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
     testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
     parallelExecution in Test := false,
@@ -94,13 +94,13 @@ object ActiveRecordBuild extends Build {
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
         "org.squeryl" %% "squeryl" % "0.9.6-RC3",
-        "com.typesafe" % "config" % "1.2.1",
+        "com.typesafe" % "config" % "1.3.0",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
-        "com.github.nscala-time" %% "nscala-time" % "2.0.0",
-        "commons-validator" % "commons-validator" % "1.5.0",
-        "org.json4s" %% "json4s-native" % "3.2.11",
-        "org.slf4j" % "slf4j-api" % "1.7.12"
+        "com.github.nscala-time" %% "nscala-time" % "2.12.0",
+        "commons-validator" % "commons-validator" % "1.5.1",
+        "org.json4s" %% "json4s-native" % "3.4.0",
+        "org.slf4j" % "slf4j-api" % "1.7.21"
       ),
       unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
       initialCommands in console in Test := """
@@ -125,8 +125,8 @@ object ActiveRecordBuild extends Build {
             libraryDependencies.value
           case Some((2, 10)) =>
             libraryDependencies.value ++ Seq(
-              compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
-              "org.scalamacros" %% "quasiquotes" % "2.0.1" cross CrossVersion.binary
+              compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+              "org.scalamacros" %% "quasiquotes" % "2.1.0" cross CrossVersion.binary
             )
         }
       }
@@ -161,7 +161,7 @@ object ActiveRecordBuild extends Build {
   lazy val scalatra = project.settings(defaultSettings:_*).settings(
     name := "scala-activerecord-scalatra",
     libraryDependencies ++= Seq(
-      "org.scalatra" %% "scalatra" % "2.3.0" % "provided",
+      "org.scalatra" %% "scalatra" % "2.4.1" % "provided",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value
     )
