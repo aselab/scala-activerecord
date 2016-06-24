@@ -9,6 +9,7 @@ trait Types {
   type KeyedEntity[T] = org.squeryl.KeyedEntity[T]
   type KeyedEntityDef[T, K] = org.squeryl.KeyedEntityDef[T, K]
   type CompositeKey2[T1, T2] = org.squeryl.dsl.CompositeKey2[T1, T2]
+  type CanLookup = org.squeryl.CanLookup
   type SquerylOptimistic = org.squeryl.Optimistic
   type StaleUpdateException = org.squeryl.StaleUpdateException
   type WhereState[A] = org.squeryl.dsl.fsm.WhereState[A]

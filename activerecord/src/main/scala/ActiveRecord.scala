@@ -119,6 +119,8 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
       if (isOptimistic) Some("occVersionNumber") else None
   }
 
+  implicit val toCanLookup: K => CanLookup = (id: K) => org.squeryl.CanLookups.unknown
+
   /** self reference */
   protected def self: this.type = this
 

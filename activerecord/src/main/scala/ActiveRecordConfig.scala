@@ -89,6 +89,7 @@ trait ActiveRecordConfig {
     }
     case "oracle.jdbc.OracleDriver" => new OracleAdapter
     case "org.apache.derby.jdbc.EmbeddedDriver" => new DerbyAdapter
+    case "org.sqlite.JDBC" => new SQLiteAdapter
     case driver => throw ActiveRecordException.unsupportedDriver(driver)
   }
 

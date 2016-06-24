@@ -93,7 +93,7 @@ object ActiveRecordBuild extends Build {
     settings = defaultSettings ++ Seq(
       name := "scala-activerecord",
       libraryDependencies ++= Seq(
-        "org.squeryl" %% "squeryl" % "0.9.6-RC3",
+        "org.squeryl" %% "squeryl" % "0.9.6-RC4",
         "com.typesafe" % "config" % "1.3.0",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
