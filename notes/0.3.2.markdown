@@ -1,0 +1,10 @@
+## New features
+* Added SQLite support
+* Play 2.4 support (#71 by @knshiro)
+* Support for Single table inheritance (experimental)
+
+## Changed
+* Bump Scala version (2.11.6 => 2.11.8, 2.10.5 => 2.10.6)
+* Bump library versions
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.3.1...0.3.2)
