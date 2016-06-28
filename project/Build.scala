@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object ActiveRecordBuild extends Build {
-  val _version = "0.3.2"
+  val _version = "0.4.0"
   val isRelease = System.getProperty("release") == "true"
 
   val originalJvmOptions = sys.process.javaVmArguments.filter(

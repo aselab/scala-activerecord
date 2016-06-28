@@ -12,10 +12,10 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.github.aselab" %% "scala-activerecord" % "0.3.0",
-  "com.github.aselab" %% "scala-activerecord-play2" % "0.3.0",
+  "com.github.aselab" %% "scala-activerecord" % "0.3.2",
+  "com.github.aselab" %% "scala-activerecord-play2" % "0.3.2",
   jdbc,
-  "com.h2database" % "h2" % "1.4.180"  // See Supported databases
+  "com.h2database" % "h2" % "1.4.192"  // See Supported databases
 )
 ```
 
