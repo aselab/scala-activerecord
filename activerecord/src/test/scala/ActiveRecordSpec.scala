@@ -144,29 +144,29 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "Timestamp" >> {
-        val t = new Timestamp(44L)
-        val result = PrimitiveModel.findAllBy("timestamp", t)
+        val t = new Timestamp(44L * 1000)
+        val result = DateModel.findAllBy("timestamp", t)
         result.toList must have size 1
         result.head.timestamp mustEqual t
       }
 
       "Option[Timestamp]" >> {
-        val t = new Timestamp(44L)
-        val result = PrimitiveModel.findAllBy("otimestamp", t)
+        val t = new Timestamp(44L * 1000)
+        val result = DateModel.findAllBy("otimestamp", t)
         result.toList must have size 1
         result.head.otimestamp must beSome(t)
       }
 
       "Date" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
-        val result = PrimitiveModel.findAllBy("date", t)
+        val result = DateModel.findAllBy("date", t)
         result.toList must have size 1
         result.head.date.toString mustEqual "1970-01-23"
       }
 
       "Option[Date]" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
-        val result = PrimitiveModel.findAllBy("odate", t)
+        val result = DateModel.findAllBy("odate", t)
         result.toList must have size 1
         result.head.odate must beSome.which {_.toString == "1970-01-23"}
       }
@@ -197,17 +197,17 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
 
     "#forceUpdate" >> {
       val now = new Timestamp(System.currentTimeMillis)
-      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
+      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true))
       query.count mustEqual 0
-      PrimitiveModel.forceUpdate(_.id.~ > 40)(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 60
+      PrimitiveModel.forceUpdate(_.id.~ > 40)(_.string := "aaa", _.oboolean := Some(true)) mustEqual 60
       query.count mustEqual 60
     }
 
     "#forceUpdateAll" >> {
       val now = new Timestamp(System.currentTimeMillis)
-      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true) and p.timestamp === now)
+      val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true))
       query.count mustEqual 0
-      PrimitiveModel.forceUpdateAll(_.string := "aaa", _.oboolean := Some(true), _.timestamp := now) mustEqual 100
+      PrimitiveModel.forceUpdateAll(_.string := "aaa", _.oboolean := Some(true)) mustEqual 100
       query.count mustEqual 100
     }
 

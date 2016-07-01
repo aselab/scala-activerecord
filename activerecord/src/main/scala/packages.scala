@@ -1,8 +1,10 @@
 package com.github.aselab.activerecord
 
 import scala.language.experimental.macros
+import org.joda.time.{LocalDate, DateTime}
 
 object dsl extends org.squeryl.PrimitiveTypeMode
+  with squeryl.DateTimeSupport with squeryl.LocalDateSupport
   with inner.Annotations with inner.DSL with inner.Types with io.JsonImplicits {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
@@ -36,6 +38,8 @@ package object support {
     case "scala.package.BigDecimal" | "scala.math.BigDecimal" => classOf[BigDecimal]
     case "java.sql.Timestamp" => classOf[java.sql.Timestamp]
     case "java.util.Date" => classOf[java.util.Date]
+    case "org.joda.time.DateTime" => classOf[DateTime]
+    case "org.joda.time.LocalDate" => classOf[LocalDate]
     case "java.util.UUID" => classOf[java.util.UUID]
   }
 }

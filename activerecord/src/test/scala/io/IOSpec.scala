@@ -7,6 +7,7 @@ import models._
 import validations._
 import java.util.{Date, UUID}
 import java.sql.Timestamp
+import org.joda.time.{LocalDate, DateTime}
 
 object IOSpec extends DatabaseSpecification with Mockito {
 
@@ -49,8 +50,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         m.toFormValues mustEqual Map(
           "boolean" -> "true",
           "oboolean" -> "true",
-          "timestamp" -> "1970-01-01T00:00:00.005Z",
-          "otimestamp" -> "1970-01-01T00:00:00.005Z",
           "float" -> "5.0",
           "ofloat" -> "5.0",
           "long" -> "5",
@@ -61,8 +60,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "obigDecimal" -> "5",
           "double" -> "5.0",
           "odouble" -> "5.0",
-          "date" -> "1970-01-06",
-          "odate" -> "1970-01-06",
           "int" -> "5",
           "oint" -> "5",
           "uuid" -> "00000000-0000-0005-0000-000000000005"
@@ -120,8 +117,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m.assign(
         "boolean" -> true,
         "oboolean" -> true,
-        "timestamp" -> new Timestamp(5L),
-        "otimestamp" -> new Timestamp(5L),
         "float" -> 5.toFloat,
         "ofloat" -> 5.toFloat,
         "long" -> 5L,
@@ -132,8 +127,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         "obigDecimal" -> BigDecimal(5),
         "double" -> 5.0,
         "odouble" -> 5.0,
-        "date" -> new Date(5L * 1000 * 60 * 60 * 24),
-        "odate" -> new Date(5L * 1000 * 60 * 60 * 24),
         "int" -> 5,
         "oint" -> 5,
         "uuid" -> new UUID(5L, 5L)
@@ -146,8 +139,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m.assign(Map(
         "boolean" -> true,
         "oboolean" -> true,
-        "timestamp" -> new Timestamp(5L),
-        "otimestamp" -> new Timestamp(5L),
         "float" -> 5.toFloat,
         "ofloat" -> 5.toFloat,
         "long" -> 5L,
@@ -158,8 +149,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         "obigDecimal" -> BigDecimal(5),
         "double" -> 5.0,
         "odouble" -> 5.0,
-        "date" -> new Date(5L * 1000 * 60 * 60 * 24),
-        "odate" -> new Date(5L * 1000 * 60 * 60 * 24),
         "int" -> 5,
         "oint" -> 5,
         "uuid" -> new UUID(5L, 5L)
@@ -172,8 +161,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
       m.assign(Map(
         ("boolean", true),
         ("oboolean", true),
-        ("timestamp", new Timestamp(5L)),
-        ("otimestamp", new Timestamp(5L)),
         ("float", 5.toFloat),
         ("ofloat", 5.toFloat),
         ("long", 5L),
@@ -184,8 +171,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         ("obigDecimal", BigDecimal(5)),
         ("double", 5.0),
         ("odouble", 5.0),
-        ("date", new Date(5L * 1000 * 60 * 60 * 24)),
-        ("odate", new Date(5L * 1000 * 60 * 60 * 24)),
         ("int", 5),
         ("oint", 5),
         ("uuid", new UUID(5L, 5L))
@@ -205,11 +190,9 @@ object IOSpec extends DatabaseSpecification with Mockito {
     "assgin(None)" in {
       val m = PrimitiveModel.newInstance
       m.assign(
-        "ostring" -> None,
-        "odate" -> None
+        "ostring" -> None
       )
       m.ostring must beNone
-      m.odate must beNone
     }
 
     "assgin(Some)" in {
@@ -236,8 +219,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         m.assignFormValues(Map(
           "boolean" -> "true",
           "oboolean" -> "true",
-          "timestamp" -> "1970-01-01T09:00:00.005+09:00",
-          "otimestamp" -> "1970-01-01T09:00:00.005+09:00",
           "float" -> "5.0",
           "ofloat" -> "5.0",
           "long" -> "5",
@@ -248,8 +229,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
           "obigDecimal" -> "5",
           "double" -> "5.0",
           "odouble" -> "5.0",
-          "date" -> "1970-01-06",
-          "odate" -> "1970-01-06",
           "int" -> "5",
           "oint" -> "5",
           "uuid" -> "00000000-0000-0005-0000-000000000005"
@@ -326,13 +305,10 @@ object IOSpec extends DatabaseSpecification with Mockito {
     "toMap" in {
       val m = PrimitiveModel.newModel(5)
       m.ofloat = None
-      m.otimestamp = None
-      m.odate = None
 
       m.toMap must equalTo(Map(
         "boolean" -> true,
         "oboolean" -> true,
-        "timestamp" -> new Timestamp(5L),
         "float" -> 5.0,
         "long" -> 5L,
         "olong" -> 5L,
@@ -342,7 +318,6 @@ object IOSpec extends DatabaseSpecification with Mockito {
         "obigDecimal" -> 5,
         "double" -> 5.0,
         "odouble" -> 5.0,
-        "date" -> new Date(5L * 1000 * 60 * 60 * 24),
         "int" -> 5,
         "oint" -> 5,
         "uuid" -> new UUID(5L, 5L)
@@ -479,8 +454,7 @@ object IOSpec extends DatabaseSpecification with Mockito {
     "bind" in {
       "with no source" in {
         val m = PrimitiveModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100"))
-        m mustEqual PrimitiveModel.newInstance.copy(string = "string",
-          int = 100, date = m.date, timestamp = m.timestamp, uuid = m.uuid)
+        m mustEqual PrimitiveModel.newInstance.copy(string = "string", int = 100, uuid = m.uuid)
       }
 
       "with source" in {

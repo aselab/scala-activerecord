@@ -54,8 +54,12 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
       new Timestamp(Config.datetimeFormatter.parseDateTime(s).getMillis)
   }
 
-  val uuidHandler = new FormConverter[UUID] {
-    def deserialize(s: String): UUID = UUID.fromString(s)
+  val datetimeHandler = new FormConverter[DateTime] {
+    override def serialize(v: Any): String =
+      new DateTime(v, Config.timeZone).toString(Config.datetimeFormatter)
+
+    def deserialize(s: String): DateTime =
+      Config.datetimeFormatter.parseDateTime(s)
   }
 
   val dateHandler = new FormConverter[Date] {
@@ -64,6 +68,18 @@ object FormConverter extends PrimitiveHandler[FormConverter[_]] {
 
     def deserialize(s: String): Date =
       Config.dateFormatter.parseDateTime(s).toDate
+  }
+
+  val localdateHandler = new FormConverter[LocalDate] {
+    override def serialize(v: Any): String =
+      new LocalDate(v, Config.timeZone).toString(Config.dateFormatter)
+
+    def deserialize(s: String): LocalDate =
+      Config.dateFormatter.parseDateTime(s).toLocalDate
+  }
+
+  val uuidHandler = new FormConverter[UUID] {
+    def deserialize(s: String): UUID = UUID.fromString(s)
   }
 }
 

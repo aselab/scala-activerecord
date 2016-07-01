@@ -1,6 +1,7 @@
 package com.github.aselab.activerecord.models
 
 import com.github.aselab.activerecord._
+import org.joda.time.{LocalDate, DateTime}
 import experimental._
 import dsl._
 import inner._
@@ -32,9 +33,17 @@ object TestTables extends ActiveRecordTables with VersionTable {
   val datestamps = table[DatestampsModel]
   val optimistics = table[OptimisticModel]
 
-  def createTestData = PrimitiveModel.forceInsertAll(
-    (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
-  )
+  val datemodels = table[DateModel]
+  val jodatimeModels = table[JodaTimeModel]
+
+  def createTestData = {
+    PrimitiveModel.forceInsertAll(
+      (1 to 100).map { i => PrimitiveModel.newModel(i, i > 50) }
+    )
+    DateModel.forceInsertAll(
+      (1 to 100).map { i => DateModel.newModel(i, i > 50) }
+    )
+  }
 }
 
 case class User(name: String, isAdmin: Boolean = false) extends ActiveRecord {
@@ -134,8 +143,6 @@ case class PrimitiveModel(
   var float: Float,
   var double: Double,
   var bigDecimal: BigDecimal,
-  var timestamp: Timestamp,
-  var date: Date,
   var uuid: UUID,
 
   var ostring: Option[String],
@@ -144,9 +151,7 @@ case class PrimitiveModel(
   var olong: Option[Long],
   var ofloat: Option[Float],
   var odouble: Option[Double],
-  var obigDecimal: Option[BigDecimal],
-  var otimestamp: Option[Timestamp],
-  var odate: Option[Date]
+  var obigDecimal: Option[BigDecimal]
 ) extends ActiveRecord
 
 object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
@@ -158,8 +163,6 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
     i.toFloat,
     i.toDouble,
     BigDecimal(i),
-    new Timestamp(i.toLong),
-    new Date(i.toLong * 1000 * 60 * 60 * 24),
     new UUID(i.toLong, i.toLong),
     Some("string" + i).filterNot(_ => none),
     Some(i % 2 == 1).filterNot(_ => none),
@@ -167,9 +170,23 @@ object PrimitiveModel extends ActiveRecordCompanion[PrimitiveModel] {
     Some(i.toLong).filterNot(_ => none),
     Some(i.toFloat).filterNot(_ => none),
     Some(i.toDouble).filterNot(_ => none),
-    Some(BigDecimal(i)),
-    Some(new Timestamp(i.toLong)).filterNot(_ => none),
-    Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none)
+    Some(BigDecimal(i))
+  )
+}
+
+case class DateModel(
+  var date: Date,
+  var timestamp: Timestamp,
+  var odate: Option[Date],
+  var otimestamp: Option[Timestamp]
+) extends ActiveRecord
+
+object DateModel extends ActiveRecordCompanion[DateModel] {
+  def newModel(i: Int, none: Boolean = false) = DateModel(
+    new Date(i.toLong * 1000 * 60 * 60 * 24),
+    new Timestamp(i.toLong * 1000),
+    Some(new Date(i.toLong * 1000 * 60 * 60 * 24)).filterNot(_ => none),
+    Some(new Timestamp(i.toLong * 1000)).filterNot(_ => none)
   )
 }
 
@@ -197,6 +214,22 @@ object AnnotationModel extends ActiveRecordCompanion[AnnotationModel]
 case class OptimisticModel(var field: String) extends ActiveRecord with Optimistic
 
 object OptimisticModel extends ActiveRecordCompanion[OptimisticModel]
+
+case class JodaTimeModel(
+  datetime: DateTime,
+  optDatetime: Option[DateTime],
+  localDate: LocalDate,
+  optLocalDate: Option[LocalDate]
+) extends ActiveRecord
+
+object JodaTimeModel extends ActiveRecordCompanion[JodaTimeModel] {
+  def newModel(i: Int, none: Boolean = false) = JodaTimeModel(
+    new DateTime(new Timestamp(i.toLong * 1000)),
+    Some(new DateTime(new Timestamp(i.toLong * 1000))).filterNot(_ => none),
+    new LocalDate(new Date(i.toLong * 1000 * 60 * 60 * 24)),
+    Some(new LocalDate(new Date(i.toLong * 1000 * 60 * 60 * 24))).filterNot(_ => none)
+  )
+}
 
 case class ListModel(l1: List[String], l2: List[Int]) extends ActiveModel
 object ListModel extends ActiveModelCompanion[ListModel] {
