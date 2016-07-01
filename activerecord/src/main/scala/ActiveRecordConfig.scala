@@ -5,7 +5,7 @@ import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import java.sql.Connection
 import java.util.TimeZone
-import com.jolbox.bonecp._
+import com.zaxxer.hikari._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
@@ -156,12 +156,15 @@ class DefaultConfig(
   lazy val jdbcurl = getString("jdbcurl").getOrElse("jdbc:h2:mem:activerecord")
   lazy val username = getString("username")
   lazy val password = getString("password")
-  lazy val partitionCount = getInt("partitionCount")
-  lazy val maxConnectionsPerPartition = getInt("maxConnectionsPerPartition")
-  lazy val minConnectionsPerPartition = getInt("minConnectionsPerPartition")
-  lazy val maxConnectionAge = getInt("maxConnectionAge").getOrElse(0).toLong
-  lazy val idleMaxAge = getLong("idleMaxAge")
-  lazy val idleConnectionTestPeriod = getLong("idleConnectionTestPeriod")
+  lazy val connectionTimeout = getLong("connectionTimeout")
+  lazy val validationTimeout = getLong("validationTimeout")
+  lazy val idleTimeout = getLong("idleTimeout")
+  lazy val leakDetectionThreshold = getLong("leakDetectionThreshold")
+  lazy val maxLifetime = getLong("maxLifetime")
+  lazy val maxPoolSize = getInt("maxPoolSize")
+  lazy val minIdle = getInt("minIdle")
+  lazy val dataSourceClassName = getString("dataSourceClassName")
+  lazy val datasourceProperties = get("dataSource", config.getConfig)
 
   lazy val adapter: DatabaseAdapter = adapter(driverClass)
   def classLoader: ClassLoader = Thread.currentThread.getContextClassLoader
@@ -173,17 +176,24 @@ class DefaultConfig(
       case e: ClassNotFoundException => throw ActiveRecordException.missingDriver(driverClass)
     }
 
-    val conf = new BoneCPConfig
+    val conf = new HikariConfig()
     conf.setJdbcUrl(jdbcurl)
     username.foreach(conf.setUsername)
     password.foreach(conf.setPassword)
-    partitionCount.foreach(conf.setPartitionCount)
-    maxConnectionsPerPartition.foreach(conf.setMaxConnectionsPerPartition)
-    minConnectionsPerPartition.foreach(conf.setMinConnectionsPerPartition)
-    conf.setMaxConnectionAgeInSeconds(maxConnectionAge)
-    idleMaxAge.foreach(conf.setIdleMaxAgeInSeconds)
-    idleConnectionTestPeriod.foreach(conf.setIdleConnectionTestPeriodInSeconds)
-    new BoneCP(conf)
+    connectionTimeout.foreach(conf.setConnectionTimeout)
+    validationTimeout.foreach(conf.setValidationTimeout)
+    idleTimeout.foreach(conf.setIdleTimeout)
+    leakDetectionThreshold.foreach(conf.setLeakDetectionThreshold)
+    maxLifetime.foreach(conf.setMaxLifetime)
+    maxPoolSize.foreach(conf.setMaximumPoolSize)
+    minIdle.foreach(conf.setMinimumIdle)
+    dataSourceClassName.foreach(conf.setDataSourceClassName)
+    datasourceProperties.foreach { ds =>
+      ds.entrySet.foreach { entry =>
+        conf.addDataSourceProperty(entry.getKey, entry.getValue.render)
+      }
+    }
+    new HikariDataSource(conf)
   }
 
   override def log: Unit = {
@@ -194,14 +204,12 @@ class DefaultConfig(
   lazy val settings = List(
     "driver" -> Some(driverClass),
     "jdbcurl" -> Some(jdbcurl),
-    "username" -> username,
-    "maxConnectionsPerPartition" -> maxConnectionsPerPartition,
-    "minConnectionsPerPartition" -> minConnectionsPerPartition
+    "username" -> username
   )
 
   override def cleanup: Unit = {
     super.cleanup
-    pool.shutdown()
+    pool.close()
   }
 
   def connection: Connection = pool.getConnection

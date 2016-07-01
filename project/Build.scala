@@ -95,7 +95,7 @@ object ActiveRecordBuild extends Build {
       libraryDependencies ++= Seq(
         "org.squeryl" %% "squeryl" % "0.9.6-RC4",
         "com.typesafe" % "config" % "1.3.0",
-        "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
+        "com.zaxxer" % "HikariCP" % "2.4.6",
         "io.backchat.inflector" %% "scala-inflector" % "1.3.5",
         "com.github.nscala-time" %% "nscala-time" % "2.12.0",
         "commons-validator" % "commons-validator" % "1.5.1",
