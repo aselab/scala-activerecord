@@ -7,7 +7,7 @@ val _version = Option(System.getProperty("version")).getOrElse(
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val root = Project("root", file(".")).enablePlugins(PlayScala).settings(
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.8",
   javaOptions ++= sys.process.javaVmArguments.filter(
     a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
   ),
@@ -15,7 +15,7 @@ lazy val root = Project("root", file(".")).enablePlugins(PlayScala).settings(
     "com.github.aselab" %% "scala-activerecord" % _version,
     "com.github.aselab" %% "scala-activerecord-play2" % _version,
     jdbc,
-    "com.h2database" % "h2" % "1.4.185"
+    "com.h2database" % "h2" % "1.4.192"
   )
 )
 

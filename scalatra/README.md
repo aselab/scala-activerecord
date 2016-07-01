@@ -1,4 +1,4 @@
-# Scala ActiveRecord Scalatra 2.3.0 Plugin
+# Scala ActiveRecord Scalatra 2.4.0 Plugin
 
 ## Usage
 
