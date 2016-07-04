@@ -1,53 +1,94 @@
 package com.github.aselab.activerecord
 
 import java.sql.Connection
-import org.squeryl.internals.DatabaseAdapter
-import play.api.Play.current
+import javax.inject.Inject
 import java.util.{Locale, TimeZone}
-import play.api.i18n.{Messages, I18nSupport}
-
+import play.api._
+import play.api.db.DBApi
+import play.api.i18n.{Messages, I18nSupport, Lang, MessagesApi}
+import org.squeryl.internals.DatabaseAdapter
 
 class PlayConfig(
   val schema: ActiveRecordTables,
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
+  import PlayConfig._
+
   lazy val schemaName = schema.getClass.getName.dropRight(1)
-  lazy val _prefix = current.configuration.getString("schema." + schemaName).getOrElse("activerecord")
+  lazy val _prefix = configuration.getString("schema." + schemaName).getOrElse("activerecord")
+
+  def classLoader = environment.classLoader
 
   def prefix(key: String) =
     "db." + _prefix + "." + key
 
-  def classLoader = play.api.Play.application.classloader
-
-  private def debug(key: String): Unit =
-    debug(key, current.configuration.getString(key))
-
   private def _getString(key: String): Option[String] =
     overrideSettings.get(key).map(_.toString).orElse(
-      current.configuration.getString(key)
+      configuration.getString(key)
     )
 
-  def getString(key: String): Option[String] = _getString("activerecord." + key)
+  def get[T](key: String): Option[T] = {
+    if (overrideSettings.isEmpty) return None
+    val keyWithPrefix = prefix(key)
+    val valueWithPrefix = overrideSettings.get(keyWithPrefix)
+    debug(keyWithPrefix + " (overrideSettings)", valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(key + " (overrideSettings)", overrideSettings.get(key))
+    }
+    valueWithPrefix.orElse(overrideSettings.get(key)).map(_.asInstanceOf[T])
+  }
 
-  def getBoolean(key: String, default: Boolean): Boolean =
-    overrideSettings.get(key).map(_.asInstanceOf[Boolean]).orElse(
-      current.configuration.getBoolean(key)
-    ).getOrElse(default)
+  def get[T](key: String, getter: String => Option[T]): Option[T] = {
+    def inner(k: String): Option[T] = try {
+      getter(k)
+    } catch {
+      case e: Exception => None
+    }
+    val k = environment.mode + "." + key
+    val keyWithPrefix = prefix(k)
+    val valueWithPrefix = inner(keyWithPrefix)
+    debug(keyWithPrefix, valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(k, inner(k))
+    }
+    valueWithPrefix.orElse(inner(k))
+  }
 
-  def autoCreate: Boolean = getBoolean("activerecord.autoCreate", true)
+  def _getString(key: String, getter: (String, Option[Set[String]]) => Option[String]): Option[String] = {
+    def inner(k: String): Option[String] = try {
+      getter(k, None)
+    } catch {
+      case e: Exception => None
+    }
+    val k = environment.mode + "." + key
+    val keyWithPrefix = prefix(k)
+    val valueWithPrefix = inner(keyWithPrefix)
+    debug(keyWithPrefix, valueWithPrefix)
+    if (valueWithPrefix.isEmpty) {
+      debug(k, inner(k))
+    }
+    valueWithPrefix.orElse(inner(k))
+  }
 
-  def autoDrop: Boolean = getBoolean("activerecord.autoDrop", false)
+  def getString(key: String): Option[String] = get[String](key).orElse(_getString(key, configuration.getString))
+  def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, configuration.getInt))
+  def getLong(key: String): Option[Long] = get[Long](key).orElse(get(key, configuration.getLong))
+  def getBoolean(key: String): Option[Boolean] = get[Boolean](key).orElse(get(key, configuration.getBoolean))
+
+  def autoCreate: Boolean = getBoolean("autoCreate").getOrElse(true)
+
+  def autoDrop: Boolean = getBoolean("autoDrop").getOrElse(false)
 
   def schemaClass: String =
     getString("schema").getOrElse("models.Tables")
 
   def connection: Connection =
-    play.api.db.DB.getConnection(_prefix)
+    dbApi.database(_prefix).getConnection
 
   override def log = {
-    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix,  play.api.Play.application.mode))
+    logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix,  environment.mode))
     logger.debug("\tSchema class: " + schemaName)
-    List(prefix("url"), prefix("driver"), prefix("user")).foreach(debug)
+    List("url" -> prefix("url"), "driver" -> prefix("driver"), "username" -> prefix("username")).foreach{case (k, v) => debug(k, Some(v))}
   }
 
   lazy val adapter: DatabaseAdapter = {
@@ -58,17 +99,12 @@ class PlayConfig(
 }
 
 object PlayTranslator extends i18n.Translator  {
-  import play.api.i18n._
-  import play.api.i18n.Messages.Implicits._
-
-  def get(key: String, args: Any*)(implicit locale: Locale):Option[String] = {
+  def get(key: String, args: Any*)(implicit locale: Locale): Option[String] = {
     implicit val lang = Lang(locale.getLanguage, locale.getCountry)
-    val messages = implicitly[Messages]
 
-    if (messages.isDefinedAt(key)) {
-      Some(messages(key))
+    if (PlayConfig.messages.messages.get(lang.code).exists(_.isDefinedAt(key))) {
+      Some(PlayConfig.messages(key, args:_*))
     } else {
-      implicit val locale = messages.lang.toLocale
       i18n.DefaultTranslator.get(key, args:_*)
     }
   }
@@ -80,6 +116,18 @@ trait PlaySupport { self: ActiveRecordTables =>
 }
 
 object PlayConfig {
-  def loadSchemas = current.configuration.getConfig("schema")
+  @Inject
+  var messages: MessagesApi = _
+
+  @Inject
+  var configuration: Configuration = _
+
+  @Inject
+  var environment: Environment = _
+
+  @Inject
+  var dbApi: DBApi = _
+
+  def loadSchemas = configuration.getConfig("schema")
     .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find).toSeq
 }

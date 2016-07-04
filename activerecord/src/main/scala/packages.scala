@@ -3,9 +3,9 @@ package com.github.aselab.activerecord
 import scala.language.experimental.macros
 import org.joda.time.{LocalDate, DateTime}
 
-object dsl extends org.squeryl.PrimitiveTypeMode
+trait dsl extends org.squeryl.PrimitiveTypeMode
   with squeryl.DateTimeSupport with squeryl.LocalDateSupport
-  with inner.Annotations with inner.DSL with inner.Types with io.JsonImplicits {
+  with inner.DSL with io.JsonImplicits {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
 
@@ -15,8 +15,17 @@ object dsl extends org.squeryl.PrimitiveTypeMode
   override def inTransaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.inTransaction(sf)(a)
 }
 
+object dsl extends dsl with inner.Annotations with inner.Types
+
 package views {
-  object dsl extends org.squeryl.PrimitiveTypeMode with inner.DSL
+  /**
+   * Adding additional imports to templates for Play Framework 2.x.
+   * Add this line to `build.sbt`:
+   * {{{
+   * TwirlKeys.templateImports ++= Seq("com.github.aselab.activerecord.views.dsl._")
+   * }}}
+   */
+  object dsl extends dsl
 }
 
 package object aliases {

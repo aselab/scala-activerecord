@@ -15,7 +15,7 @@ object ActiveRecordBuild extends Build {
   }
 
   def play20(app: String, scope: String) = Def.setting {
-    val v = if (scalaBinaryVersion.value == "2.11") "2.4.0" else "2.2.0"
+    val v = if (scalaBinaryVersion.value == "2.11") "2.5.0" else "2.2.0"
     "com.typesafe.play" %% app % v % scope
   }
 
