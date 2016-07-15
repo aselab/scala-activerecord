@@ -1,4 +1,4 @@
-# Scala ActiveRecord Play2.1+ Plugin
+# Scala ActiveRecord Play2.5 Plugin
 
 ## Sample code
 
@@ -12,19 +12,11 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.github.aselab" %% "scala-activerecord" % "0.3.2",
-  "com.github.aselab" %% "scala-activerecord-play2" % "0.3.2",
+  "com.github.aselab" %% "scala-activerecord" % "0.4.0-SNAPSHOT",
+  "com.github.aselab" %% "scala-activerecord-play2" % "0.4.0-SNAPSHOT",
   jdbc,
   "com.h2database" % "h2" % "1.4.192"  // See Supported databases
 )
-```
-
-### conf/play.plugins
-
-Add the following settings in `conf/play.plugins`
-
-```
-9999:com.github.aselab.activerecord.ActiveRecordPlugin
 ```
 
 ### app/models/Tables.scala
@@ -57,6 +49,8 @@ db.activerecord.password=""
 
 # Schema definition class
 schema.models.Tables=activerecord
+
+play.modules.enabled += "com.github.aselab.activerecord.ActiveRecordPlayModule"
 ```
 
 ### PlayFormSupport(Optional)
@@ -142,5 +136,7 @@ db.schema2.password=""
 # Schema definition class
 schema.models.Tables1=schema1
 schema.models.Tables2=schema2
+
+play.modules.enabled += "com.github.aselab.activerecord.ActiveRecordPlayModule"
 ```
 
