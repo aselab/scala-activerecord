@@ -330,6 +330,10 @@ trait Relations {
       }
     }
 
+    def isEmpty: Boolean = count == 0
+
+    def nonEmpty: Boolean = count > 0
+
     def compute[T1](e: JoinedType => TypedExpression[T1, _]): T1 = companion.inTransaction {
       toQuery(t => whereScope(t).compute(e(t)))
     }
