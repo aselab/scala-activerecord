@@ -159,7 +159,7 @@ trait Relations {
       copyParams(pages = Some((offset, count)))
   }
 
-  trait Relation[T <: AR, S] extends QuerySupport[T, S] {
+  trait Relation[T <: AR, S] extends QuerySupport[T, S] with PagerSupport[T, S] {
     val queryable: Queryable[T]
 
     implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]) =
@@ -423,6 +423,20 @@ trait Relations {
         (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
           compute(m => dsl.sum(e(m))(f))
     }
+  }
+
+  trait PagerSupport[T <: AR, S] { self: Relation[T, S] =>
+    lazy val totalPages: Int = {
+      val totalCount = count.toInt
+      if (totalCount == 0) {
+        0
+      } else {
+        (totalCount.toDouble / pages.map(_._2.toInt).filter(_ >= 0).getOrElse(totalCount)).ceil.toInt
+      }
+    }
+    lazy val currentPage: Int = pages.map(_._1.toInt).getOrElse(0) / pages.map(_._2.toInt).getOrElse(1) + 1
+    lazy val previousPage: Option[Int] = Some(currentPage - 1).filter(_ > 0)
+    lazy val nextPage: Option[Int] = Some(currentPage + 1).filter(_ <= totalPages)
   }
 
   case class Relation1[T <: AR, S](
