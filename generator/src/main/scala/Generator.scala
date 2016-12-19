@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.sbt
 
 import sbt._
 import sbt.complete.DefaultParsers._
-import mojolly.inflector.InflectorImports._
+import com.github.aselab.activerecord.util.InflectorImports._
 import com.github.aselab.sbt.Generator
 
 object ModelGenerator extends Generator[(String, Seq[Seq[String]])] {

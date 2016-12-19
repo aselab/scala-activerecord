@@ -5,7 +5,7 @@ import org.squeryl.internals.DatabaseAdapter
 import com.github.aselab.activerecord.dsl._
 import com.github.aselab.activerecord.aliases._
 import com.github.aselab.activerecord.squeryl.Implicits._
-import mojolly.inflector.InflectorImports._
+import util.InflectorImports._
 import java.io.{PrintWriter, StringWriter}
 import reflections.ReflectionUtil
 import java.sql.Connection

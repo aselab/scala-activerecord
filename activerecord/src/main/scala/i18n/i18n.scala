@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.i18n
 import java.util._
 import java.io.InputStreamReader
 import java.text.MessageFormat
-import mojolly.inflector.InflectorImports._
+import com.github.aselab.activerecord.util.InflectorImports._
 
 trait Translator {
   def apply(key: String, args: Any*)(implicit locale: Locale): String =

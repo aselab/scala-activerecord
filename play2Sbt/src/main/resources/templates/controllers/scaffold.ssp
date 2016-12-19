@@ -1,6 +1,6 @@
 <%@ val controller: String %>
 <%@ val model: String %>
-<% import mojolly.inflector.InflectorImports._ %>
+<% import com.github.aselab.activerecord.util.InflectorImports._ %>
 <% val view = "views.html." + controller.underscore %>
 <% val instance = model.camelize %>
 package controllers

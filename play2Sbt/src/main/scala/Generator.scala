@@ -6,7 +6,7 @@ import com.github.aselab.activerecord.sbt._
 import sbt._
 import sbt.Keys._
 import sbt.complete.DefaultParsers._
-import mojolly.inflector.InflectorImports._
+import com.github.aselab.activerecord.util.InflectorImports._
 
 object ControllerGenerator extends Generator[(String, Seq[String])] {
   val name = "controller"

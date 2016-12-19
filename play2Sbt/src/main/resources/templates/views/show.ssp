@@ -1,7 +1,7 @@
 <%@ val controller: String %>
 <%@ val model: String %>
 <%@ val columns: Seq[String] %>
-<% import mojolly.inflector.InflectorImports._ %>
+<% import com.github.aselab.activerecord.util.InflectorImports._ %>
 @(${model.camelize}: models.${model})
 
 @main("${model}") {
