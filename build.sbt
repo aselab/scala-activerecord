@@ -7,21 +7,21 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "3.8.6"
+    case "2.12" => "3.8.8"
     case "2.11" => "3.7"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  val v = scalaBinaryVersion.value match {
-    case "2.11" => "2.5.0"
-  }
-  "com.typesafe.play" %% app % v % scope
+  "com.typesafe.play" %% app % "2.6.0-M1" % scope
 }
 
 val compilerSettings = Seq(
-  javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
+  javacOptions ++= (scalaBinaryVersion.value match {
+    case "2.11" => Seq("-source", "1.6", "-target", "1.6")
+    case _ => Seq("-source", "1.8", "-target", "1.8")
+  }),
   scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:implicitConversions"),
   scalacOptions in Compile in doc ++= {
     val base = baseDirectory.value
@@ -88,7 +88,7 @@ val defaultSettings = Seq(
 lazy val root = project.in(file("."))
   .settings(defaultSettings: _*)
   .settings(publish := {}, publishLocal := {}, packagedArtifacts := Map.empty)
-  .aggregate(macros, core, specs, scalatra)
+  .aggregate(macros, core, specs, scalatra, play2, play2Specs)
 
 lazy val core: Project = Project("core", file("activerecord"),
   settings = defaultSettings ++ Seq(
@@ -128,25 +128,26 @@ lazy val specs = project.settings(defaultSettings:_*).settings(
   libraryDependencies += specs2("provided").value
 ).dependsOn(core)
 
-// lazy val play2 = project.settings(defaultSettings:_*).settings(
-//   name := "scala-activerecord-play2",
-//   resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
-//   libraryDependencies ++= List(
-//     play20("play", "provided").value,
-//     play20("play-jdbc", "provided").value
-//   )
-// ).dependsOn(core)
+lazy val play2 = project.settings(defaultSettings:_*).settings(
+  name := "scala-activerecord-play2",
+  resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
+  libraryDependencies ++= List(
+    play20("play", "provided").value,
+    play20("play-jdbc", "provided").value,
+    "com.google.inject" % "guice" % "4.1.0"
+  )
+).dependsOn(core)
 
-// lazy val play2Specs = project.settings(defaultSettings:_*).settings(
-//   name := "scala-activerecord-play2-specs",
-//   resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
-//   libraryDependencies ++= List(
-//     play20("play", "provided").value,
-//     play20("play-jdbc", "provided").value,
-//     play20("play-test", "provided").value,
-//     specs2("provided").value
-//   )
-// ).dependsOn(play2, specs)
+lazy val play2Specs = project.settings(defaultSettings:_*).settings(
+  name := "scala-activerecord-play2-specs",
+  resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
+  libraryDependencies ++= List(
+    play20("play", "provided").value,
+    play20("play-jdbc", "provided").value,
+    play20("play-test", "provided").value,
+    specs2("provided").value
+  )
+).dependsOn(play2, specs)
 
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",

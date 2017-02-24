@@ -2,6 +2,7 @@ package com.github.aselab.activerecord
 
 import play.api._
 import play.api.test._
+import play.api.inject.guice.GuiceApplicationBuilder
 
 trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
   var app: Application = _
@@ -13,7 +14,9 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
   )
 
   override def beforeAll = {
-    app = FakeApplication(additionalConfiguration = config)
+    val builder = new GuiceApplicationBuilder()
+    builder.configure(config)
+    val app = builder.build
     Play.start(app)
     super.beforeAll
   }

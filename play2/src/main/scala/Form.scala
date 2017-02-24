@@ -7,7 +7,7 @@ import play.api.data.format._
 import play.twirl.api.Html
 import _root_.views.html.{helper => playhelper}
 import _root_.views.html.helper._
-import play.api.i18n.{Messages, I18nSupport}
+import play.api.i18n.{MessagesProvider, I18nSupport}
 
 
 class ActiveModelFormatter[T <: ActiveModel](
@@ -50,16 +50,16 @@ class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
     }
   }
 
-  def inputText(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
+  def inputText(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: MessagesProvider) =
     playhelper.inputText(field, inputOptions(field, options.toSeq):_*)
 
-  def inputPassword(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
+  def inputPassword(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: MessagesProvider) =
     playhelper.inputPassword(field, inputOptions(field, options.toSeq):_*)
 
-  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
+  def select(field: Field, fields: Seq[(String, String)], options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: MessagesProvider) =
     playhelper.select(field, fields, inputOptions(field, options.toSeq):_*)
 
-  def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: Messages) =
+  def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: MessagesProvider) =
     playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
 
   implicit def fieldConstructor(implicit m: ClassTag[T]) = new FieldConstructor {
@@ -67,7 +67,7 @@ class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
       val error = if (elements.hasErrors) "error" else ""
       Html(<div class={"control-group %s %s".format(elements.args.get('_class).getOrElse(""), error)} 
         id={elements.args.get('_id).map(_.toString).getOrElse(elements.id + "_field")}>
-        <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.messages.lang.toLocale)}</label>
+        <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.p.messages.lang.toLocale)}</label>
         <div class="controls">
           {xml.Unparsed(elements.input.body)}
           {if (elements.errors.length > 0) {

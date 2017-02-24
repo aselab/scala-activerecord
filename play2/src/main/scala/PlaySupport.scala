@@ -15,7 +15,7 @@ class PlayConfig(
   import PlayConfig._
 
   lazy val schemaName = schema.getClass.getName.dropRight(1)
-  lazy val _prefix = configuration.getString("schema." + schemaName).getOrElse("activerecord")
+  lazy val _prefix = configuration.getOptional[String]("schema." + schemaName).getOrElse("activerecord")
 
   def classLoader = environment.classLoader
 
@@ -24,7 +24,7 @@ class PlayConfig(
 
   private def _getString(key: String): Option[String] =
     overrideSettings.get(key).map(_.toString).orElse(
-      configuration.getString(key)
+      configuration.getOptional[String](key)
     )
 
   def get[T](key: String): Option[T] = {
@@ -54,26 +54,21 @@ class PlayConfig(
     valueWithPrefix.orElse(inner(k))
   }
 
-  def _getString(key: String, getter: (String, Option[Set[String]]) => Option[String]): Option[String] = {
-    def inner(k: String): Option[String] = try {
-      getter(k, None)
-    } catch {
-      case e: Exception => None
-    }
+  def _getString(key: String, getter: (String) => Option[String]): Option[String] = {
     val k = environment.mode + "." + key
     val keyWithPrefix = prefix(k)
-    val valueWithPrefix = inner(keyWithPrefix)
+    val valueWithPrefix = getter(keyWithPrefix)
     debug(keyWithPrefix, valueWithPrefix)
     if (valueWithPrefix.isEmpty) {
-      debug(k, inner(k))
+      debug(k, getter(k))
     }
-    valueWithPrefix.orElse(inner(k))
+    valueWithPrefix.orElse(getter(k))
   }
 
-  def getString(key: String): Option[String] = get[String](key).orElse(_getString(key, configuration.getString))
-  def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, configuration.getInt))
-  def getLong(key: String): Option[Long] = get[Long](key).orElse(get(key, configuration.getLong))
-  def getBoolean(key: String): Option[Boolean] = get[Boolean](key).orElse(get(key, configuration.getBoolean))
+  def getString(key: String): Option[String] = get[String](key).orElse(_getString(key, configuration.getOptional[String]))
+  def getInt(key: String): Option[Int] = get[Int](key).orElse(get(key, configuration.getOptional[Int]))
+  def getLong(key: String): Option[Long] = get[Long](key).orElse(get(key, configuration.getOptional[Long]))
+  def getBoolean(key: String): Option[Boolean] = get[Boolean](key).orElse(get(key, configuration.getOptional[Boolean]))
 
   def autoCreate: Boolean = getBoolean("autoCreate").getOrElse(true)
 
@@ -128,6 +123,6 @@ object PlayConfig {
   @Inject
   var dbApi: DBApi = _
 
-  def loadSchemas = configuration.getConfig("schema")
+  def loadSchemas = configuration.getOptional[Configuration]("schema")
     .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find).toSeq
 }
