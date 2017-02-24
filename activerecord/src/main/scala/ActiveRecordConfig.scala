@@ -9,7 +9,7 @@ import com.zaxxer.hikari._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import org.joda.time.format._
 import org.joda.time.DateTimeZone
 
@@ -56,7 +56,7 @@ object Config {
 
   def loadSchemas(key: String = "schemas", config: Config = ConfigFactory.load): Seq[ActiveRecordTables] =
     if (config.hasPath(key)) {
-      config.getStringList(key).map(ActiveRecordTables.find).toSeq
+      config.getStringList(key).asScala.map(ActiveRecordTables.find).toSeq
     } else {
       Seq(ActiveRecordTables.find("models.Tables"))
     }
@@ -189,7 +189,7 @@ class DefaultConfig(
     minIdle.foreach(conf.setMinimumIdle)
     dataSourceClassName.foreach(conf.setDataSourceClassName)
     datasourceProperties.foreach { ds =>
-      ds.entrySet.foreach { entry =>
+      ds.entrySet.asScala.foreach { entry =>
         conf.addDataSourceProperty(entry.getKey, entry.getValue.render)
       }
     }
