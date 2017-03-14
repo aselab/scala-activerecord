@@ -7,14 +7,14 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "3.8.8"
+    case "2.12" => "3.8.9"
     case "2.11" => "3.7"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.6.0-M1" % scope
+  "com.typesafe.play" %% app % "2.6.0-M2" % scope
 }
 
 val compilerSettings = Seq(
@@ -48,7 +48,7 @@ val defaultSettings = Seq(
     specs2("test").value,
     specs2("test", "mock").value,
     "com.h2database" % "h2" % "1.4.193" % "test",
-    "ch.qos.logback" % "logback-classic" % "1.1.7" % "test"
+    "ch.qos.logback" % "logback-classic" % "1.2.1" % "test"
   ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
   testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
   parallelExecution in Test := false,
@@ -94,13 +94,13 @@ lazy val core: Project = Project("core", file("activerecord"),
   settings = defaultSettings ++ Seq(
     name := "scala-activerecord",
     libraryDependencies ++= Seq(
-      "org.squeryl" %% "squeryl" % "0.9.7",
+      "org.squeryl" %% "squeryl" % "0.9.8",
       "com.typesafe" % "config" % "1.3.1",
       "com.zaxxer" % "HikariCP" % "2.6.0",
       "com.github.nscala-time" %% "nscala-time" % "2.16.0",
-      "commons-validator" % "commons-validator" % "1.5.1",
+      "commons-validator" % "commons-validator" % "1.6",
       "org.json4s" %% "json4s-native" % "3.5.0",
-      "org.slf4j" % "slf4j-api" % "1.7.23",
+      "org.slf4j" % "slf4j-api" % "1.7.24",
       "org.scala-lang" % "scalap" % scalaVersion.value
     ),
     unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
