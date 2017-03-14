@@ -1,7 +1,6 @@
 package com.github.aselab.activerecord
 
 import play.api._
-import play.api.test._
 import play.api.inject.guice.GuiceApplicationBuilder
 
 trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
@@ -25,7 +24,9 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
     try {
       super.afterAll
     } finally {
-      app.stop
+      if (app != null) {
+        app.stop
+      }
     }
   }
 
