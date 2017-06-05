@@ -72,7 +72,8 @@ object ClassInfo {
 
     registrations ++= Seq(
       (classOf[Option[_]], () => None),
-      (classOf[Array[Byte]], () => Array.empty[Byte])
+      (classOf[Array[Byte]], () => Array.empty[Byte]),
+      (classOf[Map[_, _]], () => Map.empty[String, String])
     )
   }
 
@@ -288,7 +289,10 @@ trait ReflectionUtil {
   def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
   def getGenericTypes(field: Field): List[Class[_]] =
     field.getGenericType.asInstanceOf[ParameterizedType]
-    .getActualTypeArguments.toList.map(_.asInstanceOf[Class[_]])
+    .getActualTypeArguments.toList.map {
+      case t: ParameterizedType => t.getRawType.asInstanceOf[Class[_]]
+      case _t => _t.asInstanceOf[Class[_]]
+    }
 
   def isSeq(clazz: Class[_]): Boolean = classOf[Seq[_]].isAssignableFrom(clazz)
   def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
@@ -310,6 +314,8 @@ trait ReflectionUtil {
     classOf[java.lang.Boolean],
     classOf[Boolean]
   ).exists(_ == clazz)
+
+  def isMap(clazz: Class[_]): Boolean = classOf[Map[_, _]] == clazz
 }
 
 object ReflectionUtil extends ReflectionUtil

@@ -28,7 +28,7 @@ trait IO extends Validatable { this: ProductModel =>
   }
 
   protected def serializedValue(value: Any) =
-    if (isPrimitiveNumeric(value.getClass) || isBoolean(value.getClass)) {
+    if (isPrimitiveNumeric(value.getClass) || isBoolean(value.getClass) || isMap(value.getClass)) {
       value
     } else {
       FormConverter.get(value.getClass).map(_.serialize(value).toString).getOrElse(value)

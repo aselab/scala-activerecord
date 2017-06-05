@@ -285,3 +285,10 @@ object Student extends ActiveRecordCompanion[Student] with STISupport[Student]
 
 case class Teacher(name: String, age: Int) extends Person
 object Teacher extends ActiveRecordCompanion[Teacher] with STISupport[Teacher]
+
+case class MapModel(
+  var mapData: Map[String, String],
+  var mapList: List[Map[String, String]]
+) extends ActiveRecord
+
+object MapModel extends ActiveRecordCompanion[MapModel]

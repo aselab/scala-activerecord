@@ -42,6 +42,10 @@ object JsonSupportSpec extends DatabaseSpecification {
       PrimitiveModel.newModel(5).toJson("uuid") mustEqual """{"uuid":"00000000-0000-0005-0000-000000000005"}"""
     }
 
+    "toJson(Map)" >> {
+      MapModel(Map("a" -> "b"), List(Map("c" -> "d"), Map("e" -> "f"))).toJson mustEqual """{"mapData":{"a":"b"},"mapList":[{"c":"d"},{"e":"f"}]}"""
+    }
+
     "fromJson" >> {
       User("hoge", false).fromJson("""{"name":"foo","isAdmin":true}""") mustEqual User("foo", true)
     }
@@ -56,6 +60,10 @@ object JsonSupportSpec extends DatabaseSpecification {
 
     "fromJson(UUID)" >> {
       PrimitiveModel.newInstance.fromJson("""{"uuid":"00000000-0000-0005-0000-000000000005"}""").uuid mustEqual PrimitiveModel.newModel(5).uuid
+    }
+
+    "fromJson(Map)" >> {
+      MapModel.newInstance.fromJson("""{"mapData":{"a":"b"},"mapList":[{"c":"d"}{"e":"f"}]}""") mustEqual MapModel(Map("a" -> "b"), List(Map("c" -> "d"), Map("e" -> "f")))
     }
   }
 
