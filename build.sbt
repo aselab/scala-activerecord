@@ -14,7 +14,7 @@ def specs2(scope: String, name: String = "core") = Def.setting {
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.6.0-M2" % scope
+  "com.typesafe.play" %% app % "2.6.0-RC2" % scope
 }
 
 val compilerSettings = Seq(
@@ -41,8 +41,8 @@ val defaultResolvers = Seq(
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.12.1",
-  crossScalaVersions := Seq("2.12.1", "2.11.8"),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.12.2", "2.11.11"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
