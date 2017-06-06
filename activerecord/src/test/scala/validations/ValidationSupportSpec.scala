@@ -159,7 +159,7 @@ object ValidationSupportSpec extends DatabaseSpecification {
         m3.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "minValue", "activerecord.errors.minValue", 0))
+        m3.errors.messages.toList must contain(ValidationError(c, "minValue", "activerecord.errors.minValue", 0).toString)
       }
 
      "@Range" in {
@@ -210,7 +210,7 @@ object ValidationSupportSpec extends DatabaseSpecification {
         m4.validate
         m1.errors must beEmpty
         m2.errors must beEmpty
-        m3.errors must contain(ValidationError(c, "minValueOption", "activerecord.errors.minValue", 0))
+        m3.errors.messages.toList must contain(ValidationError(c, "minValueOption", "activerecord.errors.minValue", 0).toString)
         m4.errors must beEmpty
       }
 
