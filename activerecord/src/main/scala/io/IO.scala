@@ -41,12 +41,16 @@ trait IO extends Validatable { this: ProductModel =>
 
   def unsafeAssign(data: Map[String, Any]): this.type = unsafeAssign(data, (v: Any, f: FieldInfo) => v)
 
-  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any): this.type = {
+  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any, throws: Boolean = true): this.type = {
     val fieldInfo = _companion.fieldInfo
     data.foreach { case (k, v) =>
-      val info = fieldInfo(k)
-      val value = toFieldType(v, info)
-      this.setValue(k, assignFunc(value, info))
+      try {
+        val info = fieldInfo(k)
+        val value = toFieldType(v, info)
+        this.setValue(k, assignFunc(value, info))
+      } catch {
+        case e: Throwable => if (throws) { throw e }
+      }
     }
     this
   }

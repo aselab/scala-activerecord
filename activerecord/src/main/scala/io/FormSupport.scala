@@ -169,8 +169,8 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
     source
   }
 
-  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any)(implicit source: T = self.newInstance): T = {
-    source.unsafeAssign(data, assignFunc)
+  def unsafeAssign(data: Map[String, Any], assignFunc: (Any, FieldInfo) => Any, throws: Boolean = true)(implicit source: T = self.newInstance): T = {
+    source.unsafeAssign(data, assignFunc, throws)
     source
   }
 
