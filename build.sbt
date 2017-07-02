@@ -7,14 +7,14 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "3.8.9"
+    case "2.12" => "3.9.1"
     case "2.11" => "3.7"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.6.0-RC2" % scope
+  "com.typesafe.play" %% app % "2.6.0" % scope
 }
 
 val compilerSettings = Seq(
@@ -96,11 +96,11 @@ lazy val core: Project = Project("core", file("activerecord"),
     libraryDependencies ++= Seq(
       "org.squeryl" %% "squeryl" % "0.9.8",
       "com.typesafe" % "config" % "1.3.1",
-      "com.zaxxer" % "HikariCP" % "2.6.0",
+      "com.zaxxer" % "HikariCP" % "2.6.3",
       "com.github.nscala-time" %% "nscala-time" % "2.16.0",
       "commons-validator" % "commons-validator" % "1.6",
-      "org.json4s" %% "json4s-native" % "3.5.0",
-      "org.slf4j" % "slf4j-api" % "1.7.24",
+      "org.json4s" %% "json4s-native" % "3.5.2",
+      "org.slf4j" % "slf4j-api" % "1.7.25",
       "org.scala-lang" % "scalap" % scalaVersion.value
     ),
     unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,

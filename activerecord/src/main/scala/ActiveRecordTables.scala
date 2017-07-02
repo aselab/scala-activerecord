@@ -43,10 +43,10 @@ trait ActiveRecordTables extends Schema {
     case _ => false
   } match {
     case Some(s) =>
-      val old = Session.currentSession
+      val old = Session.currentSessionOption
       s.bindToCurrentThread
       val result = f
-      old.bindToCurrentThread
+      old.foreach(_.bindToCurrentThread)
       result
     case None =>
       transaction(f)
@@ -165,7 +165,7 @@ trait ActiveRecordTables extends Schema {
   type SwapSession = (Option[AbstractSession], AbstractSession)
   private val sessionStack = collection.mutable.Stack.empty[SwapSession]
 
-  def allSessions: Seq[AbstractSession] = Session.currentSessionOption.toSeq ++ sessionStack.map(_._2)
+  def allSessions: Seq[AbstractSession] = sessionStack.map(_._2) ++ Session.currentSessionOption.toSeq
 
   /** Set rollback point for test */
   def startTransaction {
