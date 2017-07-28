@@ -1,0 +1,20 @@
+## Breaking changes
+* Drop support for Scala 2.10.x
+* Drop support for Play 2.4.x
+* Replace BoneCP with HikariCP (#47)
+
+## New features
+* Scala 2.12 support
+* Play 2.6 support
+* Added PagerSupport
+* Added nscala-time support (#16)
+* Add isEmpty and nonEmpty to Relations
+* Support Map[String, Any] value for Json serialize
+
+## Changed
+* Bump Scala version (2.11.8 => 2.11.11)
+* Bump library versions
+* Typo fixed in validation error messages
+* Added throws option for fromJson (default throws=false)
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.3.2...0.4.0)
