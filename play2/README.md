@@ -1,4 +1,4 @@
-# Scala ActiveRecord Play2.5 Plugin
+# Scala ActiveRecord Play2.6 Plugin
 
 ## Sample code
 
@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "com.github.aselab" %% "scala-activerecord" % "0.4.0-SNAPSHOT",
   "com.github.aselab" %% "scala-activerecord-play2" % "0.4.0-SNAPSHOT",
   jdbc,
-  "com.h2database" % "h2" % "1.4.192"  // See Supported databases
+  "com.h2database" % "h2" % "1.4.196"  // See Supported databases
 )
 ```
 

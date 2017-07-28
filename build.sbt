@@ -7,7 +7,7 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "3.9.1"
+    case "2.12" => "3.9.4"
     case "2.11" => "3.7"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
@@ -42,13 +42,13 @@ val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
   scalaVersion := "2.12.3",
-  crossScalaVersions := Seq("2.12.2", "2.11.11"),
+  crossScalaVersions := Seq("2.12.3", "2.11.11"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
     specs2("test", "mock").value,
-    "com.h2database" % "h2" % "1.4.193" % "test",
-    "ch.qos.logback" % "logback-classic" % "1.2.1" % "test"
+    "com.h2database" % "h2" % "1.4.196" % "test",
+    "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
   ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
   testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
   parallelExecution in Test := false,
