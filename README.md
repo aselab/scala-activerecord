@@ -1,6 +1,4 @@
-
-
-# Scala ActiveRecord [![maven central](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.11) [![javadoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.11.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.11)
+# Scala ActiveRecord [![maven central](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.12) [![javadoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12)
 
 scala-activerecord is an ORM library for Scala.
 
@@ -71,14 +69,14 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 ## Documents and other resources
 
 * [Wiki](https://github.com/aselab/scala-activerecord/wiki)
-* [ScalaDoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.11)
+* [ScalaDoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12)
 * [Sample project](https://github.com/aselab/scala-activerecord-sample)
 * [CloudBees(CI)](https://aselab.ci.cloudbees.com/job/scala-activerecord/)
 
 ## Web framework support
 
 * [Play 2.x plugin](https://github.com/aselab/scala-activerecord/tree/master/play2)
-* [Scalatra 2.4.0 plugin](https://github.com/aselab/scala-activerecord/tree/master/scalatra)
+* [Scalatra 2.5.x plugin](https://github.com/aselab/scala-activerecord/tree/master/scalatra)
 
 ## License
 

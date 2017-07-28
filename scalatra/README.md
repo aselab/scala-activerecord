@@ -1,4 +1,8 @@
-# Scala ActiveRecord Scalatra 2.4.0 Plugin
+# Scala ActiveRecord Scalatra 2.5.x Plugin
+
+## Sample code
+
+https://github.com/aselab/scala-activerecord-sample/tree/master/scalatra
 
 ## Usage
 
@@ -8,10 +12,10 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 
 ```scala
 libraryDependencies ++= Seq(
-  "org.scalatra" %% "scalatra" % "2.4.0",
-  "com.github.aselab" %% "scala-activerecord" % "0.3.2",
-  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.3.2",
-  "com.h2database" % "h2" % "1.4.192"  // See Supported databases
+  "org.scalatra" %% "scalatra" % "2.5.1",
+  "com.github.aselab" %% "scala-activerecord" % "0.4.0",
+  "com.github.aselab" %% "scala-activerecord-scalatra" % "0.4.0",
+  "com.h2database" % "h2" % "1.4.196"  // See Supported databases
 )
 ```
 
