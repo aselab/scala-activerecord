@@ -1,4 +1,4 @@
-val _version = "0.4.0"
+val _version = "0.4.1"
 val isRelease = System.getProperty("release") == "true"
 
 val originalJvmOptions = sys.process.javaVmArguments.filter(
@@ -94,7 +94,7 @@ lazy val core: Project = Project("core", file("activerecord"),
   settings = defaultSettings ++ Seq(
     name := "scala-activerecord",
     libraryDependencies ++= Seq(
-      "org.squeryl" %% "squeryl" % "0.9.8",
+      "org.squeryl" %% "squeryl" % "0.9.9",
       "com.typesafe" % "config" % "1.3.1",
       "com.zaxxer" % "HikariCP" % "2.6.3",
       "com.github.nscala-time" %% "nscala-time" % "2.16.0",
