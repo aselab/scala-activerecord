@@ -68,7 +68,6 @@ val defaultSettings = Seq(
   shellPrompt := {
     (state: State) => Project.extract(state).currentProject.id + "> "
   },
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
   ivyLoggingLevel := UpdateLogging.DownloadOnly,
   javaOptions ++= originalJvmOptions
 ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
@@ -90,36 +89,32 @@ lazy val root = project.in(file("."))
   .settings(publish := {}, publishLocal := {}, packagedArtifacts := Map.empty)
   .aggregate(macros, core, specs, scalatra, play2, play2Specs)
 
-lazy val core: Project = Project("core", file("activerecord"),
-  settings = defaultSettings ++ Seq(
-    name := "scala-activerecord",
-    libraryDependencies ++= Seq(
-      "org.squeryl" %% "squeryl" % "0.9.9",
-      "com.typesafe" % "config" % "1.3.1",
-      "com.zaxxer" % "HikariCP" % "2.6.3",
-      "com.github.nscala-time" %% "nscala-time" % "2.16.0",
-      "commons-validator" % "commons-validator" % "1.6",
-      "org.json4s" %% "json4s-native" % "3.5.2",
-      "org.slf4j" % "slf4j-api" % "1.7.25",
-      "org.scala-lang" % "scalap" % scalaVersion.value
-    ),
-    unmanagedSourceDirectories in Test += (scalaSource in Compile in specs).value,
-    initialCommands in console in Test := """
-    import com.github.aselab.activerecord._
-    import com.github.aselab.activerecord.dsl._
-    import models._
-    TestTables.initialize(Map("schema" -> "com.github.aselab.activerecord.models.TestTables"))
-    """
-  )
+lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
+  name := "scala-activerecord",
+  libraryDependencies ++= Seq(
+    "org.squeryl" %% "squeryl" % "0.9.9",
+    "com.typesafe" % "config" % "1.3.1",
+    "com.zaxxer" % "HikariCP" % "2.6.3",
+    "com.github.nscala-time" %% "nscala-time" % "2.16.0",
+    "commons-validator" % "commons-validator" % "1.6",
+    "org.json4s" %% "json4s-native" % "3.5.2",
+    "org.slf4j" % "slf4j-api" % "1.7.25",
+    "org.scala-lang" % "scalap" % scalaVersion.value
+  ),
+  unmanagedSourceDirectories in Test += (baseDirectory.value / ".." / "specs" / "src" / "main"),
+  initialCommands in console in Test := """
+  import com.github.aselab.activerecord._
+  import com.github.aselab.activerecord.dsl._
+  import models._
+  TestTables.initialize(Map("schema" -> "com.github.aselab.activerecord.models.TestTables"))
+  """
 ) dependsOn(macros)
 
-lazy val macros = Project("macro", file("macro"),
-  settings = defaultSettings ++ Seq(
-    name := "scala-activerecord-macro",
-    libraryDependencies := Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "optional"
-    )
+lazy val macros = Project("macro", file("macro")).settings(defaultSettings:_*).settings(
+  name := "scala-activerecord-macro",
+  libraryDependencies := Seq(
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
+    "org.scala-lang" % "scala-compiler" % scalaVersion.value % "optional"
   )
 )
 
