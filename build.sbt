@@ -7,7 +7,7 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "3.9.4"
+    case "2.12" => "4.0.2"
     case "2.11" => "3.7"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
@@ -41,8 +41,8 @@ val defaultResolvers = Seq(
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.12.3",
-  crossScalaVersions := Seq("2.12.3", "2.11.11"),
+  scalaVersion := "2.12.4",
+  crossScalaVersions := Seq("2.12.4", "2.11.12"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
@@ -93,11 +93,11 @@ lazy val core: Project = Project("core", file("activerecord")).settings(defaultS
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
     "org.squeryl" %% "squeryl" % "0.9.9",
-    "com.typesafe" % "config" % "1.3.1",
+    "com.typesafe" % "config" % "1.3.2",
     "com.zaxxer" % "HikariCP" % "2.6.3",
-    "com.github.nscala-time" %% "nscala-time" % "2.16.0",
+    "com.github.nscala-time" %% "nscala-time" % "2.18.0",
     "commons-validator" % "commons-validator" % "1.6",
-    "org.json4s" %% "json4s-native" % "3.5.2",
+    "org.json4s" %% "json4s-native" % "3.5.3",
     "org.slf4j" % "slf4j-api" % "1.7.25",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
@@ -147,8 +147,8 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
-    "org.scalatra" %% "scalatra" % "2.5.0" % "provided",
-    "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+    "org.scalatra" %% "scalatra" % "2.6.2" % "provided",
+    "javax.servlet" % "javax.servlet-api" % "4.0.0" % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 ).dependsOn(core)
