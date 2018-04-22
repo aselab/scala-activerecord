@@ -7,8 +7,8 @@ val originalJvmOptions = sys.process.javaVmArguments.filter(
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "4.0.2"
-    case "2.11" => "3.7"
+    case "2.12" => "4.0.3"
+    case "2.11" => "4.0.3"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
@@ -47,7 +47,7 @@ val defaultSettings = Seq(
   libraryDependencies ++= Seq(
     specs2("test").value,
     specs2("test", "mock").value,
-    "com.h2database" % "h2" % "1.4.196" % "test",
+    "com.h2database" % "h2" % "1.4.197" % "test",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
   ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
   testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -92,9 +92,9 @@ lazy val root = project.in(file("."))
 lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
-    "org.squeryl" %% "squeryl" % "0.9.9",
-    "com.typesafe" % "config" % "1.3.2",
-    "com.zaxxer" % "HikariCP" % "2.6.3",
+    "org.squeryl" %% "squeryl" % "0.9.11",
+    "com.typesafe" % "config" % "1.3.3",
+    "com.zaxxer" % "HikariCP" % "3.1.0",
     "com.github.nscala-time" %% "nscala-time" % "2.18.0",
     "commons-validator" % "commons-validator" % "1.6",
     "org.json4s" %% "json4s-native" % "3.5.3",
@@ -129,7 +129,7 @@ lazy val play2 = project.settings(defaultSettings:_*).settings(
   libraryDependencies ++= List(
     play20("play", "provided").value,
     play20("play-jdbc", "provided").value,
-    "com.google.inject" % "guice" % "4.1.0"
+    "com.google.inject" % "guice" % "4.2.0"
   )
 ).dependsOn(core)
 
