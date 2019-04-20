@@ -57,11 +57,11 @@ object ClassInfo {
 
   lazy val factories = new PrimitiveHandler[() => AnyRef] {
     val stringHandler = () => ""
-    val booleanHandler = () => new java.lang.Boolean(false)
-    val intHandler = () => new java.lang.Integer(0)
-    val longHandler = () => new java.lang.Long(0)
-    val floatHandler = () => new java.lang.Float(0)
-    val doubleHandler = () => new java.lang.Double(0.0)
+    val booleanHandler = () => java.lang.Boolean.FALSE
+    val intHandler = () => java.lang.Integer.valueOf(0)
+    val longHandler = () => java.lang.Long.valueOf(0)
+    val floatHandler = () => java.lang.Float.valueOf(0)
+    val doubleHandler = () => java.lang.Double.valueOf(0.0)
     val dateHandler = () => new java.util.Date()
     val timestampHandler = () => new java.sql.Timestamp(System.currentTimeMillis)
     val localdateHandler = () => LocalDate.fromDateFields(new java.util.Date())
