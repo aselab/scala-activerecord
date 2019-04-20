@@ -1,27 +1,19 @@
 val _version = "0.4.1"
 val isRelease = System.getProperty("release") == "true"
 
-val originalJvmOptions = sys.process.javaVmArguments.filter(
-  a => Seq("-Xmx", "-Xms", "-XX").exists(a.startsWith)
-)
-
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "4.0.3"
-    case "2.11" => "4.0.3"
+    case "2.12" => "4.3.4"
+    case "2.11" => "4.3.4"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.6.0" % scope
+  "com.typesafe.play" %% app % "2.7.0" % scope
 }
 
 val compilerSettings = Seq(
-  javacOptions ++= (scalaBinaryVersion.value match {
-    case "2.11" => Seq("-source", "1.6", "-target", "1.6")
-    case _ => Seq("-source", "1.8", "-target", "1.8")
-  }),
   scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:implicitConversions"),
   scalacOptions in Compile in doc ++= {
     val base = baseDirectory.value
@@ -41,13 +33,13 @@ val defaultResolvers = Seq(
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.12.4",
-  crossScalaVersions := Seq("2.12.4", "2.11.12"),
+  scalaVersion := "2.12.8",
+  crossScalaVersions := Seq("2.12.8", "2.11.12"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
     specs2("test", "mock").value,
-    "com.h2database" % "h2" % "1.4.197" % "test",
+    "com.h2database" % "h2" % "1.4.199" % "test",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
   ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
   testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -68,8 +60,7 @@ val defaultSettings = Seq(
   shellPrompt := {
     (state: State) => Project.extract(state).currentProject.id + "> "
   },
-  ivyLoggingLevel := UpdateLogging.DownloadOnly,
-  javaOptions ++= originalJvmOptions
+  ivyLoggingLevel := UpdateLogging.DownloadOnly
 ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
 
 // val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
@@ -92,13 +83,13 @@ lazy val root = project.in(file("."))
 lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
-    "org.squeryl" %% "squeryl" % "0.9.11",
+    "org.squeryl" %% "squeryl" % "0.9.13",
     "com.typesafe" % "config" % "1.3.3",
-    "com.zaxxer" % "HikariCP" % "3.1.0",
-    "com.github.nscala-time" %% "nscala-time" % "2.18.0",
+    "com.zaxxer" % "HikariCP" % "3.3.1",
+    "com.github.nscala-time" %% "nscala-time" % "2.22.0",
     "commons-validator" % "commons-validator" % "1.6",
-    "org.json4s" %% "json4s-native" % "3.5.3",
-    "org.slf4j" % "slf4j-api" % "1.7.25",
+    "org.json4s" %% "json4s-native" % "3.6.5",
+    "org.slf4j" % "slf4j-api" % "1.7.26",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
   unmanagedSourceDirectories in Test += (baseDirectory.value / ".." / "specs" / "src" / "main"),
@@ -147,8 +138,8 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
-    "org.scalatra" %% "scalatra" % "2.6.2" % "provided",
-    "javax.servlet" % "javax.servlet-api" % "4.0.0" % "provided",
+    "org.scalatra" %% "scalatra" % "2.6.5" % "provided",
+    "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 ).dependsOn(core)
