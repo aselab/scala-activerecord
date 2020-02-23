@@ -25,7 +25,7 @@ trait IO extends Validatable { this: ProductModel =>
   protected def toSerialized(map: Map[String, Any]): Map[String, Any] = map.mapValues {
     case v: Seq[_] => v.map(serializedValue)
     case v => serializedValue(v)
-  }
+  }.toMap
 
   protected def serializedValue(value: Any) =
     if (isPrimitiveNumeric(value.getClass) || isBoolean(value.getClass) || isMap(value.getClass)) {

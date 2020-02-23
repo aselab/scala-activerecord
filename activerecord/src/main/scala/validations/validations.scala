@@ -12,13 +12,13 @@ import scala.language.existentials
 
 class Errors(model: Class[_]) extends Iterable[ValidationError] {
   protected val errorList =
-    collection.mutable.MutableList.empty[ValidationError]
+    collection.mutable.ArrayDeque.empty[ValidationError]
 
   private var changed = false
   private var _errors = Map.empty[String, Seq[ValidationError]]
   protected def errors = {
     if (changed) {
-      _errors = errorList.groupBy(_.key)
+      _errors = errorList.toSeq.groupBy(_.key)
       changed = false
     }
     _errors

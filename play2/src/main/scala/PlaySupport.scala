@@ -3,7 +3,7 @@ package com.github.aselab.activerecord
 import java.sql.Connection
 import javax.inject.Inject
 import java.util.{Locale, TimeZone}
-import play.api._
+import play.api.{Configuration, Environment}
 import play.api.db.DBApi
 import play.api.i18n.{Messages, I18nSupport, Lang, MessagesApi}
 import org.squeryl.internals.DatabaseAdapter

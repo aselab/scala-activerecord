@@ -3,14 +3,15 @@ val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.12" => "4.3.4"
-    case "2.11" => "4.3.4"
+    case "2.13" => "4.8.3"
+    case "2.12" => "4.8.3"
+    case "2.11" => "4.8.3"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.7.0" % scope
+  "com.typesafe.play" %% app % "2.8.1" % scope
 }
 
 val compilerSettings = Seq(
@@ -26,20 +27,19 @@ val compilerSettings = Seq(
 
 val defaultResolvers = Seq(
   Resolver.sonatypeRepo("snapshots"),
-  Classpaths.typesafeReleases,
-  "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+  ("Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases").withAllowInsecureProtocol(true)
 )
 
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq("2.12.8", "2.11.12"),
+  scalaVersion := "2.13.1",
+  crossScalaVersions := Seq("2.13.1", "2.12.8", "2.11.12"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
     specs2("test", "mock").value,
-    "com.h2database" % "h2" % "1.4.199" % "test",
+    "com.h2database" % "h2" % "1.4.200" % "test",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
   ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
   testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
@@ -83,13 +83,13 @@ lazy val root = project.in(file("."))
 lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
-    "org.squeryl" %% "squeryl" % "0.9.13",
-    "com.typesafe" % "config" % "1.3.3",
-    "com.zaxxer" % "HikariCP" % "3.3.1",
+    "org.squeryl" %% "squeryl" % "0.9.14",
+    "com.typesafe" % "config" % "1.4.0",
+    "com.zaxxer" % "HikariCP" % "3.4.2",
     "com.github.nscala-time" %% "nscala-time" % "2.22.0",
     "commons-validator" % "commons-validator" % "1.6",
-    "org.json4s" %% "json4s-native" % "3.6.5",
-    "org.slf4j" % "slf4j-api" % "1.7.26",
+    "org.json4s" %% "json4s-native" % "3.6.7",
+    "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
   unmanagedSourceDirectories in Test += (baseDirectory.value / ".." / "specs" / "src" / "main"),
@@ -116,7 +116,6 @@ lazy val specs = project.settings(defaultSettings:_*).settings(
 
 lazy val play2 = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-play2",
-  resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
   libraryDependencies ++= List(
     play20("play", "provided").value,
     play20("play-jdbc", "provided").value,
@@ -126,7 +125,6 @@ lazy val play2 = project.settings(defaultSettings:_*).settings(
 
 lazy val play2Specs = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-play2-specs",
-  resolvers += "typesafe" at "http://repo.typesafe.com/typesafe/maven-releases/",
   libraryDependencies ++= List(
     play20("play", "provided").value,
     play20("play-jdbc", "provided").value,
@@ -138,7 +136,7 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
-    "org.scalatra" %% "scalatra" % "2.6.5" % "provided",
+    "org.scalatra" %% "scalatra" % "2.7.0-RC1" % "provided",
     "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )

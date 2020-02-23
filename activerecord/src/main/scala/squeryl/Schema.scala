@@ -7,7 +7,7 @@ import internals.ResultSetMapper
 
 import com.github.aselab.activerecord.reflections.ReflectionUtil
 import com.github.aselab.activerecord.STI
-import collection.mutable.HashMap
+import collection.mutable.{HashMap, ArrayBuffer}
 
 class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schema {
   override protected def table[T](name: String)(implicit manifestT: Manifest[T], ked: OptionalKeyedEntityDef[T,_]): Table[T] = {
@@ -27,10 +27,12 @@ class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schem
     super._addTableType(typeT, t)
   }
 
-  override private [squeryl] def _addTable(t: Table[_]) =
+  override private [squeryl] def _addTable(t: Table[_]): ArrayBuffer[org.squeryl.Table[_]] = {
     if (!tables.exists(_.name == t.name)) {
-      super._addTable(t)
+      return super._addTable(t)
     }
+    ArrayBuffer.empty
+  }
 
   lazy val parentTypes = {
     val parentTypeSig = ReflectionUtil.typeSig(classOf[STI])

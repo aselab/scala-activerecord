@@ -165,7 +165,7 @@ trait ActiveRecordTables extends Schema {
   type SwapSession = (Option[AbstractSession], AbstractSession)
   private val sessionStack = collection.mutable.Stack.empty[SwapSession]
 
-  def allSessions: Seq[AbstractSession] = sessionStack.map(_._2) ++ Session.currentSessionOption.toSeq
+  def allSessions: Seq[AbstractSession] = sessionStack.map(_._2).toSeq ++ Session.currentSessionOption.toSeq
 
   /** Set rollback point for test */
   def startTransaction {

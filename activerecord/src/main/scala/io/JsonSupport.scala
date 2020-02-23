@@ -90,10 +90,10 @@ trait JsonImplicits { self: DSL =>
   implicit class GroupByJsonable[T <: ActiveModel: ClassTag](grouped: Map[_, List[T]]) {
     private implicit val format = DefaultFormats
 
-    def toJson: String = Serialization.write(grouped.map{ case (k, v) => (k.toString, v.asJson) })
+    def toJson: String = Serialization.write(grouped.toMap.map{ case (k, v) => (k.toString, v.asJson) })
 
     def toJson(onlyFields: List[String]): String =
-      Serialization.write(grouped.map{ case (k, v) => (k.toString, v.asJson(onlyFields)) })
+      Serialization.write(grouped.toMap.map{ case (k, v) => (k.toString, v.asJson(onlyFields)) })
 
     def toJson(onlyFields: String*): String = toJson(onlyFields.toList)
   }
