@@ -4,8 +4,6 @@ val isRelease = System.getProperty("release") == "true"
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
     case "2.13" => "4.8.3"
-    case "2.12" => "4.8.3"
-    case "2.11" => "4.8.3"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
@@ -34,7 +32,7 @@ val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
   scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.13.1", "2.12.8", "2.11.12"),
+  crossScalaVersions := Seq("2.13.1"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
