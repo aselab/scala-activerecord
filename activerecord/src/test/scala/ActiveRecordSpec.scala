@@ -223,7 +223,7 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
 
     "#forceInsertAll" >> {
       val invalidUser = new User("invalid") {
-        override def doValidate() { errors.add("error") }
+        override def doValidate(): Unit = { errors.add("error") }
       }
       User.forceInsertAll(List(User("user1"), invalidUser))
       User.count mustEqual 2
@@ -233,7 +233,7 @@ object ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
 
     "#insertWithValidation" >> {
       val invalidUser = new User("invalid") {
-        override def doValidate() { errors.add("error") }
+        override def doValidate(): Unit = { errors.add("error") }
       }
       User.insertWithValidation(List(User("user1"), invalidUser)) must contain(exactly(invalidUser))
       User.count mustEqual 1

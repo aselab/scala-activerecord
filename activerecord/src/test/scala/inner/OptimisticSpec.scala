@@ -4,7 +4,7 @@ import com.github.aselab.activerecord._
 import models._
 
 object OptimisticSpec extends DatabaseSpecification with AutoRollback {
-  override def beforeAll {
+  override def beforeAll: Unit = {
     super.beforeAll
     OptimisticModel("record1").save
     OptimisticModel("record2").save

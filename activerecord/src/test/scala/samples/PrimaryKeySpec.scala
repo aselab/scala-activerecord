@@ -9,7 +9,7 @@ abstract class UUIDRecord extends ActiveRecordBase[UUID] {
   var id: UUID = UUIDRecord.initialValue
   def isPersisted: Boolean = id != UUIDRecord.initialValue
 
-  override def beforeCreate() {
+  override def beforeCreate(): Unit = {
     id = UUID.randomUUID
   }
 }

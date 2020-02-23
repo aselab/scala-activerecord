@@ -14,12 +14,12 @@ object ValidatableSpec extends DatabaseSpecification {
   }
 
   case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable with ProductModel {
-    override def doValidate {
+    override def doValidate: Unit = {
       e.foreach(errors.add)
       calledMethods :+= "doValidate"
     }
 
-    override def beforeValidation() {
+    override def beforeValidation(): Unit = {
       calledMethods :+= "beforeValidation"
     }
   }

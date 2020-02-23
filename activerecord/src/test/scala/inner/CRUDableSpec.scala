@@ -22,35 +22,35 @@ object CRUDableSpec extends Specification {
     _isNewRecord = isNew
     var calledMethods = List[String]()
 
-    override def beforeSave() {
+    override def beforeSave(): Unit = {
       calledMethods :+= "beforeSave"
     }
 
-    override def afterSave() {
+    override def afterSave(): Unit = {
       calledMethods :+= "afterSave"
     }
 
-    override def beforeCreate() {
+    override def beforeCreate(): Unit = {
       calledMethods :+= "beforeCreate"
     }
 
-    override def afterCreate() {
+    override def afterCreate(): Unit = {
       calledMethods :+= "afterCreate"
     }
 
-    override def beforeUpdate() {
+    override def beforeUpdate(): Unit = {
       calledMethods :+= "beforeUpdate"
     }
 
-    override def afterUpdate() {
+    override def afterUpdate(): Unit = {
       calledMethods :+= "afterUpdate"
     }
 
-    override def beforeDelete() {
+    override def beforeDelete(): Unit = {
       calledMethods :+= "beforeDelete"
     }
 
-    override def afterDelete() {
+    override def afterDelete(): Unit = {
       calledMethods :+= "afterDelete"
     }
 

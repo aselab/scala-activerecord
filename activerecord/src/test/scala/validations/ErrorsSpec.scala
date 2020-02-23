@@ -72,7 +72,7 @@ object ErrorsSpec extends DatabaseSpecification with Mockito {
     "messages" in {
       val messagesEn = Seq("message1", "message2")
       val messagesJa = Seq("メッセージ1", "メッセージ2")
-      val mockErrors = (messagesEn, messagesJa).zipped.map {case (en, ja) =>
+      val mockErrors = (messagesEn lazyZip messagesJa).map {case (en, ja) =>
         val e = mock[ValidationError]
         e.translation(Locale.ENGLISH) returns en
         e.translation(Locale.JAPANESE) returns ja
