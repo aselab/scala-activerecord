@@ -2,7 +2,7 @@ package com.github.aselab.activerecord
 
 import org.specs2.specification._
 
-import dsl._
+import com.github.aselab.activerecord.dsl._
 import models._
 
 object STISupportSpec extends DatabaseSpecification with AutoRollback {
