@@ -22,7 +22,7 @@ trait IO extends Validatable { this: ProductModel =>
 
   def toSerializedMap(onlyFields: List[String]): Map[String, Any] = toSerialized(toMap(onlyFields))
 
-  protected def toSerialized(map: Map[String, Any]): Map[String, Any] = map.mapValues {
+  protected def toSerialized(map: Map[String, Any]): Map[String, Any] = map.view.mapValues {
     case v: Seq[_] => v.map(serializedValue)
     case v => serializedValue(v)
   }.toMap

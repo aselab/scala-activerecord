@@ -44,7 +44,7 @@ class PlayConfig(
     } catch {
       case e: Exception => None
     }
-    val k = environment.mode + "." + key
+    val k = environment.mode.toString + "." + key
     val keyWithPrefix = prefix(k)
     val valueWithPrefix = inner(keyWithPrefix)
     debug(keyWithPrefix, valueWithPrefix)
@@ -55,7 +55,7 @@ class PlayConfig(
   }
 
   def _getString(key: String, getter: (String) => Option[String]): Option[String] = {
-    val k = environment.mode + "." + key
+    val k = environment.mode.toString + "." + key
     val keyWithPrefix = prefix(k)
     val valueWithPrefix = getter(keyWithPrefix)
     debug(keyWithPrefix, valueWithPrefix)

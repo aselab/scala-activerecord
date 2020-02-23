@@ -263,15 +263,15 @@ trait Associations {
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
+    def <<(list: Iterable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
     def +=(m: T): T = this << m
 
-    def ++=(list: Traversable[T]): List[T] = this << list
+    def ++=(list: Iterable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = companion.inTransaction {
+    def :=(list: Iterable[T]): List[T] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList.map(associate)
     }
@@ -346,15 +346,15 @@ trait Associations {
 
     def <<(m: T): I = associate(m)
 
-    def <<(list: Traversable[T]): List[I] = companion.inTransaction {
+    def <<(list: Iterable[T]): List[I] = companion.inTransaction {
       list.toList.map(associate)
     }
 
     def +=(m: T): I = this << m
 
-    def ++=(list: Traversable[T]): List[I] = this << list
+    def ++=(list: Iterable[T]): List[I] = this << list
 
-    def :=(list: Traversable[T]): List[I] = companion.inTransaction {
+    def :=(list: Iterable[T]): List[I] = companion.inTransaction {
       if (hasConstraint) deleteAll else removeAll
       relation.cache = list.toList
       relation.cache.map(associate)
@@ -456,7 +456,7 @@ trait Associations {
         getId(inter, ownerSide) in ids
       ).select((m, inter) =>
         (getId(inter, ownerSide), m)
-      ).toList.groupBy(_._1).mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
+      ).toList.groupBy(_._1).view.mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
     }
 
     def associate(m: T): T = companion.inTransaction {
@@ -477,15 +477,15 @@ trait Associations {
 
     def <<(m: T): T = associate(m)
 
-    def <<(list: Traversable[T]): List[T] = companion.inTransaction {
+    def <<(list: Iterable[T]): List[T] = companion.inTransaction {
       list.toList.map(associate)
     }
 
     def +=(m: T): T = this << m
 
-    def ++=(list: Traversable[T]): List[T] = this << list
+    def ++=(list: Iterable[T]): List[T] = this << list
 
-    def :=(list: Traversable[T]): List[T] = inTransaction {
+    def :=(list: Iterable[T]): List[T] = inTransaction {
       interCompanion.forceDelete(inter =>
         getId(inter, ownerSide) === owner.id
       )

@@ -9,7 +9,7 @@ import com.zaxxer.hikari._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Exception.catching
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.joda.time.format._
 import org.joda.time.DateTimeZone
 

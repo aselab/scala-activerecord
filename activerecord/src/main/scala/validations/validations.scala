@@ -28,7 +28,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
 
   def add(message: String): Unit = add("", message)
 
-  def add(fieldName: String, message: String, args: Any*) {
+  def add(fieldName: String, message: String, args: Any*): Unit = {
     errorList += ValidationError(model, fieldName, message, args:_*)
     changed = true
   }
@@ -224,7 +224,7 @@ object Validator {
     private def min = annotation.min
     private def max = annotation.max
 
-    def range[T <% Ordered[T]](min: T, v: T, max: T): Unit = {
+    def range[T](min: T, v: T, max: T)(implicit ev: T => Ordered[T]): Unit = {
       if (annotation.message.isEmpty) {
         if (v < min) errors.add(fieldName, ERROR_PREFIX + "minValue", min)
         if (v > max) errors.add(fieldName, ERROR_PREFIX + "maxValue", max)

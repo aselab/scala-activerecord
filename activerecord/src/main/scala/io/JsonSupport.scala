@@ -84,7 +84,7 @@ trait JsonImplicits { self: DSL =>
     new IterableJsonSerializer(list)
 
   // for Scala 2.11+ only
-  implicit def toJsonable[T <: ActiveModel: ClassTag, ILike <% Iterable[T]](list: ILike) =
+  implicit def toJsonable[T <: ActiveModel: ClassTag, ILike](list: ILike)(implicit ev:  ILike => Iterable[T]) =
     new IterableJsonSerializer(list)
 
   implicit class GroupByJsonable[T <: ActiveModel: ClassTag](grouped: Map[_, List[T]]) {

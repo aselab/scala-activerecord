@@ -19,11 +19,11 @@ class ActiveRecordInitialize @Inject() (
   lazy val activeRecordTables = configuration.getOptional[Configuration]("schema")
     .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find)
 
-  def onStart() {
+  def onStart(): Unit ={
     activeRecordTables.foreach(_.initialize)
   }
 
-  def onStop() {
+  def onStop(): Unit = {
     activeRecordTables.foreach(_.cleanup)
   }
 

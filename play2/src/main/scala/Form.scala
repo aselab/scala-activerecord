@@ -40,12 +40,12 @@ trait PlayFormSupport[T <: ActiveModel] { self: ActiveModelCompanion[T] =>
 
 class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
   protected def inputOptions(field: Field, options: Seq[(Symbol, Any)] = Nil) = {
-    val isRequired = options.collectFirst{ case ('required, v) => v }
+    val isRequired = options.collectFirst{ case (Symbol("required"), v) => v }
       .getOrElse(companion.isRequired(field.name))
-    (('required -> isRequired) +: options).toMap.toSeq.flatMap {
-      case ('required, true) => Seq('_class -> "required")
-      case ('required, false) => Nil
-      case ('label, v) => Seq('_label ->  v)
+    ((Symbol("required") -> isRequired) +: options).toMap.toSeq.flatMap {
+      case (Symbol("required"), true) => Seq(Symbol("_class") -> "required")
+      case (Symbol("required"), false) => Nil
+      case (Symbol("label"), v) => Seq(Symbol("_label") ->  v)
       case v => Seq(v)
     }
   }
@@ -65,8 +65,8 @@ class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
   implicit def fieldConstructor(implicit m: ClassTag[T]) = new FieldConstructor {
     def apply(elements: FieldElements) = {
       val error = if (elements.hasErrors) "error" else ""
-      Html(<div class={"control-group %s %s".format(elements.args.get('_class).getOrElse(""), error)} 
-        id={elements.args.get('_id).map(_.toString).getOrElse(elements.id + "_field")}>
+      Html(<div class={"control-group %s %s".format(elements.args.get(Symbol("_class")).getOrElse(""), error)} 
+        id={elements.args.get(Symbol("_id")).map(_.toString).getOrElse(elements.id + "_field")}>
         <label class="control-label" for={elements.id}>{Config.translator.field(m.runtimeClass, elements.field.name)(elements.p.messages.lang.toLocale)}</label>
         <div class="controls">
           {xml.Unparsed(elements.input.body)}

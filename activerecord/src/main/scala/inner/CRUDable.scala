@@ -80,7 +80,7 @@ trait CRUDable extends Saveable {
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
-  protected def beforeSave() {}
+  protected def beforeSave(): Unit = {}
 
   /**
    * Callback method of after create and update.
@@ -89,7 +89,7 @@ trait CRUDable extends Saveable {
    * Nothing is done by default.
    * This is not called if failed to save.
    */
-  protected def afterSave() {}
+  protected def afterSave(): Unit = {}
 
   /**
    * Callback method of before create.
@@ -97,7 +97,7 @@ trait CRUDable extends Saveable {
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
-  protected def beforeCreate() {}
+  protected def beforeCreate(): Unit = {}
 
   /**
    * Callback method of after create.
@@ -106,7 +106,7 @@ trait CRUDable extends Saveable {
    * Nothing is done by default.
    * This is not called if failed to create.
    */
-  protected def afterCreate() {}
+  protected def afterCreate(): Unit = {}
 
   /**
    * Callback method of before update.
@@ -114,7 +114,7 @@ trait CRUDable extends Saveable {
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
-  protected def beforeUpdate() {}
+  protected def beforeUpdate(): Unit = {}
 
   /**
    * Callback method of after update.
@@ -123,7 +123,7 @@ trait CRUDable extends Saveable {
    * Nothing is done by default.
    * This is not called if failed to update.
    */
-  protected def afterUpdate() {}
+  protected def afterUpdate(): Unit = {}
 
   /**
    * Callback method of before delete.
@@ -131,7 +131,7 @@ trait CRUDable extends Saveable {
    * You can override this method and implement logic if necessary.
    * Nothing is done by default.
    */
-  protected def beforeDelete() {}
+  protected def beforeDelete(): Unit = {}
 
   /**
    * Callback method of after delete.
@@ -140,5 +140,5 @@ trait CRUDable extends Saveable {
    * Nothing is done by default.
    * This is not called if failed to delete.
    */
-  protected def afterDelete() {}
+  protected def afterDelete(): Unit = {}
 }

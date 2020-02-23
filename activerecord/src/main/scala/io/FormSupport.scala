@@ -91,7 +91,7 @@ trait FormSerializer extends IO { self: ProductModel =>
 
         try {
           if (info.isSeq) {
-            val dataList = Stream.from(0).map(i => data.collect {
+            val dataList = LazyList.from(0).map(i => data.collect {
               case (k, v) if k.startsWith("%s[%d]".format(name, i)) => FormUtil.shift(k) -> v
             }.toMap).takeWhile(_.nonEmpty)
             Some(name -> dataList.zipWithIndex.flatMap {
@@ -130,7 +130,7 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
   type C = ActiveModelCompanion[ActiveModel]
 
   def isRequired(name: String): Boolean = {
-    def inner(c: C, names: Seq[String]): Boolean = {
+    def inner(c: C, names: Array[String]): Boolean = {
       (names.headOption, names.tail) match {
         case (Some(name), tail) =>
           c.fieldInfo.get(name).map { info =>
@@ -182,7 +182,7 @@ object FormUtil {
   def shift(s: String): String = s.replaceFirst("""[^\[]+\[([^\[\]]+)\]""", "$1")
 
   /** a[b][c] => a, b, c */
-  def split(s: String): Seq[String] = s.replaceAll("""\[([^\[\]]*)\]""", ",$1").split(",")
+  def split(s: String): Array[String] = s.replaceAll("""\[([^\[\]]*)\]""", ",$1").split(",")
 
   /** a, b, c[d] => a[b][c][d] */
   def join(a: String, b: Any*): String =

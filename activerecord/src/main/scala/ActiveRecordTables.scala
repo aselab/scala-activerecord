@@ -109,7 +109,7 @@ trait ActiveRecordTables extends Schema {
   private var _initialized = false
 
   /** load configuration and then setup database and session */
-  def initialize(config: Map[String, Any]) {
+  def initialize(config: Map[String, Any]): Unit = {
     if (!_initialized) {
       configOption = Some(loadConfig(config))
       Config.registerSchema(this)
@@ -143,7 +143,7 @@ trait ActiveRecordTables extends Schema {
   def newSession: AbstractSession = {
     val connectionFunc = () => {
       val c = config.connection
-      config.logger.trace(Thread.currentThread.getStackTrace.toStream.drop(3).filterNot { se =>
+      config.logger.trace(Thread.currentThread.getStackTrace.to(LazyList).drop(3).filterNot { se =>
         se.getClassName.startsWith("com.github.aselab") || se.getClassName.startsWith("org.squeryl")
       }.take(10).mkString("[StackTrace]\n  ", "\n  ", ""))
       config.logger.debug("[URL] " + c.getMetaData.getURL)
@@ -168,7 +168,7 @@ trait ActiveRecordTables extends Schema {
   def allSessions: Seq[AbstractSession] = sessionStack.map(_._2).toSeq ++ Session.currentSessionOption.toSeq
 
   /** Set rollback point for test */
-  def startTransaction {
+  def startTransaction: Unit = {
     val oldSession = Session.currentSessionOption
     val newSession = sessionManager.newSession
     oldSession.foreach(_.unbindFromCurrentThread)

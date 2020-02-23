@@ -80,7 +80,7 @@ object ClassInfo {
   def getFactory(clazz: Class[_]): () => AnyRef = factories.getOrRegister(clazz, {
     clazz.getConstructors.map(
       c => (c, c.getParameterTypes.toSeq)
-    ).sortBy(_._2.size).toStream.flatMap {
+    ).sortBy(_._2.size).to(LazyList).flatMap {
       case (const, params) => allCatch.opt {
         // test creation parameters
         val facts = params.map(c =>
@@ -124,7 +124,7 @@ case class FieldInfo(
 
   def is[T](implicit m: ClassTag[T]): Boolean = fieldType == m.runtimeClass
 
-  def setValue(model: Any, value: Any) {
+  def setValue(model: Any, value: Any): Unit = {
     model.setValue(name, if (isOption) value.toOption else value)
   }
 
@@ -178,7 +178,7 @@ case class ScalaSigInfo(clazz: Class[_]) {
     find(clazz).getOrElse(error)
   }
 
-  val classSymbol = scalaSig.symbols.toIterator.collect {
+  val classSymbol = scalaSig.symbols.iterator.collect {
     case symbol: ClassSymbol if !symbol.isModule => symbol
   }.find(_.name == clazz.getSimpleName).getOrElse(error)
 
