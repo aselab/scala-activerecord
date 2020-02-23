@@ -1,2 +1,0 @@
-#!/bin/sh
-exec java -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Xss2M -Xmx1G -Dfile.encoding=UTF-8 -jar `dirname $0`/sbt-launch.jar "$@"
