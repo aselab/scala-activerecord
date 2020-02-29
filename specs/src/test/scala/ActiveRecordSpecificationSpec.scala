@@ -18,7 +18,7 @@ package models {
   }
 }
 
-object Model1Spec extends ActiveRecordSpecification {
+class Model1Spec extends ActiveRecordSpecification {
   import models._
 
   override def schema = com.github.aselab.activerecord.models.Tables1
@@ -39,7 +39,7 @@ object Model1Spec extends ActiveRecordSpecification {
   }
 }
 
-object Model2Spec extends ActiveRecordSpecification {
+class Model2Spec extends ActiveRecordSpecification {
   import models._
 
   override def schema = com.github.aselab.activerecord.models.Tables2

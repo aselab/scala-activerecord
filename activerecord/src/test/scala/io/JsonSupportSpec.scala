@@ -1,11 +1,11 @@
 package com.github.aselab.activerecord.io
 
 import com.github.aselab.activerecord._
-import dsl._
+import com.github.aselab.activerecord.dsl._
 import models._
 import org.json4s._
 
-object JsonSupportSpec extends DatabaseSpecification {
+class JsonSupportSpec extends DatabaseSpecification {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData
@@ -75,9 +75,8 @@ object JsonSupportSpec extends DatabaseSpecification {
     "fromJson(PrimitiveModel)" >> {
       val json = PrimitiveModel.newModel(10).toJson
       json mustEqual """
-         |{"oboolean":false,"bigDecimal":"10",
-         |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"string":"string10",
-         |"ostring":"string10","obigDecimal":"10","double":10.0,"long":10,"boolean":false,"int":10,"oint":10,"odouble":10.0}
+         |{"oboolean":false,"bigDecimal":"10","float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,
+         |"obigDecimal":"10","double":10.0,"long":10,"boolean":false,"int":10,"oint":10,"odouble":10.0,"string":"string10","ostring":"string10"}
       """.stripMargin.replaceAll("\n", "").trim
       PrimitiveModel.fromJson(json) mustEqual PrimitiveModel.newModel(10)
     }
@@ -87,9 +86,8 @@ object JsonSupportSpec extends DatabaseSpecification {
       val json = m.toJson
       json mustEqual s"""
          |{"oboolean":false,"bigDecimal":"10",
-         |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"string":"string10",
-         |"ostring":"string10","obigDecimal":"10","double":10.0,"long":10,"id":${m.id},"boolean":false,
-         |"int":10,"oint":10,"odouble":10.0}
+         |"float":10.0,"ofloat":10.0,"uuid":"00000000-0000-000a-0000-00000000000a","olong":10,"obigDecimal":"10",
+         |"double":10.0,"long":10,"int":10,"oint":10,"odouble":10.0,"string":"string10","ostring":"string10","id":${m.id},"boolean":false}
       """.stripMargin.replaceAll("\n", "").trim
       PrimitiveModel.fromJson(json) mustEqual PrimitiveModel.newModel(10)
     }

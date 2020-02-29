@@ -5,8 +5,8 @@ import java.sql.Timestamp
 import com.github.aselab.activerecord._
 import inner._
 
-object ValidationSupportSpec extends DatabaseSpecification {
-  import dsl._
+class ValidationSupportSpec extends DatabaseSpecification {
+  import com.github.aselab.activerecord.dsl._
   import annotation.meta._
   type CustomAnnotation = sample.CustomAnnotation @field
 

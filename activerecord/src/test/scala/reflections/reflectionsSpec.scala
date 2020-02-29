@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.reflections
 import org.specs2.mutable._
 import com.github.aselab.activerecord._
 
-object reflectionsSpec extends Specification {
+class reflectionsSpec extends Specification {
   class Dummy {
     val s: String = "test"
   }

@@ -4,7 +4,7 @@ import models._
 import java.util.Date
 import java.sql.Timestamp
 
-object TimestampsSpec extends DatabaseSpecification {
+class TimestampsSpec extends DatabaseSpecification {
   "Timestamps" should {
     "create" in {
       val model = TimestampsModel("")

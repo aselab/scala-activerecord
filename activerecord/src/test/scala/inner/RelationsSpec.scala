@@ -6,7 +6,7 @@ import org.specs2.specification.Scope
 import models._
 import java.sql.Timestamp
 
-object RelationsSpec extends DatabaseSpecification with AutoRollback {
+class RelationsSpec extends DatabaseSpecification with AutoRollback {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData

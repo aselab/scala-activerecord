@@ -5,7 +5,7 @@ import org.specs2.specification._
 import com.github.aselab.activerecord.dsl._
 import models._
 
-object STISupportSpec extends DatabaseSpecification with AutoRollback {
+class STISupportSpec extends DatabaseSpecification with AutoRollback {
   "STI" should {
     "type" >> {
       Student.newInstance._type mustEqual "Student"

@@ -6,7 +6,7 @@ import java.util.Locale
 import i18n._
 import scala.language.reflectiveCalls
 
-object i18nSpec extends Specification with Mockito {
+class i18nSpec extends Specification with Mockito {
   "Translator" should {
     implicit val locale = Locale.ENGLISH
     def translator(result: Option[String]) = new Translator {

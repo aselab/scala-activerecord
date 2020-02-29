@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.validations
 import com.github.aselab.activerecord._
 import inner._
 
-object ValidatableSpec extends DatabaseSpecification {
+class ValidatableSpec extends DatabaseSpecification {
   class SaveableImpl extends Saveable {
     var calledMethods = List[String]()
     override def save = {

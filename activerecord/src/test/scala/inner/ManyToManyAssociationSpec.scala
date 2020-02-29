@@ -46,7 +46,7 @@ package manytomany {
   }
 }
 
-object ManyToManyAssociationSpec extends DatabaseSpecification {
+class ManyToManyAssociationSpec extends DatabaseSpecification {
   import manytomany._
 
   override def schema = Tables
@@ -82,7 +82,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       val removed = foo.throughOption.remove(baz)
       removed must beSome(baz)
       foo.throughOption.toList mustEqual List(baz2)
-      Inter.find(inter.id).map(_.bazId) must beNone
+      Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
     }
 
     "remove with not null constraint" >> new TestData {
@@ -96,7 +96,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       removed mustEqual List(baz)
       foo.throughOption.toList must beEmpty
       foo.throughOption.reload must beEmpty
-      Inter.find(inter.id).map(_.bazId) must beNone
+      Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
     }
 
     "removeAll with not null constraint" >> new TestData {
@@ -109,7 +109,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       val deleted = foo.throughOption.deleteAll
       deleted mustEqual List(baz)
       foo.throughOption.toList must beEmpty
-      Inter.find(inter.id).map(_.bazId) must beNone
+      Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
     }
 
     "deleteAll with not null constraint" >> new TestData {
@@ -133,7 +133,7 @@ object ManyToManyAssociationSpec extends DatabaseSpecification {
       val baz3 = Baz("baz3").create
       val inter = foo.throughOption << baz
       foo.throughOption := List(baz2, baz3)
-      Inter.find(inter.id).map(_.bazId) must beNone
+      Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
       foo.throughOption.toList mustEqual List(baz2, baz3)
     }
 

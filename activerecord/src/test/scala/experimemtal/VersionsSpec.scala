@@ -1,9 +1,9 @@
 package com.github.aselab.activerecord.experimental
 
 import com.github.aselab.activerecord._
-import dsl._
+import com.github.aselab.activerecord.dsl._
 
-object VersionsSpec extends DatabaseSpecification {
+class VersionsSpec extends DatabaseSpecification {
   "Versions" should {
     val modelName = "com.github.aselab.activerecord.models.VersionModel"
 

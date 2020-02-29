@@ -1,9 +1,9 @@
 package com.github.aselab.activerecord
 
-import dsl._
+import com.github.aselab.activerecord.dsl._
 import models._
 
-object ActiveRecordTablesSpec extends DatabaseSpecification {
+class ActiveRecordTablesSpec extends DatabaseSpecification {
   override def beforeAll = {
     super.beforeAll
     TestTables.createTestData

@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.models
 import com.github.aselab.activerecord._
 import org.joda.time.{LocalDate, DateTime}
 import experimental._
-import dsl._
+import com.github.aselab.activerecord.dsl._
 import inner._
 import java.sql.Timestamp
 import java.util.{Date, UUID, TimeZone}

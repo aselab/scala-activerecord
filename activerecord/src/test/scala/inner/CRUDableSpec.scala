@@ -3,7 +3,7 @@ package com.github.aselab.activerecord.inner
 import org.specs2.mutable._
 import scala.language.reflectiveCalls
 
-object SaveableSpec extends Specification {
+class SaveableSpec extends Specification {
   "Saveable" should {
     "save" in {
       val m = new Saveable {def isNewRecord = true}
@@ -12,7 +12,7 @@ object SaveableSpec extends Specification {
   }
 }
 
-object CRUDableSpec extends Specification {
+class CRUDableSpec extends Specification {
   def testModel(
     isNew: Boolean = true,
     createResult: Boolean = true,

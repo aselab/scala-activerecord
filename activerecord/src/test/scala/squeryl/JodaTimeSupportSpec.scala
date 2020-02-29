@@ -6,7 +6,7 @@ import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
 import models._
 
-object JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
+class JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
   "JodaTimeSupport" should {
     val now = DateTime.now
     val tomorrow = DateTime.tomorrow

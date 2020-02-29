@@ -9,7 +9,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import org.joda.time.{LocalDate, DateTime}
 
-object IOSpec extends DatabaseSpecification with Mockito {
+class IOSpec extends DatabaseSpecification with Mockito {
 
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveModel
   object ListModel extends ActiveModelCompanion[ListModel] {

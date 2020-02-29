@@ -26,7 +26,7 @@ object PrimaryKeyTables extends ActiveRecordTables {
   val uuidModels = table[UUIDModel]
 }
 
-object PrimaryKeySpec extends ActiveRecordSpecification {
+class PrimaryKeySpec extends ActiveRecordSpecification {
   override def schema = PrimaryKeyTables
 
   "primary key type" should {

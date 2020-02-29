@@ -32,7 +32,7 @@ package onetomany {
   }
 }
 
-object OneToManyAssociationSpec extends DatabaseSpecification {
+class OneToManyAssociationSpec extends DatabaseSpecification {
   import onetomany._
 
   override def schema = Tables

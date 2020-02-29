@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.sbt
 
 import org.specs2.mutable._
 
-object FieldSpec extends Specification {
+class FieldSpec extends Specification {
   "Field" should {
     "apply" in {
       "name:string:required" in {

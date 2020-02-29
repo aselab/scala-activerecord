@@ -5,7 +5,7 @@ import org.specs2.mock._
 import com.github.aselab.activerecord._
 import scala.language.reflectiveCalls
 
-object ValidatorSpec extends Specification with Mockito {
+class ValidatorSpec extends Specification with Mockito {
   import annotation.meta._
   type CustomAnnotation = sample.CustomAnnotation @field
 

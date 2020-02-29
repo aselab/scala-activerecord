@@ -51,7 +51,7 @@ package onetoone {
   }
 }
 
-object OneToOneAssociationSpec extends DatabaseSpecification {
+class OneToOneAssociationSpec extends DatabaseSpecification {
   import onetoone._
 
   override def schema = Tables

@@ -18,7 +18,7 @@ object SchemaTestTables extends ActiveRecordTables {
   }
 }
 
-object SchemaPrefixedSpec extends DatabaseSpecification {
+class SchemaPrefixedSpec extends DatabaseSpecification {
   override def schema = SchemaTestTables
 
   "Tables.isCreated" should {

@@ -40,7 +40,7 @@ package schema2 {
   }
 }
 
-object ActiveRecordConfigSpec extends Specification {
+class ActiveRecordConfigSpec extends Specification {
   "DefaultConfig" should {
     "supported database" in {
       def config(driverName: String) = new DefaultConfig(
@@ -90,7 +90,7 @@ object ActiveRecordConfigSpec extends Specification {
   }
 }
 
-object MultipleSchemaSpec extends ActiveRecordSpecification {
+class MultipleSchemaSpec extends ActiveRecordSpecification {
   override def beforeAll = {
     System.setProperty("run.mode", "test")
     schema1.Tables.initialize(Map("com.github.aselab.activerecord.schema1.Tables.jdbcurl" -> "jdbc:h2:mem:activerecord-test1"))

@@ -2,7 +2,7 @@ package com.github.aselab.activerecord
 
 import org.specs2.mutable._
 
-object supportSpec extends Specification {
+class supportSpec extends Specification {
   "primitiveClasses" should {
     val f = support.primitiveClasses.apply _
 
