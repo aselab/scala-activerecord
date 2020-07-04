@@ -1,4 +1,4 @@
-val _version = "0.5.0"
+val _version = "0.6.0"
 val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
@@ -31,8 +31,8 @@ val defaultResolvers = Seq(
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.13.1"),
+  scalaVersion := "2.13.3",
+  crossScalaVersions := Seq("2.13.3"),
   resolvers ++= defaultResolvers,
   libraryDependencies ++= Seq(
     specs2("test").value,
@@ -44,13 +44,7 @@ val defaultSettings = Seq(
   parallelExecution in Test := false,
   fork in Test := true,
   testForkedParallel in Test := true,
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (version.value.trim.endsWith("SNAPSHOT"))
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-  },
+  publishTo := sonatypePublishToBundle.value,
   publishMavenStyle := true,
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
