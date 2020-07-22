@@ -9,8 +9,7 @@ import java.util.{Date, UUID}
 import java.sql.Timestamp
 import org.joda.time.{LocalDate, DateTime}
 
-class IOSpec extends DatabaseSpecification with Mockito {
-
+object Models {
   case class ListModel(l1: List[String], l2: List[Int]) extends ActiveModel
   object ListModel extends ActiveModelCompanion[ListModel] {
     def create(addErrors: (String, String)*) = {
@@ -42,6 +41,10 @@ class IOSpec extends DatabaseSpecification with Mockito {
     def this() = this(1, new NestModel, List(new NestModel, new NestModel))
   }
   object ComplexModel extends ActiveModelCompanion[ComplexModel]
+}
+
+class IOSpec extends DatabaseSpecification with Mockito {
+  import Models._
 
   "IO" should {
     "toFormValues" in {
@@ -436,10 +439,10 @@ class IOSpec extends DatabaseSpecification with Mockito {
     }
 
     "split" in {
-      FormUtil.split("a[b]") mustEqual Seq("a", "b")
-      FormUtil.split("a[b][c][d]") mustEqual Seq("a", "b", "c", "d")
-      FormUtil.split("a[]") mustEqual Seq("a")
-      FormUtil.split("a[][b]") mustEqual Seq("a", "", "b")
+      FormUtil.split("a[b]") mustEqual Array("a", "b")
+      FormUtil.split("a[b][c][d]") mustEqual Array("a", "b", "c", "d")
+      FormUtil.split("a[]") mustEqual Array("a")
+      FormUtil.split("a[][b]") mustEqual Array("a", "", "b")
     }
 
     "join" in {

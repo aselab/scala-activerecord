@@ -5,9 +5,10 @@ import java.sql.Timestamp
 import com.github.aselab.activerecord._
 import inner._
 
-class ValidationSupportSpec extends DatabaseSpecification {
+object Models {
   import com.github.aselab.activerecord.dsl._
   import annotation.meta._
+
   type CustomAnnotation = sample.CustomAnnotation @field
 
   case class CustomAnnotationModel(
@@ -67,6 +68,10 @@ class ValidationSupportSpec extends DatabaseSpecification {
   object ValidationSupportModel extends ProductModelCompanion[ValidationSupportModel]
 
   object AnnotationOptionModel extends ActiveModelCompanion[AnnotationOptionModel]
+}
+
+class ValidationSupportSpec extends DatabaseSpecification {
+  import Models._
 
   "ValidationSupport" should {
     "doValidate" in {
