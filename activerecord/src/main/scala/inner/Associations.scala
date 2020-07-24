@@ -456,7 +456,7 @@ trait Associations {
         getId(inter, ownerSide) in ids
       ).select((m, inter) =>
         (getId(inter, ownerSide), m)
-      ).toList.groupBy(_._1).view.mapValues(_.map(_._2)).asInstanceOf[Map[Any, List[T]]]
+      ).toList.groupBy(_._1).view.mapValues(_.map(_._2)).toMap[Any, List[T]]
     }
 
     def associate(m: T): T = companion.inTransaction {
