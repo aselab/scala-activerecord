@@ -15,7 +15,7 @@ import scala.language.existentials
  * Base class of database schema.
  */
 trait ActiveRecordTables extends Schema {
-  import ReflectionUtil.{defaultLoader, classToARCompanion, getGenericTypes, toReflectable}
+  import ReflectionUtil.{classToARCompanion, getGenericTypes, toReflectable}
 
   lazy val tableMap = {
     val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[_, _]]
@@ -79,7 +79,7 @@ trait ActiveRecordTables extends Schema {
   def foreignKeyFromClass(c: Class[_]): String =
     c.getSimpleName.camelize + "Id"
 
-  protected def execute(sql: String, logging: Boolean = true): Unit = inTransaction {
+  protected def execute(sql: String, logging: Boolean = true): Boolean = inTransaction {
     if (logging) config.logger.debug(sql)
     val connection = Session.currentSession.connection
     val s = connection.createStatement
@@ -131,7 +131,7 @@ trait ActiveRecordTables extends Schema {
     if (config.autoDrop) drop
     config.cleanup
     sessionStack.foreach { case (s1, s2) => s1.foreach(_.cleanup); s2.cleanup }
-    sessionStack.clear
+    sessionStack.clear()
     _initialized = false
   }
 
@@ -181,7 +181,7 @@ trait ActiveRecordTables extends Schema {
   }
 
   def endTransaction: Unit = try {
-    val (oldSession, newSession) = sessionStack.pop
+    val (oldSession, newSession) = sessionStack.pop()
     newSession.unbindFromCurrentThread
     newSession.close
     oldSession.foreach(_.bindToCurrentThread)
@@ -191,7 +191,7 @@ trait ActiveRecordTables extends Schema {
 
   /** Rollback to startTransaction point */
   def rollback: Unit = try {
-    val (oldSession, newSession) = sessionStack.pop
+    val (oldSession, newSession) = sessionStack.pop()
     newSession.connection.rollback
     newSession.unbindFromCurrentThread
     newSession.close
@@ -211,7 +211,7 @@ trait ActiveRecordTables extends Schema {
     out.toString
   }
 
-  def table[T <: AR]()(implicit m: Manifest[T]): Table[T] = {
+  def table[T <: AR](implicit m: Manifest[T]): Table[T] = {
     val typeT = m.runtimeClass.asInstanceOf[Class[T]]
     val columnName = baseARType(typeT)
       .map(c => tableNameFromClass(c.name.toString))

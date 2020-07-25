@@ -8,9 +8,9 @@ import models._
 
 class JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
   "JodaTimeSupport" should {
-    val now = DateTime.now
-    val tomorrow = DateTime.tomorrow
-    val today = LocalDate.now
+    val now = DateTime.now()
+    val tomorrow = DateTime.tomorrow()
+    val today = LocalDate.now()
     def jodaTimeModel(m: Int = 0) =
       JodaTimeModel(now + m.month, Option(tomorrow + m.month),
         today + m.month, Option(tomorrow.toLocalDate + m.month))
@@ -24,10 +24,10 @@ class JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
       val d1 = jodaTimeModel().create
       val d2 = jodaTimeModel(1).create
       val d3 = jodaTimeModel(2).create
-      JodaTimeModel.where(_.datetime > DateTime.tomorrow)
+      JodaTimeModel.where(_.datetime > DateTime.tomorrow())
         .orderBy(_.datetime).toList must contain(allOf(d3, d2))
-      JodaTimeModel.where(_.optDatetime < DateTime.tomorrow).toList must contain(allOf(d1))
-      JodaTimeModel.where(_.localDate <= LocalDate.tomorrow + 1.month)
+      JodaTimeModel.where(_.optDatetime < DateTime.tomorrow()).toList must contain(allOf(d1))
+      JodaTimeModel.where(_.localDate <= LocalDate.tomorrow() + 1.month)
         .orderBy(_.localDate).toList must contain(allOf(d2, d1))
       JodaTimeModel.where(_.optLocalDate.between(today, today + 2.month))
         .toList must contain(allOf(d1, d2))

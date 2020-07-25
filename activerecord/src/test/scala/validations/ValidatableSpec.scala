@@ -6,7 +6,7 @@ import inner._
 class ValidatableSpec extends DatabaseSpecification {
   class SaveableImpl extends Saveable {
     var calledMethods = List[String]()
-    override def save = {
+    override def save() = {
       calledMethods :+= "save"
       true
     }
@@ -14,7 +14,7 @@ class ValidatableSpec extends DatabaseSpecification {
   }
 
   case class ValidatableModel(e: Seq[String]) extends SaveableImpl with Validatable with ProductModel {
-    override def doValidate: Unit = {
+    override def doValidate(): Unit = {
       e.foreach(errors.add)
       calledMethods :+= "doValidate"
     }
@@ -74,19 +74,19 @@ class ValidatableSpec extends DatabaseSpecification {
     "validate success" in {
       "validate" in {
         val m = new ValidatableModel(Nil)
-        m.validate must beTrue
+        m.validate() must beTrue
       }
 
       "save" in {
         val m = new ValidatableModel(Nil)
-        m.save must beTrue
+        m.save() must beTrue
         m.calledMethods mustEqual List("beforeValidation", "doValidate", "save")
       }
 
       "validate twice" in {
         val m = new ValidatableModel(Nil)
-        m.validate must beTrue
-        m.validate must beTrue
+        m.validate() must beTrue
+        m.validate() must beTrue
         m.calledMethods mustEqual List("beforeValidation", "doValidate")
       }
     }
@@ -94,20 +94,20 @@ class ValidatableSpec extends DatabaseSpecification {
     "validate failure" in {
       "validate" in {
         val m = new ValidatableModel(Seq("error"))
-        m.validate must beFalse
+        m.validate() must beFalse
       }
 
       "save" in {
         val m = new ValidatableModel(Seq("error"))
-        m.save must beFalse
+        m.save() must beFalse
         m.calledMethods mustEqual List("beforeValidation", "doValidate")
       }
 
       "validate twice" in {
         val m = new ValidatableModel(Seq("error"))
         m.errors.add("manual error")
-        m.validate must beFalse
-        m.validate must beFalse
+        m.validate() must beFalse
+        m.validate() must beFalse
         m.calledMethods mustEqual List("beforeValidation", "doValidate")
         m.errors.toList mustEqual List(
           ValidationError(m.getClass, "", "manual error"),

@@ -6,8 +6,8 @@ import models._
 import org.json4s._
 
 class JsonSupportSpec extends DatabaseSpecification {
-  override def beforeAll = {
-    super.beforeAll
+  override def beforeAll() = {
+    super.beforeAll()
     TestTables.createTestData
   }
 
@@ -148,8 +148,8 @@ class JsonSupportSpec extends DatabaseSpecification {
     }
 
     "toJson" >> {
-      User("foo").save
-      User("bar", true).save
+      User("foo").save()
+      User("bar", true).save()
       User.toList.toJson mustEqual """[{"name":"foo","isAdmin":false,"id":1},{"name":"bar","isAdmin":true,"id":2}]"""
     }
 

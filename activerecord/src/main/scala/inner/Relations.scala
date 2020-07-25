@@ -9,6 +9,7 @@ import reflections._
 import ReflectionUtil._
 import scala.language.reflectiveCalls
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 trait Relations {
@@ -244,8 +245,8 @@ trait Relations {
     def findByOrCreate(m: T, fields: String*): S = macro MethodMacros.findByOrCreate[T, S]
 
     def unsafeFindByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
-      unsafeFindBy((field, m.getValue(field)),
-        fields.map(f => (f, m.getValue(f))).toSeq:_*).getOrElse(m.create)
+      unsafeFindBy((field, m.getValue[Any](field)),
+        fields.map(f => (f, m.getValue[Any](f))).toSeq:_*).getOrElse(m.create)
     }
 
     /**
@@ -315,7 +316,7 @@ trait Relations {
 
     def deleteAll()(implicit ev: S =:= T): List[T] = companion.inTransaction {
       val records = toQuery.toList
-      records.foreach(_.delete)
+      records.foreach(_.delete())
       records.asInstanceOf[List[T]]
     }
 

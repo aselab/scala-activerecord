@@ -92,7 +92,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "removeAll" >> new TestData {
       val inter = foo.throughOption << baz
-      val removed = foo.throughOption.removeAll
+      val removed = foo.throughOption.removeAll()
       removed mustEqual List(baz)
       foo.throughOption.toList must beEmpty
       foo.throughOption.reload must beEmpty
@@ -101,12 +101,12 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "removeAll with not null constraint" >> new TestData {
       val inter = foo.through << bar
-      foo.through.removeAll must throwA(ActiveRecordException.notNullConstraint("barId"))
+      foo.through.removeAll() must throwA(ActiveRecordException.notNullConstraint("barId"))
     }
 
     "deleteAll" >> new TestData {
       val inter = foo.throughOption << baz
-      val deleted = foo.throughOption.deleteAll
+      val deleted = foo.throughOption.deleteAll()
       deleted mustEqual List(baz)
       foo.throughOption.toList must beEmpty
       Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
@@ -114,7 +114,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "deleteAll with not null constraint" >> new TestData {
       val inter = foo.through << bar
-      val deleted = foo.through.deleteAll
+      val deleted = foo.through.deleteAll()
       deleted mustEqual List(bar)
       foo.through.toList must beEmpty
       Inter.find(inter.id) must beNone
@@ -183,7 +183,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "removeAll" >> new TestData {
       foo.bars << bar
-      foo.bars.removeAll mustEqual List(bar)
+      foo.bars.removeAll() mustEqual List(bar)
       foo.bars.toList must beEmpty
       foo.bars.reload must beEmpty
       Bar.find(bar.id) must beSome
@@ -191,7 +191,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "deleteAll" >> new TestData {
       foo.bars << bar
-      foo.bars.deleteAll mustEqual List(bar)
+      foo.bars.deleteAll() mustEqual List(bar)
       foo.bars.toList must beEmpty
       Bar.find(bar.id) must beNone
     }

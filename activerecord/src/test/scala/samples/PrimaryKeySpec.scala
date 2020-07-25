@@ -33,7 +33,7 @@ class PrimaryKeySpec extends ActiveRecordSpecification {
     "uuid" >> {
       val m = UUIDModel("value").create
       m.value = "test"
-      m.save must beTrue
+      m.save() must beTrue
       UUIDModel.where(_.value === m.value).toList mustEqual List(m)
     }
   }

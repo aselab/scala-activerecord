@@ -2,10 +2,9 @@ package com.github.aselab.activerecord.io
 
 import com.github.aselab.activerecord._
 import reflections._
-import java.util.{Date, UUID, TimeZone}
+import java.util.{Date, UUID}
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._
-import org.joda.time.format.ISODateTimeFormat
 
 trait Converter[A, B] {
   def serialize(v: Any): B

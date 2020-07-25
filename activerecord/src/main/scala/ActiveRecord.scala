@@ -37,8 +37,9 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
   override def save(): Boolean = save(false)
 
   def save(throws: Boolean = false, validate: Boolean = true): Boolean = {
-    val result = if (validate) super.save else super.saveWithoutValidation
-    result || (throws && (throw ActiveRecordException.saveFailed(errors)))
+    val result = if (validate) super.save() else super.saveWithoutValidation()
+    if (!result && throws) throw ActiveRecordException.saveFailed(errors)
+    result
   }
 
   def create: this.type = create(true)
@@ -57,17 +58,17 @@ trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.As
     this
   }
 
-  protected def doCreate: Boolean = {
+  protected def doCreate(): Boolean = {
     recordCompanion.create(this)
     true
   }
 
-  protected def doUpdate: Boolean = {
+  protected def doUpdate(): Boolean = {
     recordCompanion.update(this)
     true
   }
 
-  protected def doDelete: Boolean = {
+  protected def doDelete(): Boolean = {
     val result = if (isDeleted) false else recordCompanion.delete(id)
     if (result) _isDeleted = true
     result
@@ -156,6 +157,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
    */
   protected[activerecord] def create(model: T): Unit = inTransaction {
     table.insert(model)
+    ()
   }
 
   /**
@@ -163,6 +165,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
    */
   protected[activerecord] def update(model: T): Unit = inTransaction {
     table.update(model)
+    ()
   }
 
   /**
@@ -193,7 +196,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   def forceInsertAll(models: T*): Unit = forceInsertAll(models.toIterable)
 
   def insertWithValidation(models: Iterable[T]): Iterable[T] = {
-    val (valid, invalid) = models.partition(_.validate)
+    val (valid, invalid) = models.partition(_.validate())
     forceInsertAll(valid)
     invalid
   }

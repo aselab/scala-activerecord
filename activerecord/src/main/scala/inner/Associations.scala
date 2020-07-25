@@ -65,7 +65,7 @@ trait Associations {
 
     def delete(): Option[T] = companion.inTransaction {
       val result = toOption
-      result.foreach(_.delete)
+      result.foreach(_.delete())
       relation.cache = Nil
       result
     }
@@ -78,7 +78,7 @@ trait Associations {
 
     def deleteAll(): List[T] = companion.inTransaction {
       val result = relation.toList
-      result.foreach(_.delete)
+      result.foreach(_.delete())
       relation.cache = Nil
       result
     }
@@ -138,12 +138,12 @@ trait Associations {
       val field = fieldInfo(foreignKey)
 
       val r = source.where(conditionFactory(conditions)).where(
-        m => field.toInExpression(m.getValue(foreignKey), ids)).toQuery.toList
+        m => field.toInExpression(m.getValue[Any](foreignKey), ids)).toQuery.toList
       r.groupBy(_.getOption[Any](foreignKey).orNull)
     }
 
     def associate(m: T): T = companion.inTransaction {
-      if (hasConstraint) delete else remove
+      if (hasConstraint) delete() else remove()
       if (m.isNewRecord) m.save(throws = true)
       assignConditions(m).update
       relation.cache = List(m)
@@ -199,7 +199,7 @@ trait Associations {
 
     def associate(m: T): I = companion.inTransaction {
       if (m.isNewRecord) throw ActiveRecordException.recordMustBeSaved
-      if (hasConstraint) delete else remove
+      if (hasConstraint) delete() else remove()
       assignConditions(m).update
       relation.cache = List(m)
       val inter = through.build
@@ -227,8 +227,8 @@ trait Associations {
     }
 
     override def delete(): Option[T] = companion.inTransaction {
-      val result = super.delete
-      if (hasConstraint) through.delete else remove
+      val result = super.delete()
+      if (hasConstraint) through.delete() else remove()
       result
     }
   }
@@ -250,7 +250,7 @@ trait Associations {
       val field = fieldInfo(foreignKey)
 
       val r = source.where(conditionFactory(conditions)).where(
-        m => field.toInExpression(m.getValue(foreignKey), ids)).toQuery.toList
+        m => field.toInExpression(m.getValue[Any](foreignKey), ids)).toQuery.toList
       r.groupBy(_.getOption[Any](foreignKey).orNull)
     }
 
@@ -272,7 +272,7 @@ trait Associations {
     def ++=(list: Iterable[T]): List[T] = this << list
 
     def :=(list: Iterable[T]): List[T] = companion.inTransaction {
-      if (hasConstraint) deleteAll else removeAll
+      if (hasConstraint) deleteAll() else removeAll()
       relation.cache = list.toList.map(associate)
     }
 
@@ -355,7 +355,7 @@ trait Associations {
     def ++=(list: Iterable[T]): List[I] = this << list
 
     def :=(list: Iterable[T]): List[I] = companion.inTransaction {
-      if (hasConstraint) deleteAll else removeAll
+      if (hasConstraint) deleteAll() else removeAll()
       relation.cache = list.toList
       relation.cache.map(associate)
     }
@@ -393,8 +393,8 @@ trait Associations {
     }
 
     override def deleteAll(): List[T] = companion.inTransaction {
-      val result = super.deleteAll
-      if (hasConstraint) through.deleteAll else removeAll
+      val result = super.deleteAll()
+      if (hasConstraint) through.deleteAll() else removeAll()
       relation.cache = Nil
       result
     }

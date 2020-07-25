@@ -9,23 +9,24 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
   // override application.conf settings
   override def config = super.config ++ Map(
     "db.activerecord.driver" -> "org.h2.Driver",
-    "db.activerecord.url" -> ("jdbc:h2:mem:activerecord-test-" + scala.util.Random.nextInt)
+    "db.activerecord.url" -> ("jdbc:h2:mem:activerecord-test-" + scala.util.Random.nextInt())
   )
 
-  override def beforeAll = {
+  override def beforeAll() = {
     val builder = new GuiceApplicationBuilder()
     builder.configure(config)
-    val app = builder.build
+    val app = builder.build()
     Play.start(app)
-    super.beforeAll
+    super.beforeAll()
   }
 
-  override def afterAll = {
+  override def afterAll() = {
     try {
-      super.afterAll
+      super.afterAll()
     } finally {
       if (app != null) {
-        app.stop
+        app.stop()
+        ()
       }
     }
   }

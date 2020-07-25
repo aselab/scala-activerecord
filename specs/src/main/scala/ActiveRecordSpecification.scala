@@ -12,12 +12,12 @@ trait ActiveRecordSpecification extends Specification with BeforeAfterAll {
   sequential
   implicit def toTableList(table: ActiveRecordTables) = Seq(table)
 
-  override def beforeAll = {
+  override def beforeAll() = {
     System.setProperty("run.mode", "test")
     schema.foreach(_.initialize(config))
   }
 
-  override def afterAll = schema.foreach { s => s.transaction {
+  override def afterAll() = schema.foreach { s => s.transaction {
     s.drop
     s.cleanup
   }}
@@ -33,7 +33,7 @@ trait ActiveRecordSpecification extends Specification with BeforeAfterAll {
 
     def define(m: (String, Any)*): Unit = define(m.toMap)
 
-    def create(name: String, m: Map[String, Any]): T = factory(name).apply.unsafeAssign(m).create
+    def create(name: String, m: Map[String, Any]): T = factory(name).apply().unsafeAssign(m).create
 
     def create(name: String, m: (String, Any)*): T = create(name, m.toMap)
 

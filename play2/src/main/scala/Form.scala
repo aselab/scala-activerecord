@@ -14,7 +14,7 @@ class ActiveModelFormatter[T <: ActiveModel](
   companion: ActiveModelCompanion[T], source: Option[T]) extends Formatter[T] { 
   def bind(key: String, data: Map[String, String]): Either[Seq[FormError], T] = {
     val m = companion.bind(data)(source.getOrElse(companion.newInstance))
-    if (m.validate) {
+    if (m.validate()) {
       Right(m)
     } else {
       Left(m.formErrors.map(e => FormError(e.key, e.error, e.args.toSeq)).toSeq)

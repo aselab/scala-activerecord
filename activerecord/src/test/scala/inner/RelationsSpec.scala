@@ -7,8 +7,8 @@ import models._
 import java.sql.Timestamp
 
 class RelationsSpec extends DatabaseSpecification with AutoRollback {
-  override def beforeAll = {
-    super.beforeAll
+  override def beforeAll() = {
+    super.beforeAll()
     TestTables.createTestData
   }
 
@@ -119,7 +119,7 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
     "#compute with joined relation" >> {
       PrimitiveModel.limit(2).foreach {m =>
         m.int = 50
-        m.save
+        m.save()
       }
 
       val joined = relation.where(_.id === 50).joins[PrimitiveModel](
@@ -165,7 +165,7 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
     }
 
     "#distinct" >> {
-      PrimitiveModel.newModel(1).save
+      PrimitiveModel.newModel(1).save()
       PrimitiveModel.where(_.string === "string1").select(_.string).distinct.count mustEqual 1
     }
 

@@ -12,8 +12,19 @@ def play20(app: String, scope: String) = Def.setting {
   "com.typesafe.play" %% app % "2.8.1" % scope
 }
 
+val compileOptions = Seq(
+  "-encoding",
+  "utf-8",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Wdead-code",
+  "-Wvalue-discard",
+  "-Xfatal-warnings"
+)
+
 val compilerSettings = Seq(
-  scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:implicitConversions"),
+  scalacOptions ++= compileOptions,
   scalacOptions in Compile in doc ++= {
     val base = baseDirectory.value
     Seq("-sourcepath", base.getAbsolutePath, "-doc-source-url",

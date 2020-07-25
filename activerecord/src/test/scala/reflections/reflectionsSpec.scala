@@ -53,7 +53,8 @@ class reflectionsSpec extends Specification {
   class NotSupportedModel(func: (Int) => String)
 
   class ExceptionModel {
-    throw new Exception
+    val isError = true
+    if (isError) throw new Exception
   }
 
   abstract class BaseModel {
@@ -72,9 +73,9 @@ class reflectionsSpec extends Specification {
       val factory = ClassInfo(classOf[PrimitiveModel]).factory
 
       "can construct new instance" in {
-        val m = factory.apply
+        val m = factory.apply()
         m.isInstanceOf[PrimitiveModel] must beTrue
-        factory.apply must not equalTo(m)
+        factory.apply() must not equalTo(m)
       }
 
       "is added to ClassInfo.factories" in {
@@ -86,16 +87,16 @@ class reflectionsSpec extends Specification {
       val factory = ClassInfo(classOf[MultipleConstructor]).factory
 
       "uses a constructor which has minimum arguments size" in {
-        factory.apply.string mustEqual "test"
+        factory.apply().string mustEqual "test"
       }
     }
 
     "factory of ComplexModel" in {
       "can construct new instance" in {
         val factory = ClassInfo(classOf[ComplexModel]).factory
-        val m = factory.apply
+        val m = factory.apply()
         m.isInstanceOf[ComplexModel] must beTrue
-        factory.apply must not equalTo(m)
+        factory.apply() must not equalTo(m)
       }
 
       "is added to ClassInfo.factories" in {
@@ -115,7 +116,7 @@ class reflectionsSpec extends Specification {
     "exception in constructor" in {
       val c = classOf[ExceptionModel]
       val factory = ClassInfo(c).factory
-      factory.apply must throwA(
+      factory.apply() must throwA(
         ActiveRecordException.cannotCreateInstance(c.getName, null)
       )
     }

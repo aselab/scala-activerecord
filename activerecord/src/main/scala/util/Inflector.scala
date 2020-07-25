@@ -21,6 +21,7 @@ package com.github.aselab.activerecord.util
 import java.util.Locale.ENGLISH
 import annotation.tailrec
 import scala.util.matching.Regex
+import scala.language.implicitConversions
 
 trait Inflector {
 

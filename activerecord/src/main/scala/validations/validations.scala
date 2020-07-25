@@ -8,7 +8,6 @@ import scala.util.DynamicVariable
 import java.util.Locale
 import scala.reflect.ClassTag
 import scala.language.reflectiveCalls
-import scala.language.existentials
 
 class Errors(model: Class[_]) extends Iterable[ValidationError] {
   protected val errorList =
@@ -42,8 +41,8 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
 
   def global: Seq[ValidationError] = get("")
 
-  def clear: Unit = {
-    errorList.clear
+  def clear(): Unit = {
+    errorList.clear()
     changed = true
   }
 
@@ -63,9 +62,9 @@ trait Validatable extends Saveable { self: ProductModel =>
   def globalErrors: Seq[ValidationError] = errors.global
   def fieldErrors: Seq[ValidationError] = errors.filterNot(_.isGlobal).toSeq
 
-  abstract override def save(): Boolean = validate && super.save
+  abstract override def save(): Boolean = validate() && super.save()
 
-  def saveWithoutValidation(): Boolean = super.save
+  def saveWithoutValidation(): Boolean = super.save()
 
   def validate(): Boolean = {
     if (!_validated) {
@@ -76,14 +75,14 @@ trait Validatable extends Saveable { self: ProductModel =>
     errors.isEmpty
   }
 
-  def isValid: Boolean = validate
+  def isValid: Boolean = validate()
 
   def hasErrors: Boolean = !isValid
 
   def hasError(name: String): Boolean = errors.get(name).nonEmpty
 
   def clearErrors(): Unit = {
-    errors.clear
+    errors.clear()
     _validated = false
   }
 
@@ -123,7 +122,7 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: ClassTag[T])
   def model: Validatable = _model.value
 
   def errors: Errors = model.errors
-  def message(error: String): String = Option(annotation.message).filter(!_.isEmpty)
+  def message(error: String): String = Option(annotation.message()).filter(!_.isEmpty)
     .getOrElse(Validator.ERROR_PREFIX + error)
 
   def validate(value: Any): Unit
@@ -134,7 +133,7 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: ClassTag[T])
     _annotation.withValue(a) {
       _model.withValue(model) {
         _fieldName.withValue(name) {
-          val skip = (annotation.on match {
+          val skip = (annotation.on() match {
             case "save" => false
             case "create" if model.isNewRecord => false
             case "update" if !model.isNewRecord => false
@@ -317,7 +316,7 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
   abstract override def doValidate(): Unit = {
     _companion.fieldInfo.foreach {
       case (name, info) if classOf[Validatable].isAssignableFrom(info.fieldType) =>
-        info.toSeq[Validatable](this).map(_.validate)
+        info.toSeq[Validatable](this).map(_.validate())
       case (name, info) =>
         val validators = _companion.validators(name)
         if (!validators.isEmpty) {
@@ -334,7 +333,7 @@ trait ValidationSupport extends Validatable {self: ProductModel =>
   }
 
   def saveEither: Either[Errors, this.type] = {
-    if (save) Right[Errors, this.type](this) else Left(this.errors)
+    if (save()) Right[Errors, this.type](this) else Left(this.errors)
   }
 }
 

@@ -4,8 +4,8 @@ import com.github.aselab.activerecord.dsl._
 import models._
 
 class ActiveRecordTablesSpec extends DatabaseSpecification {
-  override def beforeAll = {
-    super.beforeAll
+  override def beforeAll() = {
+    super.beforeAll()
     TestTables.createTestData
   }
 
@@ -17,9 +17,9 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
     "withRollback" >> {
       val users: List[User] = User.all.toList
       TestTables.withRollback {
-        User("testuser").save
-        User("testuser2").save
-        User("testuser3").save
+        User("testuser").save()
+        User("testuser2").save()
+        User("testuser3").save()
         User.all.toList must not equalTo(users)
       }
       User.all.toList mustEqual users
@@ -28,9 +28,9 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
     "startTransaction and rollback" >> {
       TestTables.startTransaction
       val users: List[User] = User.all.toList
-      User("testuser").save
-      User("testuser2").save
-      User("testuser3").save
+      User("testuser").save()
+      User("testuser2").save()
+      User("testuser3").save()
       TestTables.rollback
       User.all.toList mustEqual users
     }

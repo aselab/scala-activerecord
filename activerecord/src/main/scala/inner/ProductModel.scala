@@ -20,7 +20,7 @@ trait ProductModelCompanion[T <: ProductModel] {
   /**
    * Create a new model object.
    */
-  def newInstance: T = classInfo.factory.apply
+  def newInstance: T = classInfo.factory.apply()
 
   /** ProductModel class information */
   lazy val classInfo: ClassInfo[T] = ClassInfo(targetClass)

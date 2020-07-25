@@ -63,7 +63,7 @@ class ErrorsSpec extends DatabaseSpecification with Mockito {
       errors.global.size mustEqual 1
       errors("name").size mustEqual 1
       errors.size mustEqual 2
-      errors.clear
+      errors.clear()
       errors.global must beEmpty
       errors("name") must beEmpty
       errors must beEmpty

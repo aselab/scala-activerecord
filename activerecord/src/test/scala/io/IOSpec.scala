@@ -406,7 +406,7 @@ class IOSpec extends DatabaseSpecification with Mockito {
     "validate success" in {
       "validate" in {
         val m = new ComplexModel
-        m.validate must beTrue
+        m.validate() must beTrue
       }
     }
 
@@ -414,7 +414,7 @@ class IOSpec extends DatabaseSpecification with Mockito {
       "errors in basemodel" in {
         val m = new ComplexModel
         m.errors.add("error")
-        m.validate must beFalse
+        m.validate() must beFalse
       }
 
       "errors in nestmodel" in {
@@ -425,7 +425,7 @@ class IOSpec extends DatabaseSpecification with Mockito {
         val nestModel2 = NestModel.create(listModel2)
         val nestModel3 = NestModel.create(listModel3)
         val m = ComplexModel(1, nestModel1, List(nestModel2, nestModel3))
-        m.validate must beFalse
+        m.validate() must beFalse
       }
     }
   }

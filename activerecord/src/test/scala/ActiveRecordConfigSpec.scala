@@ -91,13 +91,13 @@ class ActiveRecordConfigSpec extends Specification {
 }
 
 class MultipleSchemaSpec extends ActiveRecordSpecification {
-  override def beforeAll = {
+  override def beforeAll() = {
     System.setProperty("run.mode", "test")
     schema1.Tables.initialize(Map("com.github.aselab.activerecord.schema1.Tables.jdbcurl" -> "jdbc:h2:mem:activerecord-test1"))
     schema2.Tables.initialize(Map("com.github.aselab.activerecord.schema2.Tables.jdbcurl" -> "jdbc:h2:mem:activerecord-test2"))
   }
 
-  override def afterAll = {
+  override def afterAll() = {
     schema1.Tables.drop
     schema2.Tables.drop
     schema1.Tables.cleanup
@@ -109,9 +109,9 @@ class MultipleSchemaSpec extends ActiveRecordSpecification {
       val foo = schema1.Foo("aaa")
       val hoge = schema2.Hoge("aaa")
       val bar = schema1.Bar("aaa")
-      foo.save
-      hoge.save
-      bar.save
+      foo.save()
+      hoge.save()
+      bar.save()
       schema1.Foo.toList mustEqual List(foo)
       schema2.Hoge.toList mustEqual List(hoge)
       schema1.Bar.toList mustEqual List(bar)

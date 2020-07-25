@@ -121,7 +121,7 @@ trait FormSerializer extends IO { self: ProductModel =>
     errors.toSeq ++ nestErrors
   }
 
-  override def validate(): Boolean = super.validate && formErrors.isEmpty
+  override def validate(): Boolean = super.validate() && formErrors.isEmpty
 }
 
 trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>

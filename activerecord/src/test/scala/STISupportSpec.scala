@@ -74,7 +74,7 @@ class STISupportSpec extends DatabaseSpecification with AutoRollback {
     }
 
     "forceDeleteAll" >> new MultipleTestData {
-      Student.forceDeleteAll mustEqual 3
+      Student.forceDeleteAll() mustEqual 3
       Student.count mustEqual 0
       Teacher.count mustEqual 3
     }

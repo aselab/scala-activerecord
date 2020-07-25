@@ -15,6 +15,7 @@ object SchemaTestTables extends ActiveRecordTables {
   override def drop = {
     super.drop
     execute("drop schema test_schema")
+    ()
   }
 }
 

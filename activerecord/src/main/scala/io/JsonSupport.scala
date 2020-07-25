@@ -4,10 +4,8 @@ import com.github.aselab.activerecord._
 import inner._
 import reflections._
 import scala.reflect.ClassTag
+import scala.language.implicitConversions
 
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.UUID
 import org.json4s._
 import org.json4s.native.JsonMethods
 import org.json4s.native.Serialization

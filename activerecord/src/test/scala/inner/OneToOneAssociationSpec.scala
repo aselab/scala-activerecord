@@ -71,7 +71,7 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
 
     "remove" >> new TestData {
       group.userByOtherKey := user
-      val removed = group.userByOtherKey.remove
+      val removed = group.userByOtherKey.remove()
       removed must beSome(user)
       removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
       group.userByOtherKey.toOption must beNone
@@ -79,12 +79,12 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
 
     "remove with not null constraint" >> new TestData {
       group.user := user
-      group.user.remove must throwA(ActiveRecordException.notNullConstraint("groupId"))
+      group.user.remove() must throwA(ActiveRecordException.notNullConstraint("groupId"))
     }
 
     "delete" >> new TestData {
       group.user := user
-      group.user.delete must beSome(user)
+      group.user.delete() must beSome(user)
       group.user.toOption must beNone
       User.exists(_.id === user.id) must beFalse
     }
@@ -128,11 +128,11 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
     }
 
     "remove with not null constraint" >> new TestData {
-      user.address.remove must throwA(ActiveRecordException.notNullConstraint("addressId"))
+      user.address.remove() must throwA(ActiveRecordException.notNullConstraint("addressId"))
     }
 
     "remove" >> new TestData {
-      val removed = user.optionAddress.remove
+      val removed = user.optionAddress.remove()
       removed must beSome(address)
       Profile.exists(_.id === profile.id) must beTrue
       Address.exists(_.id === address.id) must beTrue
@@ -140,7 +140,7 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
     }
 
     "delete with not null constraint" >> new TestData {
-      val deleted = user.address.delete
+      val deleted = user.address.delete()
       deleted must beSome(address)
       Profile.exists(_.id === profile.id) must beFalse
       Address.exists(_.id === address.id) must beFalse
@@ -148,7 +148,7 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
     }
 
     "delete" >> new TestData {
-      val deleted = user.optionAddress.delete
+      val deleted = user.optionAddress.delete()
       deleted must beSome(address)
       Profile.exists(_.id === profile.id) must beTrue
       Address.exists(_.id === address.id) must beFalse

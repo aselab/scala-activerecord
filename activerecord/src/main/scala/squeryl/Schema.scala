@@ -1,6 +1,6 @@
 package org.squeryl
 
-import internals.{FieldMapper, FieldMetaData, PosoMetaData}
+import internals.FieldMapper
 import dsl.ast.FieldSelectElement
 import java.sql.ResultSet
 import internals.ResultSetMapper

@@ -78,7 +78,7 @@ class PlayConfig(
     getString("schema").getOrElse("models.Tables")
 
   def connection: Connection =
-    dbApi.database(_prefix).getConnection
+    dbApi.database(_prefix).getConnection()
 
   override def log = {
     logger.debug("----- Database setting: %s (mode: %s) -----".format(_prefix,  environment.mode))

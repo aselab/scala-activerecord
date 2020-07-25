@@ -18,8 +18,8 @@ class ValidatorSpec extends Specification with Mockito {
     on: String = "save"
   )(implicit m: Manifest[T]) = {
     val a = mock[T]
-    a.message returns ""
-    a.on returns on
+    a.message() returns ""
+    a.on() returns on
     a
   }
 

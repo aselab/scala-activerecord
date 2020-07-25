@@ -4,6 +4,7 @@ import com.github.aselab.activerecord.dsl._
 import com.github.nscala_time.time.Imports._
 import java.sql.Timestamp
 import java.util.Date
+import scala.language.implicitConversions
 
 trait DateTimeSupport { self: org.squeryl.PrimitiveTypeMode =>
   implicit val jodaTimeTEF = new NonPrimitiveJdbcMapper[Timestamp, DateTime, TTimestamp](timestampTEF, this) {

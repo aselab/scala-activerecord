@@ -9,11 +9,11 @@ class VersionsSpec extends DatabaseSpecification {
 
     "doUpdateでVersionに保存されること" in {
       val model = models.VersionModel("str", true, 10, Some("aaa"))
-      model.save
+      model.save()
       val m1 = model.map("string" -> "bbb", "boolean" -> true)
-      m1.save
+      m1.save()
       val m2 = m1.map("string" -> "bbb", "boolean" -> false)
-      m2.save
+      m2.save()
       Version.all.toList must equalTo(List(
         Version(modelName, 1, "string", "str", "bbb"),
         Version(modelName, 1, "boolean", "true", "false")

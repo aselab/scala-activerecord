@@ -9,7 +9,7 @@ class TimestampsSpec extends DatabaseSpecification {
     "create" in {
       val model = TimestampsModel("")
       model.createdAt must beNull
-      model.save
+      model.save()
       model.createdAt must not(beNull)
       model.updatedAt must not(beNull)
     }
@@ -19,7 +19,7 @@ class TimestampsSpec extends DatabaseSpecification {
     "create" in {
       val model = DatestampsModel("")
       model.createdOn must beNull
-      model.save
+      model.save()
       model.createdOn must not(beNull)
       model.updatedOn must not(beNull)
     }

@@ -4,14 +4,13 @@ import com.github.aselab.activerecord._
 import org.joda.time.{LocalDate, DateTime}
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
-import scala.reflect.ClassTag
 import scala.util.control.Exception._
 import annotations._
 import scala.tools.scalap.scalax.rules.scalasig._
 import scala.language.reflectiveCalls
-import scala.language.existentials
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
+import scala.language.implicitConversions
 
 class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   import ClassInfo._
@@ -85,10 +84,10 @@ object ClassInfo {
         // test creation parameters
         val facts = params.map(c =>
           apply(c.asInstanceOf[Class[AnyRef]]).factory)
-        facts.foreach(_.apply)
+        facts.foreach(_.apply())
 
         () => try {
-          const.newInstance(facts.map(_.apply):_*).asInstanceOf[AnyRef]
+          const.newInstance(facts.map(_.apply()):_*).asInstanceOf[AnyRef]
         } catch {
           case e: Throwable => throw ActiveRecordException.cannotCreateInstance(
             clazz.getName, e.getMessage)

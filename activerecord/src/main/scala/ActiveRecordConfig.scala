@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord
 
-import org.squeryl.Session
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters._
 import java.sql.Connection
@@ -8,7 +7,6 @@ import java.util.TimeZone
 import com.zaxxer.hikari._
 import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
-import scala.util.control.Exception.catching
 import scala.jdk.CollectionConverters._
 import org.joda.time.format._
 import org.joda.time.DateTimeZone

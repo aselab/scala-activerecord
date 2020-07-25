@@ -10,8 +10,8 @@ trait Optimistic extends CRUDable { self: AR =>
   private def occVersion = occVersionNumber
 
   /** update with lock */
-  abstract override protected def doUpdate = try {
-    val result = super.doUpdate
+  abstract override protected def doUpdate() = try {
+    val result = super.doUpdate()
     if (result) {
       this.setValue("occVersionNumber", occVersion + 1)
     }
@@ -21,9 +21,9 @@ trait Optimistic extends CRUDable { self: AR =>
   }
 
   /** destroy with lock */
-  abstract override protected def doDelete = self.recordInDatabase match {
+  abstract override protected def doDelete() = self.recordInDatabase match {
     case Some(m) if m.occVersion != occVersion =>
       throw ActiveRecordException.staleDelete(self.getClass.getName)
-    case _ => super.doDelete
+    case _ => super.doDelete()
   }
 }

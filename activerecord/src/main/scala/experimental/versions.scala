@@ -6,16 +6,15 @@ trait Versionable extends ActiveRecord with Serializable {
   import reflections.ReflectionUtil._
 
   @dsl.Ignore private lazy val _className = getClass.getName
+  @dsl.Ignore protected var changed = collection.mutable.Map[String, (Any, Any)]()
 
-  abstract override def doUpdate: Boolean = Version.inTransaction {
+  abstract override def doUpdate(): Boolean = Version.inTransaction {
     changed.foreach { case (name, value) =>
-      Version(_className, this.id, name, value._1.toString, value._2.toString).save
+      Version(_className, this.id, name, value._1.toString, value._2.toString).save()
     }
-    changed.clear
-    super.doUpdate
+    changed.clear()
+    super.doUpdate()
   }
-
-  @dsl.Ignore private var changed = collection.mutable.Map[String, (Any, Any)]()
 
   private def setId(id: Long) = {
     val f = classOf[ActiveRecord].getDeclaredField("id")
@@ -54,5 +53,5 @@ case class Version(
 object Version extends ActiveRecordCompanion[Version]
 
 trait VersionTable extends org.squeryl.Schema {
-  val _versionTable = table[Version]
+  val _versionTable = table[Version]()
 }

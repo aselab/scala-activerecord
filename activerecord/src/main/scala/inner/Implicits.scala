@@ -7,6 +7,7 @@ import ActiveRecord._
 import reflections._
 import scala.reflect.ClassTag
 import scala.language.reflectiveCalls
+import scala.language.implicitConversions
 
 // scalastyle:off
 

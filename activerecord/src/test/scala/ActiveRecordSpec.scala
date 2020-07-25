@@ -8,8 +8,8 @@ import java.sql.Timestamp
 import models._
 
 class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
-  override def beforeAll = {
-    super.beforeAll
+  override def beforeAll() = {
+    super.beforeAll()
     TestTables.createTestData
   }
 
@@ -342,29 +342,29 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       val m = PrimitiveModel.newModel(5)
       val size = PrimitiveModel.all.size
       m.string = "abcdezzz"
-      m.save
+      m.save()
       PrimitiveModel.all.size mustEqual size + 1
 
       val oldId = m.id
       m.string = "aaaa"
-      m.save
+      m.save()
       m.id mustEqual oldId
       PrimitiveModel.find(oldId).get.string mustEqual "aaaa"
 
-      m.delete must beTrue
+      m.delete() must beTrue
       m.isPersisted must beFalse
-      m.delete must beFalse
+      m.delete() must beFalse
       PrimitiveModel.find(m.id) must beNone
     }
 
     "recordInDatabase" >> {
-      OptimisticModel("record").save
+      OptimisticModel("record").save()
       val m1 = OptimisticModel.head
       val m2 = OptimisticModel.head
       m1.field = "update"
-      m1.save
+      m1.save()
       m2.recordInDatabase must beSome(m1)
-      m1.delete
+      m1.delete()
       m2.recordInDatabase must beNone
     }
   }

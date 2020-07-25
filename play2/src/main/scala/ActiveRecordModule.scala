@@ -36,9 +36,7 @@ class ActiveRecordInitialize @Inject() (
 
 class ActiveRecordPlayModule extends AbstractModule {
   override def configure(): Unit = {
-    Seq(
-      bind(PlayConfig.getClass.asInstanceOf[Class[PlayConfig.type]]).toInstance(PlayConfig),
-      bind(classOf[ActiveRecordInitialize]).asEagerSingleton()
-    )
+    bind(PlayConfig.getClass.asInstanceOf[Class[PlayConfig.type]]).toInstance(PlayConfig)
+    bind(classOf[ActiveRecordInitialize]).asEagerSingleton()
   }
 }
