@@ -31,5 +31,5 @@ trait ActiveRecordPlaySpecification extends ActiveRecordSpecification {
     }
   }
 
-  override def schema: Seq[ActiveRecordTables] = PlayConfig.loadSchemas
+  override def schema: Seq[ActiveRecordTables] = PlayConfigProvider.loadSchemas
 }

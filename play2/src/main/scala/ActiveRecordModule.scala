@@ -13,7 +13,7 @@ class ActiveRecordInitialize @Inject() (
   lifecycle: ApplicationLifecycle,
   environment: Environment,
   configuration: Configuration,
-  config: PlayConfig.type
+  config: PlayConfigProvider
 ) {
   implicit val classLoader = environment.classLoader
   lazy val activeRecordTables = configuration.getOptional[Configuration]("schema")
@@ -36,7 +36,7 @@ class ActiveRecordInitialize @Inject() (
 
 class ActiveRecordPlayModule extends AbstractModule {
   override def configure(): Unit = {
-    bind(PlayConfig.getClass.asInstanceOf[Class[PlayConfig.type]]).toInstance(PlayConfig)
+    bind(classOf[PlayConfigProvider]).asEagerSingleton()
     bind(classOf[ActiveRecordInitialize]).asEagerSingleton()
   }
 }

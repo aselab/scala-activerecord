@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord
 
 import java.sql.Connection
-import javax.inject.Inject
+import javax.inject._
 import java.util.{Locale, TimeZone}
 import play.api.{Configuration, Environment}
 import play.api.db.DBApi
@@ -12,7 +12,7 @@ class PlayConfig(
   val schema: ActiveRecordTables,
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
-  import PlayConfig._
+  import PlayConfigProvider._
 
   lazy val schemaName = schema.getClass.getName.dropRight(1)
   lazy val _prefix = configuration.getOptional[String]("schema." + schemaName).getOrElse("activerecord")
@@ -97,8 +97,8 @@ object PlayTranslator extends i18n.Translator  {
   def get(key: String, args: Any*)(implicit locale: Locale): Option[String] = {
     implicit val lang = Lang(locale.getLanguage, locale.getCountry)
 
-    if (PlayConfig.messages.messages.get(lang.code).exists(_.isDefinedAt(key))) {
-      Some(PlayConfig.messages(key, args:_*))
+    if (PlayConfigProvider.messages.messages.get(lang.code).exists(_.isDefinedAt(key))) {
+      Some(PlayConfigProvider.messages(key, args:_*))
     } else {
       i18n.DefaultTranslator.get(key, args:_*)
     }
@@ -110,17 +110,26 @@ trait PlaySupport { self: ActiveRecordTables =>
     new PlayConfig(self, c)
 }
 
-object PlayConfig {
-  @Inject
+@Singleton
+class PlayConfigProvider @Inject()(
+  messages: MessagesApi,
+  configuration: Configuration,
+  environment: Environment,
+  dbApi: DBApi
+) {
+  PlayConfigProvider.messages = messages
+  PlayConfigProvider.configuration = configuration
+  PlayConfigProvider.environment = environment
+  PlayConfigProvider.dbApi = dbApi
+}
+
+object PlayConfigProvider {
   var messages: MessagesApi = _
 
-  @Inject
   var configuration: Configuration = _
 
-  @Inject
   var environment: Environment = _
 
-  @Inject
   var dbApi: DBApi = _
 
   def loadSchemas = configuration.getOptional[Configuration]("schema")
