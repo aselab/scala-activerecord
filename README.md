@@ -1,4 +1,4 @@
-# Scala ActiveRecord [![maven central](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.12) [![javadoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12/com/github/aselab/activerecord/index.html?javadocio=true)
+# Scala ActiveRecord [![maven central](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.aselab/scala-activerecord_2.13) [![javadoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.13.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.13/com/github/aselab/activerecord/index.html?javadocio=true)
 
 scala-activerecord is an ORM library for Scala.
 
