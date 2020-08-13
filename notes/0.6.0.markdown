@@ -1,0 +1,14 @@
+## Breaking changes
+* Drop support for Scala 2.11.x, 2.12.x
+* Drop support for Play 2.6.x
+
+## New features
+* Scala 2.13 Support
+* Play 2.8 support
+* Scalatra 2.7 support
+
+## Changed
+* Bump library versions
+* drop generator projects
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.5.0...0.6.0)
