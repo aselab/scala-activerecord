@@ -76,7 +76,7 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 ## Web framework support
 
 * [Play 2.x plugin](https://github.com/aselab/scala-activerecord/tree/master/play2)
-* [Scalatra 2.5.x plugin](https://github.com/aselab/scala-activerecord/tree/master/scalatra)
+* [Scalatra 2.7.x plugin](https://github.com/aselab/scala-activerecord/tree/master/scalatra)
 
 ## License
 

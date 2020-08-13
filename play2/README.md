@@ -1,4 +1,4 @@
-# Scala ActiveRecord Play2.6 Plugin
+# Scala ActiveRecord Play2.8 Plugin
 
 ## Sample code
 
@@ -12,10 +12,10 @@ Add the following settings in `build.sbt` or `project/Build.scala`
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.github.aselab" %% "scala-activerecord" % "0.4.0-SNAPSHOT",
-  "com.github.aselab" %% "scala-activerecord-play2" % "0.4.0-SNAPSHOT",
+  "com.github.aselab" %% "scala-activerecord" % "0.6.0",
+  "com.github.aselab" %% "scala-activerecord-play2" % "0.6.0",
   jdbc,
-  "com.h2database" % "h2" % "1.4.196"  // See Supported databases
+  "com.h2database" % "h2" % "1.4.200"  // See Supported databases
 )
 ```
 
