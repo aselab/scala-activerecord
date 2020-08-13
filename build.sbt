@@ -66,18 +66,6 @@ val defaultSettings = Seq(
   ivyLoggingLevel := UpdateLogging.DownloadOnly
 ) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
 
-// val pluginSettings = defaultSettings ++ ScriptedPlugin.scriptedSettings ++
-//   Seq(
-//      scalaVersion := "2.10.6",
-//      sbtPlugin := true,
-//      crossScalaVersions := Seq("2.10.6"),
-//      ScriptedPlugin.scriptedBufferLog := false,
-//      ScriptedPlugin.scriptedLaunchOpts := { ScriptedPlugin.scriptedLaunchOpts.value ++
-//        originalJvmOptions :+ s"-Dversion=${version.value}"
-//      },
-//      watchSources ++= ScriptedPlugin.sbtTestDirectory.value.***.get
-//   )
-
 lazy val root = project.in(file("."))
   .settings(defaultSettings: _*)
   .settings(publish := {}, publishLocal := {}, packagedArtifacts := Map.empty)
@@ -139,28 +127,11 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
-    "org.scalatra" %% "scalatra" % "2.7.0-RC1" % "provided",
+    "org.scalatra" %% "scalatra" % "2.7.0" % "provided",
     "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 ).dependsOn(core)
-
-// lazy val generator = project.settings(pluginSettings:_*).settings(
-//   name := "scala-activerecord-generator",
-//   resolvers ++= defaultResolvers,
-//   addSbtPlugin("com.github.aselab" % "sbt-generator" % "0.1.0-SNAPSHOT"),
-//   libraryDependencies ++= Seq(
-//       "io.backchat.inflector" %% "scala-inflector" % "1.3.5"
-//     )
-// )
-
-// lazy val play2Sbt = project.settings(pluginSettings:_*).settings(
-//     name := "scala-activerecord-play2-sbt"
-//   ).dependsOn(generator)
-
-// lazy val scalatraSbt = project.settings(pluginSettings:_*).settings(
-//     name := "scala-activerecord-scalatra-sbt"
-//   ).dependsOn(generator)
 
 val pomXml =
   <url>https://github.com/aselab/scala-activerecord</url>
