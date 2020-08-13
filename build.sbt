@@ -3,13 +3,13 @@ val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.13" => "4.8.3"
+    case "2.13" => "4.10.2"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.8.1" % scope
+  "com.typesafe.play" %% app % "2.8.2" % scope
 }
 
 val compileOptions = Seq(
@@ -74,12 +74,12 @@ lazy val root = project.in(file("."))
 lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
-    "org.squeryl" %% "squeryl" % "0.9.14",
+    "org.squeryl" %% "squeryl" % "0.9.15",
     "com.typesafe" % "config" % "1.4.0",
-    "com.zaxxer" % "HikariCP" % "3.4.2",
-    "com.github.nscala-time" %% "nscala-time" % "2.22.0",
-    "commons-validator" % "commons-validator" % "1.6",
-    "org.json4s" %% "json4s-native" % "3.6.7",
+    "com.zaxxer" % "HikariCP" % "3.4.5",
+    "com.github.nscala-time" %% "nscala-time" % "2.24.0",
+    "commons-validator" % "commons-validator" % "1.7",
+    "org.json4s" %% "json4s-native" % "3.6.9",
     "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
@@ -110,7 +110,7 @@ lazy val play2 = project.settings(defaultSettings:_*).settings(
   libraryDependencies ++= List(
     play20("play", "provided").value,
     play20("play-jdbc", "provided").value,
-    "com.google.inject" % "guice" % "4.2.0"
+    "com.google.inject" % "guice" % "4.2.3"
   )
 ).dependsOn(core)
 
