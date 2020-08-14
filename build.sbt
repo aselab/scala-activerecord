@@ -1,4 +1,4 @@
-val _version = "0.6.1"
+val _version = "0.6.2"
 val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
