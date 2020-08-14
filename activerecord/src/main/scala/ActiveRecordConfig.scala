@@ -112,7 +112,7 @@ class DefaultConfig(
   overrideSettings: Map[String, Any] = Map()
 ) extends ActiveRecordConfig {
   lazy val env = System.getProperty("run.mode", "dev")
-  lazy val _prefix = schema.getClass.getName.dropRight(1)
+  lazy val _prefix = schema.getClass.getName.dropRight(1).replaceFirst("^.+\\$", "")
   def prefix(key: String): String = s"${_prefix}.${key}"
 
   logger.debug("----- Loading config: %s (mode: %s) -----".format(_prefix, env))
