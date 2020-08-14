@@ -1,4 +1,4 @@
-val _version = "0.6.0"
+val _version = "0.6.1"
 val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
@@ -24,6 +24,7 @@ val compileOptions = Seq(
 )
 
 val compilerSettings = Seq(
+  javacOptions := Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= compileOptions,
   scalacOptions in Compile in doc ++= {
     val base = baseDirectory.value

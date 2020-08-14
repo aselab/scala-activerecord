@@ -1,0 +1,4 @@
+## Fixed
+* Fixed error `java.lang.AssertionError: unsafe symbol Ignore` when not in JDK 14 environment
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.6.0...0.6.1)
