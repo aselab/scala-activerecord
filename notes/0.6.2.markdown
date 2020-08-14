@@ -1,0 +1,4 @@
+## Fixed
+* Fixed error when schema table package is not defined
+
+[all changes](https://github.com/aselab/scala-activerecord/compare/0.6.1...0.6.2)
