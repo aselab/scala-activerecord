@@ -7,6 +7,8 @@ It is designed following the CoC(Convention over Configuration), DRY(Don't Repea
 
 ## Minimal example
 
+* Sample snippet: **[Scastie](https://scastie.scala-lang.org/N5fy1pUZRWWqq8cwLHCgeQ)**
+
 Model implementation:
 
 ```scala
@@ -38,14 +40,15 @@ ActiveRecord model usage:
 ```scala
 import com.github.aselab.activerecord.dsl._
 import models._
+import scala.language.postfixOps
 
 object App extends App {
   Tables.initialize
   
-  Person("person1", 25).save
-  Person("person2", 18).save
-  Person("person3", 40).save
-  Person("person4", 18).save
+  Person("person1", 25).save()
+  Person("person2", 18).save()
+  Person("person3", 40).save()
+  Person("person4", 18).save()
 
   Person.findBy("name", "person1") //=> Some(Person("person1", 25))
   Person.findBy("age", 55) //=> None
@@ -71,7 +74,6 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 * [Wiki](https://github.com/aselab/scala-activerecord/wiki)
 * [ScalaDoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12/com/github/aselab/activerecord/index.html?javadocio=true)
 * [Sample project](https://github.com/aselab/scala-activerecord-sample)
-* [CloudBees(CI)](https://aselab.ci.cloudbees.com/job/scala-activerecord/)
 
 ## Web framework support
 
