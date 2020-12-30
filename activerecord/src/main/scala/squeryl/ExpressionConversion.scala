@@ -21,6 +21,7 @@ class ExpressionConversion(field: FieldInfo) {
     case f if f.is[Timestamp] => value.toOption[Timestamp]
     case f if f.is[Date] => value.toOption[Date]
     case f if f.is[UUID] => value.toOption[UUID]
+    case _ => throw ActiveRecordException.unsupportedType(field.name)
   }
 
   def toEqualityExpression(v1: => Any, v2: => Any): ast.EqualityExpression =
@@ -36,18 +37,21 @@ class ExpressionConversion(field: FieldInfo) {
   }
 
   def toInExpression(v1: Any, v2: List[Any]): ast.InclusionOperator = try {
-    new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(new ast.ConstantExpressionNodeList(v2, field match {
-    case f if f.is[String] => optionStringTEF.createOutMapper
-    case f if f.is[Boolean] => optionBooleanTEF.createOutMapper
-    case f if f.is[Int] => optionIntTEF.createOutMapper
-    case f if f.is[Long] => optionLongTEF.createOutMapper
-    case f if f.is[Float] => optionFloatTEF.createOutMapper
-    case f if f.is[Double] => optionDoubleTEF.createOutMapper
-    case f if f.is[BigDecimal] => optionBigDecimalTEF.createOutMapper
-    case f if f.is[Timestamp] => optionTimestampTEF.createOutMapper
-    case f if f.is[Date] => optionDateTEF.createOutMapper
-    case f if f.is[UUID] => optionUUIDTEF.createOutMapper
-  })))
+    new ast.InclusionOperator(toExpression(v1), new ast.RightHandSideOfIn(
+      new ast.ConstantExpressionNodeList(v2, field match {
+        case f if f.is[String] => optionStringTEF.createOutMapper
+        case f if f.is[Boolean] => optionBooleanTEF.createOutMapper
+        case f if f.is[Int] => optionIntTEF.createOutMapper
+        case f if f.is[Long] => optionLongTEF.createOutMapper
+        case f if f.is[Float] => optionFloatTEF.createOutMapper
+        case f if f.is[Double] => optionDoubleTEF.createOutMapper
+        case f if f.is[BigDecimal] => optionBigDecimalTEF.createOutMapper
+        case f if f.is[Timestamp] => optionTimestampTEF.createOutMapper
+        case f if f.is[Date] => optionDateTEF.createOutMapper
+        case f if f.is[UUID] => optionUUIDTEF.createOutMapper
+        case _ => throw ActiveRecordException.unsupportedType(field.name)
+      })
+    ))
   } catch {
     case e: RuntimeException => throw ActiveRecordException.unsupportedType(field.name)
   }

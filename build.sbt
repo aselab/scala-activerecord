@@ -3,13 +3,13 @@ val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
   val v = scalaBinaryVersion.value match {
-    case "2.13" => "4.10.2"
+    case "2.13" => "4.10.5"
   }
   "org.specs2" %% s"specs2-${name}" % v % scope
 }
 
 def play20(app: String, scope: String) = Def.setting {
-  "com.typesafe.play" %% app % "2.8.2" % scope
+  "com.typesafe.play" %% app % "2.8.7" % scope
 }
 
 val compileOptions = Seq(
@@ -35,17 +35,11 @@ val compilerSettings = Seq(
   compileOrder in Compile := CompileOrder.JavaThenScala
 )
 
-val defaultResolvers = Seq(
-  Resolver.sonatypeRepo("snapshots"),
-  ("Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases").withAllowInsecureProtocol(true)
-)
-
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.13.3",
-  crossScalaVersions := Seq("2.13.3"),
-  resolvers ++= defaultResolvers,
+  scalaVersion := "2.13.4",
+  crossScalaVersions := Seq("2.13.4"),
   libraryDependencies ++= Seq(
     specs2("test").value,
     specs2("test", "mock").value,
@@ -76,11 +70,11 @@ lazy val core: Project = Project("core", file("activerecord")).settings(defaultS
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
     "org.squeryl" %% "squeryl" % "0.9.15",
-    "com.typesafe" % "config" % "1.4.0",
+    "com.typesafe" % "config" % "1.4.1",
     "com.zaxxer" % "HikariCP" % "3.4.5",
-    "com.github.nscala-time" %% "nscala-time" % "2.24.0",
+    "com.github.nscala-time" %% "nscala-time" % "2.26.0",
     "commons-validator" % "commons-validator" % "1.7",
-    "org.json4s" %% "json4s-native" % "3.6.9",
+    "org.json4s" %% "json4s-native" % "3.6.10",
     "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
@@ -128,7 +122,7 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
 lazy val scalatra = project.settings(defaultSettings:_*).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
-    "org.scalatra" %% "scalatra" % "2.7.0" % "provided",
+    "org.scalatra" %% "scalatra" % "2.7.1" % "provided",
     "javax.servlet" % "javax.servlet-api" % "4.0.1" % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
