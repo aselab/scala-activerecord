@@ -72,7 +72,7 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 ## Documents and other resources
 
 * [Wiki](https://github.com/aselab/scala-activerecord/wiki)
-* [ScalaDoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.12/com/github/aselab/activerecord/index.html?javadocio=true)
+* [ScalaDoc](http://javadoc-badge.appspot.com/com.github.aselab/scala-activerecord_2.13/com/github/aselab/activerecord/index.html?javadocio=true)
 * [Sample project](https://github.com/aselab/scala-activerecord-sample)
 
 ## Web framework support
