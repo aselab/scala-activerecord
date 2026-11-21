@@ -13,8 +13,8 @@ import org.json4s.native.Serialization
 object JsonSerializer {
   def assignFunc(value: Any, fieldInfo: FieldInfo): Any = fieldInfo match {
     case f if f.isSeq && classOf[FormSerializer].isAssignableFrom(fieldInfo.fieldType) => FormSerializer.formAssignFunc(value, fieldInfo)(this.assignFunc)
-    case f if f.isSeq => value.asInstanceOf[List[_]].map(v => deserializeValue(v, f))
-    case f if f.isOption => value.asInstanceOf[Option[_]].map(v => deserializeValue(v, f))
+    case f if f.isSeq => value.asInstanceOf[List[?]].map(v => deserializeValue(v, f))
+    case f if f.isOption => value.asInstanceOf[Option[?]].map(v => deserializeValue(v, f))
     case _ => deserializeValue(value, fieldInfo)
   }
 
@@ -25,7 +25,7 @@ object JsonSerializer {
 }
 
 trait JsonSerializer extends FormSerializer { self: ProductModel =>
-  private[this] implicit def _format: Formats = DefaultFormats
+  private implicit def _format: Formats = DefaultFormats
 
   def asJson: JValue = Extraction.decompose(toSerializedMap)
 
@@ -85,7 +85,7 @@ trait JsonImplicits { self: DSL =>
   implicit def toJsonable[T <: ActiveModel: ClassTag, ILike](list: ILike)(implicit ev:  ILike => Iterable[T]): IterableJsonSerializer[T] =
     new IterableJsonSerializer(ev(list))
 
-  implicit class GroupByJsonable[T <: ActiveModel: ClassTag](grouped: Map[_, List[T]]) {
+  implicit class GroupByJsonable[T <: ActiveModel: ClassTag](grouped: Map[?, List[T]]) {
     private implicit val format: Formats = DefaultFormats
 
     def toJson: String = Serialization.write(grouped.toMap.map{ case (k, v) => (k.toString, v.asJson) })

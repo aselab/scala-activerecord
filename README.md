@@ -62,8 +62,10 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 
 ## Scala 3
 
-The current master builds for Scala 3 (3.3 LTS); Scala 2.13 users should stay on 0.6.x.
+The current master builds for Scala 3.7; Scala 2.13 users should stay on 0.6.x.
 
+* Scala 3.8 and later are not supported yet: their standard library is compiled by Scala 3, and Squeryl 0.11
+  fails to initialize on it (it reads the public `$outer` field of `Enumeration#Value` by reflection).
 * Building requires JDK 17 or later (sbt 2). The library itself is compiled for Java 11, the minimum of its
   dependencies (HikariCP, nscala-time, json4s).
 * Squeryl creates proxies of model classes with cglib. On JDK 9 and later, run your application and tests with
@@ -77,7 +79,7 @@ The current master builds for Scala 3 (3.3 LTS); Scala 2.13 users should stay on
 * Squeryl on Scala 3 cannot infer the result type of arithmetic on columns of different types, such as
   `sum(item.price) + avg(item.price)`; pass the result factory explicitly:
   `sum(item.price).+(avg(item.price))(optionFloatTEF)`. Aggregates (`max`, `min`, `sum`, `avg`) work as before.
-* scala-activerecord-specs is built on specs2 5 (5.9.1, the latest release that supports Scala 3.3):
+* scala-activerecord-specs is built on specs2 5 (5.9.1; 5.11 and later need Scala 3.9):
   * `ActiveRecordSpecification` runs its examples sequentially. Override `beforeAll()` and `afterAll()`
     (methods, now with `()`) to add set-up and tear-down; call `super` to keep the schema handling.
   * `AutoRollback` rolls back each example with `AroundEach`.

@@ -7,11 +7,11 @@ import com.github.aselab.activerecord.util.InflectorImports._
 
 trait Translator {
   def apply(key: String, args: Any*)(implicit locale: Locale): String =
-    get(key, args:_*).getOrElse(key)
+    get(key, args*).getOrElse(key)
 
   def get(key: String, args: Any*)(implicit locale: Locale): Option[String]
 
-  def field(model: Class[_], name: String)(implicit locale: Locale): String = {
+  def field(model: Class[?], name: String)(implicit locale: Locale): String = {
     val key = "activerecord.models." + model.getSimpleName + "." + name
     get(key).getOrElse(name.titleize)
   }
@@ -25,7 +25,7 @@ object DefaultTranslator extends Translator {
 
   def get(key: String, args: Any*)(implicit locale: Locale): Option[String] = try {
     Option(bundle.getString(key)).map(msg =>
-      MessageFormat.format(msg, args.map(_.asInstanceOf[AnyRef]):_*)
+      MessageFormat.format(msg, args.map(_.asInstanceOf[AnyRef])*)
     )
   } catch {
     case e: MissingResourceException => None

@@ -12,7 +12,7 @@ val compileOptions = Seq(
   "-feature",
   "-unchecked",
   "-Wvalue-discard",
-  "-Xfatal-warnings"
+  "-Werror"
 )
 
 val compilerSettings = Seq(
@@ -25,8 +25,8 @@ val compilerSettings = Seq(
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "3.3.9",
-  crossScalaVersions := Seq("3.3.9"),
+  scalaVersion := "3.7.4",
+  crossScalaVersions := Seq("3.7.4"),
   libraryDependencies ++= {
     val junit = specs2("test", "junit").value
     Seq(

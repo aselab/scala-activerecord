@@ -44,23 +44,23 @@ class i18nSpec extends Specification {
   "DefaultTranslator" should {
     "get" in {
       "English locale" in {
-        DefaultTranslator.get("test.key")(Locale.ENGLISH) must beSome("test message")
+        DefaultTranslator.get("test.key")(using Locale.ENGLISH) must beSome("test message")
       }
 
       "Japanese locale" in {
-        DefaultTranslator.get("test.key")(Locale.JAPANESE) must beSome("テストメッセージ")
+        DefaultTranslator.get("test.key")(using Locale.JAPANESE) must beSome("テストメッセージ")
       }
 
       "return None if key is not exists" in {
-        DefaultTranslator.get("not.exist.key")(Locale.ENGLISH) must beNone
+        DefaultTranslator.get("not.exist.key")(using Locale.ENGLISH) must beNone
       }
 
       "fallback" in {
-        DefaultTranslator.get("activerecord.errors.required")(Locale.FRENCH) must beSome("is required")
+        DefaultTranslator.get("activerecord.errors.required")(using Locale.FRENCH) must beSome("is required")
       }
 
       "minValue validation error message" in {
-        DefaultTranslator.apply("activerecord.errors.minValue", 3)(Locale.JAPANESE) must beEqualTo("は3以上でなければなりません")
+        DefaultTranslator.apply("activerecord.errors.minValue", 3)(using Locale.JAPANESE) must beEqualTo("は3以上でなければなりません")
       }
     }
   }

@@ -36,7 +36,7 @@ trait ActiveRecordSpecification extends Specification with BeforeAfterSpec with 
 
   private var factories = Map.empty[String, Map[String, Any]]
 
-  implicit class RichActiveRecordCompanion[T <: ActiveRecordBase[_]](companion: ActiveRecordBaseCompanion[_, T]) {
+  implicit class RichActiveRecordCompanion[T <: ActiveRecordBase[?]](companion: ActiveRecordBaseCompanion[?, T]) {
     def define(name: String, m: Map[String, Any]): Unit = factories += (name -> m)
 
     def define(name: String, m: (String, Any)*): Unit = define(name, m.toMap)

@@ -179,10 +179,10 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[?]]
   }
 
   def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int =
-    all.forceUpdateAll(updateAssignments: _*)
+    all.forceUpdateAll(updateAssignments*)
 
   def forceUpdate(condition: T => LogicalBoolean)(updateAssignments: (T => UpdateAssignment)*): Int =
-    all.where(condition).forceUpdateAll(updateAssignments: _*)
+    all.where(condition).forceUpdateAll(updateAssignments*)
 
   def forceDeleteAll(): Int = inTransaction {
     table.delete(all.toQuery)

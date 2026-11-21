@@ -15,7 +15,7 @@ trait DateTimeSupport { self: org.squeryl.PrimitiveTypeMode =>
   }
 
   implicit val optionJodaTimeTEF: TypedExpressionFactory[Option[DateTime], TOptionTimestamp]
-    with DeOptionizer[Timestamp, DateTime, TTimestamp, Option[DateTime], TOptionTimestamp] =
+    & DeOptionizer[Timestamp, DateTime, TTimestamp, Option[DateTime], TOptionTimestamp] =
     new TypedExpressionFactory[Option[DateTime], TOptionTimestamp]
       with DeOptionizer[Timestamp, DateTime, TTimestamp, Option[DateTime], TOptionTimestamp] {
 
@@ -36,7 +36,7 @@ trait LocalDateSupport { self: org.squeryl.PrimitiveTypeMode =>
   }
 
   implicit val optionLocalDateTEF: TypedExpressionFactory[Option[LocalDate], TOptionDate]
-    with DeOptionizer[Date, LocalDate, TDate, Option[LocalDate], TOptionDate] =
+    & DeOptionizer[Date, LocalDate, TDate, Option[LocalDate], TOptionDate] =
     new TypedExpressionFactory[Option[LocalDate], TOptionDate]
       with DeOptionizer[Date, LocalDate, TDate, Option[LocalDate], TOptionDate] {
 

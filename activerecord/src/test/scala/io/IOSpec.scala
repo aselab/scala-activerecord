@@ -463,7 +463,7 @@ class IOSpec extends DatabaseSpecification with MockSupport {
         val source = mock[PrimitiveModel]
         val data = Map("string" -> "string", "ostring" -> "", "int" -> "100")
 
-        PrimitiveModel.bind(data)(source) must beTheSameAs(source)
+        PrimitiveModel.bind(data)(using source) must beTheSameAs(source)
 
         verifyOnce(source).assignFormValues(data)
         ok

@@ -53,7 +53,7 @@ object ActiveRecordException {
   def cannotRollback: ActiveRecordException =
     apply("Must call ActiveRecordTables#startTransaction before rollback")
 
-  def scalaSig(c: Class[_]): ActiveRecordException =
+  def scalaSig(c: Class[?]): ActiveRecordException =
     apply("Failed to extract ScalaSig from class " + c.getName)
 
   def saveFailed(errors: validations.Errors): RecordInvalidException =

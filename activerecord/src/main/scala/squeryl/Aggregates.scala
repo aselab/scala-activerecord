@@ -97,19 +97,19 @@ object Aggregates {
   // Squeryl's marker types are phantom: casting them only satisfies its bounds, the factory decides the result.
   def max[A1, T1, A2, T2](b: TypedExpression[A1, T1])(implicit r: MaxMinResult[A1, A2, T2]): TypedExpressionConversion[A2, T2] =
     P.max[TOption, TOption, A1, A2](b.asInstanceOf[TypedExpression[A1, TOption]])(
-      r.factory.asInstanceOf[TypedExpressionFactory[A2, TOption]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
+      using r.factory.asInstanceOf[TypedExpressionFactory[A2, TOption]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
 
   def min[A1, T1, A2, T2](b: TypedExpression[A1, T1])(implicit r: MaxMinResult[A1, A2, T2]): TypedExpressionConversion[A2, T2] =
     P.min[TOption, TOption, A1, A2](b.asInstanceOf[TypedExpression[A1, TOption]])(
-      r.factory.asInstanceOf[TypedExpressionFactory[A2, TOption]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
+      using r.factory.asInstanceOf[TypedExpressionFactory[A2, TOption]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
 
   def sum[A1, T1 >: TNumericLowerTypeBound, A2, T2](b: TypedExpression[A1, T1])(implicit r: SumResult[A1, A2, T2]): TypedExpressionConversion[A2, T2] =
     P.sum[TOptionBigDecimal, TOptionBigDecimal, A1, A2](b.asInstanceOf[TypedExpression[A1, TOptionBigDecimal]])(
-      r.factory.asInstanceOf[TypedExpressionFactory[A2, TOptionBigDecimal]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
+      using r.factory.asInstanceOf[TypedExpressionFactory[A2, TOptionBigDecimal]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
 
   def avg[A1, T1, A2, T2](b: TypedExpression[A1, T1])(implicit r: AvgResult[A1, A2, T2]): TypedExpressionConversion[A2, T2] =
     P.avg[TOptionFloat, TOptionFloat, A1, A2](b.asInstanceOf[TypedExpression[A1, TOptionFloat]])(
-      r.factory.asInstanceOf[TypedExpressionFactory[A2, TOptionFloat]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
+      using r.factory.asInstanceOf[TypedExpressionFactory[A2, TOptionFloat]]).asInstanceOf[TypedExpressionConversion[A2, T2]]
 }
 
 /**

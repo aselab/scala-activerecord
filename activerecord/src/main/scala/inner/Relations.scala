@@ -34,7 +34,7 @@ trait Relations {
 
     val manifest: ClassTag[T]
 
-    lazy val companion: ActiveRecordBaseCompanion[_, T] =
+    lazy val companion: ActiveRecordBaseCompanion[?, T] =
       classToARCompanion(manifest.runtimeClass)
 
     // scalastyle:off
@@ -163,7 +163,7 @@ trait Relations {
   trait Relation[T <: AR, S] extends QuerySupport[T, S] with PagerSupport[T, S] with UnsafeFinders[T, S] {
     val queryable: Queryable[T]
 
-    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]): TypedExpressionFactory[A, Any] =
+    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, ?]): TypedExpressionFactory[A, Any] =
       f.asInstanceOf[TypedExpressionFactory[A, Any]]
 
     private var _isLoaded = false
@@ -184,7 +184,7 @@ trait Relations {
         val sources = cache.asInstanceOf[List[T]]
         val sample = companion.newInstance
         val eagerLoadedMaps = includeAssociations.map(a =>
-          (a, a(sample).eagerLoad(sources)(manifest))
+          (a, a(sample).eagerLoad(sources)(using manifest))
         )
         for ((associationOf, map) <- eagerLoadedMaps; m <- sources) {
           associationOf(m).relation.cache = map.getOrElse(m.id, Nil)
@@ -243,7 +243,7 @@ trait Relations {
      * @param conditions multiple fieldname-value tuples(optional)
      */
     def unsafeFindBy(condition: (String, Any), conditions: (String, Any)*): Option[S] = companion.inTransaction {
-      unsafeFindAllBy(condition, conditions:_*).headOption
+      unsafeFindAllBy(condition, conditions*).headOption
     }
 
     inline def findByOrCreate(m: T, inline fields: String*)(implicit ev: T =:= S): S =
@@ -251,7 +251,7 @@ trait Relations {
 
     def unsafeFindByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
       unsafeFindBy((field, m.getValue[Any](field)),
-        fields.map(f => (f, m.getValue[Any](f))).toSeq:_*).getOrElse(m.create)
+        fields.map(f => (f, m.getValue[Any](f))).toSeq*).getOrElse(m.create)
     }
 
     /**
@@ -343,7 +343,7 @@ trait Relations {
 
     def nonEmpty: Boolean = count > 0
 
-    def compute[T1](e: JoinedType => TypedExpression[T1, _]): T1 = companion.inTransaction {
+    def compute[T1](e: JoinedType => TypedExpression[T1, ?]): T1 = companion.inTransaction {
       toQuery(t => whereScope(t).compute(e(t)))
     }
 
@@ -380,13 +380,13 @@ trait Relations {
 
     def toSql: String = companion.inTransaction { toQuery.statement }
 
-    def group[R](groupScope: JoinedType => TypedExpression[R, _]): GroupRelation1[R] = GroupRelation1(groupScope)
+    def group[R](groupScope: JoinedType => TypedExpression[R, ?]): GroupRelation1[R] = GroupRelation1(groupScope)
 
     case class GroupRelation1[R](
-      groupScope: JoinedType => TypedExpression[R, _],
+      groupScope: JoinedType => TypedExpression[R, ?],
       havingConditions: List[JoinedType => LogicalBoolean] = Nil
     ) {
-      def compute[V](e: JoinedType => TypedExpression[V, _]): Map[R, V] = companion.inTransaction {
+      def compute[V](e: JoinedType => TypedExpression[V, ?]): Map[R, V] = companion.inTransaction {
         queryToIterable(toQuery { t =>
           val groupByScope = whereScope(t).groupBy(groupScope(t))
           havingScope(t, groupByScope).compute(e(t))
@@ -467,7 +467,7 @@ trait Relations {
     private[activerecord] def forceUpdateAll(updateAssignments: (T => UpdateAssignment)*): Int = companion.inTransaction {
       dsl.update(companion.table)(m =>
         whereScope(Tuple1(m)).asInstanceOf[WhereState[Unconditioned]]
-          .setAll(updateAssignments.map(_.apply(m)): _*)
+          .setAll(updateAssignments.map(_.apply(m))*)
       )
     }
 
@@ -491,7 +491,7 @@ trait Relations {
         Parameters[T, (T, J), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J), S](selector), includeAssociations, pages, isUnique),
         queryable, c.table, on.tupled
-      )(manifest)
+      )(using manifest)
     }
 
     def joins[J1 <: AR, J2 <: AR](
@@ -504,7 +504,7 @@ trait Relations {
         Parameters[T, (T, J1, J2), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2), S](selector), includeAssociations, pages, isUnique),
         queryable, c1.table, c2.table, on.tupled
-      )(manifest)
+      )(using manifest)
     }
 
     def joins[J1 <: AR, J2 <: AR, J3 <: AR](
@@ -518,7 +518,7 @@ trait Relations {
         Parameters[T, (T, J1, J2, J3), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2, J3), S](selector), includeAssociations, pages, isUnique),
         queryable, c1.table, c2.table, c3.table, on.tupled
-      )(manifest)
+      )(using manifest)
     }
 
     def joins[J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR](
@@ -533,7 +533,7 @@ trait Relations {
         Parameters[T, (T, J1, J2, J3, J4), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2, J3, J4), S](selector), includeAssociations, pages, isUnique),
         queryable, c1.table, c2.table, c3.table, c4.table, on.tupled
-      )(manifest)
+      )(using manifest)
     }
 
     def joins[J1 <: AR, J2 <: AR, J3 <: AR, J4 <: AR, J5 <: AR](
@@ -549,7 +549,7 @@ trait Relations {
         Parameters[T, (T, J1, J2, J3, J4, J5), S](conditions.map(wrapTuple1), orders.map(wrapTuple1),
           wrapTuple1[(T, J1, J2, J3, J4, J5), S](selector), includeAssociations, pages, isUnique),
         queryable, c1.table, c2.table, c3.table, c4.table, c5.table, on.tupled
-      )(manifest)
+      )(using manifest)
     }
   }
 

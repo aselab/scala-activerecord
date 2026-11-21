@@ -24,18 +24,18 @@ trait CompanionConversion[T <: AR] extends CompanionIterable[T] {
 
 // low priority implicits
 trait IterableConversion {
-  implicit def relationToIterable[T](relation: Relation[_, T])
+  implicit def relationToIterable[T](relation: Relation[?, T])
     (implicit manifest: ClassTag[T]): Iterable[T] = relation.load
 
   implicit def associationToIterable[T <: AR]
-    (association: Association[_, T])(implicit manifest: ClassTag[T]): Iterable[T] =
+    (association: Association[?, T])(implicit manifest: ClassTag[T]): Iterable[T] =
       relationToIterable(association.relation)
 }
 
 trait DSL extends IterableConversion {
-  implicit def keyedEntityDef[T <: AR](implicit manifest: ClassTag[T]): KeyedEntityDef[T, _] = {
+  implicit def keyedEntityDef[T <: AR](implicit manifest: ClassTag[T]): KeyedEntityDef[T, ?] = {
     ReflectionUtil.classToARCompanion[T](manifest.runtimeClass)
-      .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
+      .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, ?]]
   }
 
   implicit def queryToRelation[T <: AR](query: Queryable[T])
@@ -46,16 +46,16 @@ trait DSL extends IterableConversion {
     (relation: Relation[T, S]): Query[S] = relation.toQuery
 
   implicit def belongsToAssociationToOption[T <: AR]
-    (association: BelongsToAssociation[_, T]): Option[T] = association.toOption
+    (association: BelongsToAssociation[?, T]): Option[T] = association.toOption
 
   implicit def belongsToAssociationToRecord[T <: AR]
-    (association: BelongsToAssociation[_, T]): T = association.relation.head
+    (association: BelongsToAssociation[?, T]): T = association.relation.head
 
   implicit def singularAssociationToOption[T <: AR]
-    (association: SingularAssociation[_, T]): Option[T] = association.toOption
+    (association: SingularAssociation[?, T]): Option[T] = association.toOption
 
   implicit def singularAssociationToRecord[T <: AR]
-    (association: SingularAssociation[_, T]): T = association.relation.head
+    (association: SingularAssociation[?, T]): T = association.relation.head
 
   implicit def associationToRelation1[T <: AR]
     (association: {def relation1: Relation1[T, T]}): Relation1[T, T] = association.relation1

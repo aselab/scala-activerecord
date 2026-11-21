@@ -4,6 +4,7 @@ import com.github.aselab.activerecord._
 import validations._
 import inner._
 import reflections._
+import scala.util.control.NonFatal
 
 trait IO extends Validatable { this: ProductModel =>
   import ReflectionUtil._
@@ -51,7 +52,7 @@ trait IO extends Validatable { this: ProductModel =>
         val value = toFieldType(v, info)
         this.setValue(k, assignFunc(value, info))
       } catch {
-        case e: Throwable => if (throws) { throw e }
+        case NonFatal(e) => if (throws) { throw e }
       }
     }
     this

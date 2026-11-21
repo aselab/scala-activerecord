@@ -15,7 +15,7 @@ trait FormConverter[T] extends Converter[T, String] {
   override def serialize(v: Any): String = Option(v).map(_.toString).orNull
 }
 
-object FormConverter extends PrimitiveHandler[FormConverter[_]] {
+object FormConverter extends PrimitiveHandler[FormConverter[?]] {
   val stringHandler = new FormConverter[String] {
     def deserialize(s: String): String = s
   }

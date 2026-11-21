@@ -11,6 +11,7 @@ import reflections.ReflectionUtil
 import java.sql.Connection
 import scala.language.existentials
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 /**
  * Base class of database schema.
@@ -19,10 +20,12 @@ trait ActiveRecordTables extends Schema {
   import ReflectionUtil.{classToARCompanion, getGenericTypes, toReflectable}
 
   lazy val tableMap = {
-    val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[_, _]]
+    val c = classOf[ActiveRecord.HasAndBelongsToManyAssociation[?, ?]]
     val map = collection.mutable.Map[String, Table[inner.IntermediateRecord]]()
-    this.getFields[Table[ActiveRecordBase[_]]].map {f =>
-      val clazz = getGenericTypes(f).last
+    this.getFields[Table[ActiveRecordBase[?]]].map {f =>
+      val t = this.getValue[Table[AR]](f.getName)
+      // take the model class from the table: Scala 3.7+ emits no generic signature for a val inherited from a trait
+      val clazz = t.posoMetaData.clasz
       // associations are usually lazy vals, whose backing field is untyped on Scala 3: use the accessors
       clazz.getDeclaredMethods.foreach {m =>
         if (m.getParameterCount == 0 && c.isAssignableFrom(m.getReturnType)) {
@@ -34,7 +37,7 @@ trait ActiveRecordTables extends Schema {
           }
         }
       }
-      (clazz.getName, this.getValue[Table[AR]](f.getName))
+      (clazz.getName, t)
     }.toMap ++ map
   }
 
@@ -69,16 +72,16 @@ trait ActiveRecordTables extends Schema {
   override def columnNameFromPropertyName(propertyName: String): String =
     propertyName.underscore
 
-  override def tableNameFromClass(c: Class[_]): String =
+  override def tableNameFromClass(c: Class[?]): String =
     tableNameFromClass(c.getSimpleName)
 
   def tableNameFromClass(className: String): String =
     className.underscore.pluralize
 
-  def tableNameFromClasses(c1: Class[_], c2: Class[_]): String =
+  def tableNameFromClasses(c1: Class[?], c2: Class[?]): String =
     Seq(c1, c2).map(tableNameFromClass).sorted.mkString("_")
 
-  def foreignKeyFromClass(c: Class[_]): String =
+  def foreignKeyFromClass(c: Class[?]): String =
     c.getSimpleName.camelize + "Id"
 
   protected def execute(sql: String, logging: Boolean = true): Boolean = inTransaction {
@@ -103,7 +106,7 @@ trait ActiveRecordTables extends Schema {
         execute("select 1 from " + name + " where 0 = 1", false)
         true
       } catch {
-        case e: Throwable => false
+        case NonFatal(_) => false
       }
     }
   }
@@ -227,16 +230,16 @@ trait ActiveRecordTables extends Schema {
   inline def table[T <: AR](name: String, prefix: String)(implicit m: ClassTag[T]): Table[T] =
     prefixedTableWithFieldsInfo[T](name, prefix, org.squeryl.internals.TypeInfo.fieldsInfo[T])
 
-  def prefixedTableWithFieldsInfo[T <: AR](name: String, prefix: String, fieldsInfo: Map[String, Class[_]])(
+  def prefixedTableWithFieldsInfo[T <: AR](name: String, prefix: String, fieldsInfo: Map[String, Class[?]])(
     implicit m: ClassTag[T]
-  ): Table[T] = super.table[T](name, prefix)(fieldsInfo)(m, dsl.keyedEntityDef(m))
+  ): Table[T] = super.table[T](name, prefix)(fieldsInfo)(using m, dsl.keyedEntityDef(using m))
 
   /** table name of `typeT`: the root model's name for STI models */
-  def defaultTableName(typeT: Class[_]): String =
+  def defaultTableName(typeT: Class[?]): String =
     baseARType(typeT).map(c => tableNameFromClass(c)).getOrElse(tableNameFromClass(typeT))
 
-  def tableWithFieldsInfo[T <: AR](name: String, fieldsInfo: Map[String, Class[_]])(implicit m: ClassTag[T]): Table[T] = {
-    val t = super.table[T](name)(fieldsInfo)(m, dsl.keyedEntityDef(m))
+  def tableWithFieldsInfo[T <: AR](name: String, fieldsInfo: Map[String, Class[?]])(implicit m: ClassTag[T]): Table[T] = {
+    val t = super.table[T](name)(fieldsInfo)(using m, dsl.keyedEntityDef(using m))
 
     val c = classToARCompanion[T](m.runtimeClass)
     val fields = c.fieldInfo.values.toSeq
@@ -250,7 +253,7 @@ trait ActiveRecordTables extends Schema {
       case f if f.hasAnnotation[Confirmation] =>
         val name = validations.Validator.confirmationFieldName(f.name, f.getAnnotation[Confirmation])
         f.toExpression(r.getValue[Any](name)).is(transient)
-    }:_*))
+    }*))
     t
   }
 }

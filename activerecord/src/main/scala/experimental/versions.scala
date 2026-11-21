@@ -24,7 +24,7 @@ trait Versionable extends ActiveRecord with Serializable {
 
   def map(newValues: (String, Any)*): this.type = {
     val constructor = this.getClass.getConstructors.head
-    val n: this.type = constructor.newInstance(productIterator.map(_.asInstanceOf[AnyRef]).toSeq:_*).asInstanceOf[this.type]
+    val n: this.type = constructor.newInstance(productIterator.map(_.asInstanceOf[AnyRef]).toSeq*).asInstanceOf[this.type]
     (_companion.fields.map {
       f => (f.name, this.getValue[Any](f.name))
     }.toMap ++ newValues).foreach {
@@ -39,7 +39,7 @@ trait Versionable extends ActiveRecord with Serializable {
     n
   }
 
-  def apply(newValues: (String, Any)*): this.type = map(newValues:_*)
+  def apply(newValues: (String, Any)*): this.type = map(newValues*)
 }
 
 case class Version(

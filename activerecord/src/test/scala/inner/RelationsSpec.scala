@@ -184,7 +184,7 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
       "#compute" >> new testData {
         // Squeryl on Scala 3 cannot infer the result type of arithmetic on different column types,
         // so the factory (Option[Float], as Scala 2 inferred) is passed explicitly
-        Item.group(_.name).compute(item => sum(item.price).+(avg(item.price))(optionFloatTEF)) must beEqualTo(Map("apple" -> Some(375.0), "orange" -> Some(400.0), "coffee" -> Some(200.0)))
+        Item.group(_.name).compute(item => sum(item.price).+(avg(item.price))(using optionFloatTEF)) must beEqualTo(Map("apple" -> Some(375.0), "orange" -> Some(400.0), "coffee" -> Some(200.0)))
       }
 
       "#average" >> new testData {

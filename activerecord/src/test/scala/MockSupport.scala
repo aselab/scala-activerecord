@@ -20,7 +20,7 @@ trait MockSupport {
 
 object MockSupport {
   class Stubbing[T](call: T) {
-    def returns(value: T): Unit = {
+    infix def returns(value: T): Unit = {
       Mockito.when(call).thenReturn(value)
       ()
     }

@@ -550,7 +550,7 @@ trait Associations {
       val key = Option(foreignKey).getOrElse(
         Config.schema(self.recordCompanion).foreignKeyFromClass(m1.runtimeClass))
 
-      new HasOneThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
+      new HasOneThroughAssociation[this.type, T, I](self, through, conditions, key)(using m1, m2)
     }
 
     protected def hasMany[T <: AR]
@@ -573,14 +573,14 @@ trait Associations {
       val key = Option(foreignKey).getOrElse(
         Config.schema(self.recordCompanion).foreignKeyFromClass(m1.runtimeClass))
 
-      new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(m1, m2)
+      new HasManyThroughAssociation[this.type, T, I](self, through, conditions, key)(using m1, m2)
     }
   }
 
   trait HabtmAssociationSupport { self: ActiveRecord =>
     protected def hasAndBelongsToMany[T <: ActiveRecord]
       (implicit m: ClassTag[T]): HasAndBelongsToManyAssociation[this.type, T] =
-      hasAndBelongsToMany[T](Map.empty[String, Any])(m)
+      hasAndBelongsToMany[T](Map.empty[String, Any])(using m)
         .asInstanceOf[HasAndBelongsToManyAssociation[this.type, T]]
 
     protected def hasAndBelongsToMany[T <: ActiveRecord]
@@ -601,7 +601,7 @@ case class IntermediateRecord() extends ActiveRecordBase[CKey] with KeyedEntity[
   val rightId: Long = 0
   def id: CKey = compositeKey(leftId, rightId)
 
-  private[inner] var interCompanion: IntermediateRecordCompanion = _
+  private[inner] var interCompanion: IntermediateRecordCompanion = scala.compiletime.uninitialized
   override lazy val _companion =
     interCompanion.asInstanceOf[ProductModelCompanion[this.type]]
 }

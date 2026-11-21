@@ -4,6 +4,7 @@ import com.github.aselab.activerecord._
 import inner._
 import validations._
 import reflections._
+import scala.util.control.NonFatal
 
 object FormSerializer {
   import ReflectionUtil._
@@ -19,7 +20,7 @@ object FormSerializer {
         val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
         companion.unsafeAssign(v.asInstanceOf[Map[String, Any]], assignFunc)
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && isSeq =>
-        if (v.asInstanceOf[List[_]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
+        if (v.asInstanceOf[List[?]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
           value
         } else {
           val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
@@ -46,7 +47,7 @@ trait FormSerializer extends IO { self: ProductModel =>
   def toFormValues: Map[String, String] = toFormValues(None)
 
   def toFormValues(prefix: Option[String]): Map[String, String] = {
-    def serialize(c: Class[_], value: Any, key: String): Map[String, String] =
+    def serialize(c: Class[?], value: Any, key: String): Map[String, String] =
       if (classOf[FormSerializer].isAssignableFrom(c)) {
         value.asInstanceOf[FormSerializer].toFormValues(Some(key))
       } else {
@@ -60,7 +61,7 @@ trait FormSerializer extends IO { self: ProductModel =>
       val key = prefix.map(FormUtil.join(_, k)).getOrElse(k)
 
       if (info.isSeq) {
-        v.asInstanceOf[Seq[_]].zipWithIndex.flatMap { case (value, index) =>
+        v.asInstanceOf[Seq[?]].zipWithIndex.flatMap { case (value, index) =>
           serialize(info.fieldType, value, FormUtil.join(key, index))
         }
       } else {
@@ -101,7 +102,7 @@ trait FormSerializer extends IO { self: ProductModel =>
             deserialize(data, name).map(name -> _)
           }
         } catch {
-          case e: Throwable =>
+          case NonFatal(_) =>
             this.errors.add(name, Validator.ERROR_PREFIX + "invalid")
             None
         }
@@ -154,7 +155,7 @@ trait FormSupport[T <: ActiveModel] { self: ProductModelCompanion[T] =>
         val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]
         companion.unsafeAssign(v.asInstanceOf[Map[String, Any]], (v, k) => v)
       case (v, FieldInfo(name, klass, _, isSeq, _)) if classOf[FormSerializer].isAssignableFrom(klass) && isSeq =>
-        if (v.asInstanceOf[List[_]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
+        if (v.asInstanceOf[List[?]].headOption.exists(e => classOf[FormSerializer].isAssignableFrom(e.getClass))) {
           value
         } else {
           val companion = classToCompanion(klass).asInstanceOf[FormSupport[ActiveModel]]

@@ -32,13 +32,13 @@ package views {
 }
 
 package object aliases {
-  type AR = ActiveRecordBase[_]
-  type ARC = ActiveRecordBaseCompanion[_, _]
+  type AR = ActiveRecordBase[?]
+  type ARC = ActiveRecordBaseCompanion[?, ?]
   type CKey = dsl.CompositeKey2[Long, Long]
 }
 
 package object support {
-  type PF = PartialFunction[String, Class[_]]
+  type PF = PartialFunction[String, Class[?]]
 
   val primitiveClasses: PF = {
     case "scala.Predef.String" | "java.lang.String" => classOf[String]

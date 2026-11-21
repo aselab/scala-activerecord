@@ -23,7 +23,7 @@ class ValidatorSpec extends Specification with MockSupport {
   }
 
   type Value = {val value: Any}
-  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable with Value) = {
+  def validate[A <: Validator.AnnotationType, T <: Validator[A]](validator: T, a: A, m: Validatable & Value) = {
     val v = m.value match {
       case v: Option[_] => v
       case v => Some(v)

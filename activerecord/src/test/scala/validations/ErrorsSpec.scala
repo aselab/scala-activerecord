@@ -73,8 +73,8 @@ class ErrorsSpec extends DatabaseSpecification with MockSupport {
       val messagesJa = Seq("メッセージ1", "メッセージ2")
       val mockErrors = (messagesEn lazyZip messagesJa).map {case (en, ja) =>
         val e = mock[ValidationError]
-        e.translation(Locale.ENGLISH) returns en
-        e.translation(Locale.JAPANESE) returns ja
+        e.translation(using Locale.ENGLISH) returns en
+        e.translation(using Locale.JAPANESE) returns ja
         e
       }
       val errors = new Errors(userClass) {
@@ -82,11 +82,11 @@ class ErrorsSpec extends DatabaseSpecification with MockSupport {
       }
 
       "locale en" in {
-        errors.messages(Locale.ENGLISH) must beEqualTo(messagesEn)
+        errors.messages(using Locale.ENGLISH) must beEqualTo(messagesEn)
       }
 
       "locale ja" in {
-        errors.messages(Locale.JAPANESE) must beEqualTo(messagesJa)
+        errors.messages(using Locale.JAPANESE) must beEqualTo(messagesJa)
       }
     }
   }

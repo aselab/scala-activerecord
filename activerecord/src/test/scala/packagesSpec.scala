@@ -4,7 +4,7 @@ import org.specs2.mutable._
 
 class supportSpec extends Specification {
   "primitiveClasses" should {
-    val f = support.primitiveClasses.apply _
+    val f = support.primitiveClasses.apply
 
     "String" in {
       f("java.lang.String") == classOf[String] must beTrue

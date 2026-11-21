@@ -5,6 +5,7 @@ import org.joda.time.{LocalDate, DateTime}
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
 import scala.util.control.Exception._
+import scala.util.control.NonFatal
 import annotations._
 import scala.reflect.Selectable.reflectiveSelectable
 import scala.reflect.ClassTag
@@ -24,7 +25,7 @@ class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   }.asInstanceOf[() => T]
 
   lazy val allFields: List[Field] = {
-    def getFields(c: Class[_]): List[Field] = {
+    def getFields(c: Class[?]): List[Field] = {
       c.getDeclaredFields.toList.filterNot {f =>
         f.isAnnotationPresent(classOf[annotations.Ignore]) ||
         f.getName.startsWith("_") ||
@@ -44,11 +45,11 @@ class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
   }.toMap
 
   /** element classes of generic fields such as `Option[Int]` (see [[FieldTypes]]) */
-  lazy val genericTypes: Map[String, Class[_]] = ClassInfo.genericTypes(clazz)
+  lazy val genericTypes: Map[String, Class[?]] = ClassInfo.genericTypes(clazz)
 }
 
 object ClassInfo {
-  private val cache = collection.mutable.Map[Class[_], ClassInfo[_]]()
+  private val cache = collection.mutable.Map[Class[?], ClassInfo[?]]()
 
   def apply[T <: AnyRef](clazz: Class[T]): ClassInfo[T] = cache.getOrElseUpdate(
     clazz, new ClassInfo(clazz)).asInstanceOf[ClassInfo[T]]
@@ -57,14 +58,14 @@ object ClassInfo {
    * Field types registered for `clazz` and its superclasses. Initializes the companion object
    * first if needed, since model companions register the field types of their model.
    */
-  def genericTypes(clazz: Class[_]): Map[String, Class[_]] = {
-    def registered(c: Class[_]): Option[Map[String, Class[_]]] =
+  def genericTypes(clazz: Class[?]): Map[String, Class[?]] = {
+    def registered(c: Class[?]): Option[Map[String, Class[?]]] =
       FieldTypes.lookup(c).orElse {
         allCatch.opt(ReflectionUtil.classToCompanion(c))
         FieldTypes.lookup(c)
       }
 
-    Iterator.iterate[Class[_]](clazz)(_.getSuperclass).takeWhile(c => c != null && c != classOf[Object])
+    Iterator.iterate[Class[?]](clazz)(_.getSuperclass).takeWhile(c => c != null && c != classOf[Object])
       .toList.reverse.flatMap(c => registered(c).getOrElse(Map.empty)).toMap
   }
 
@@ -84,13 +85,13 @@ object ClassInfo {
     val nilHandler = () => Nil.asInstanceOf[AnyRef]
 
     registrations ++= Seq(
-      (classOf[Option[_]], () => None),
+      (classOf[Option[?]], () => None),
       (classOf[Array[Byte]], () => Array.empty[Byte]),
-      (classOf[Map[_, _]], () => Map.empty[String, String])
+      (classOf[Map[?, ?]], () => Map.empty[String, String])
     )
   }
 
-  def getFactory(clazz: Class[_]): () => AnyRef = factories.getOrRegister(clazz, {
+  def getFactory(clazz: Class[?]): () => AnyRef = factories.getOrRegister(clazz, {
     clazz.getConstructors.map(
       c => (c, c.getParameterTypes.toSeq)
     ).sortBy(_._2.size).to(LazyList).flatMap {
@@ -101,9 +102,9 @@ object ClassInfo {
         facts.foreach(_.apply())
 
         () => try {
-          const.newInstance(facts.map(_.apply()):_*).asInstanceOf[AnyRef]
+          const.newInstance(facts.map(_.apply())*).asInstanceOf[AnyRef]
         } catch {
-          case e: Throwable => throw ActiveRecordException.cannotCreateInstance(
+          case NonFatal(e) => throw ActiveRecordException.cannotCreateInstance(
             clazz.getName, e.getMessage)
         }
       }
@@ -114,7 +115,7 @@ object ClassInfo {
 }
 
 case class FieldInfo(
-  name: String, fieldType: Class[_],
+  name: String, fieldType: Class[?],
   isOption: Boolean, isSeq: Boolean,
   annotations: Seq[Annotation] = Nil
 ) {
@@ -122,7 +123,7 @@ case class FieldInfo(
 
   private lazy val annotationMap = annotations.map {
     a => (a.annotationType, a)
-  }.toMap[Class[_], Annotation]
+  }.toMap[Class[?], Annotation]
 
   lazy val isRequired = hasAnnotation[Required]
   lazy val isIgnored = hasAnnotation[Ignore]
@@ -153,12 +154,12 @@ case class FieldInfo(
 object FieldInfo {
   import ReflectionUtil._
 
-  def apply(field: Field, classInfo: ClassInfo[_]): FieldInfo = {
+  def apply(field: Field, classInfo: ClassInfo[?]): FieldInfo = {
     def notSupported: Nothing = throw ActiveRecordException.unsupportedType(
       classInfo.name + "#" + field.getName
     )
 
-    def genericType: Class[_] = getGenericType(field) match {
+    def genericType: Class[?] = getGenericType(field) match {
       case c if c == classOf[Object] =>
         // the JVM erased a primitive type argument; use the types captured at compile time
         classInfo.genericTypes.getOrElse(field.getName, notSupported)
@@ -166,7 +167,7 @@ object FieldInfo {
       case c => c
     }
 
-    def fieldInfo(clazz: Class[_]): FieldInfo = clazz match {
+    def fieldInfo(clazz: Class[?]): FieldInfo = clazz match {
       case c if isOption(c) =>
         fieldInfo(genericType).copy(isOption = true)
       case c if isSeq(c) =>
@@ -187,9 +188,9 @@ trait ReflectionUtil {
    * All superclasses and interfaces of `c`, excluding `c` itself:
    * the superclass chain first, then interfaces breadth-first, without duplicates.
    */
-  def supertypes(c: Class[_]): Seq[Class[_]] = {
-    val superclasses = Iterator.iterate[Class[_]](c.getSuperclass)(_.getSuperclass).takeWhile(_ != null).toList
-    val interfaces = collection.mutable.LinkedHashSet[Class[_]]()
+  def supertypes(c: Class[?]): Seq[Class[?]] = {
+    val superclasses = Iterator.iterate[Class[?]](c.getSuperclass)(_.getSuperclass).takeWhile(_ != null).toList
+    val interfaces = collection.mutable.LinkedHashSet[Class[?]]()
     var queue = (c :: superclasses).flatMap(_.getInterfaces.toList)
     while (queue.nonEmpty) {
       val i = queue.head
@@ -201,7 +202,7 @@ trait ReflectionUtil {
 
   def loadClass(name: String)(
     implicit classLoader: ClassLoader = defaultLoader
-  ): Class[_] = classLoader.loadClass(name)
+  ): Class[?] = classLoader.loadClass(name)
 
   /**
    * returns companion object from class name
@@ -218,24 +219,24 @@ trait ReflectionUtil {
    * returns companion object from class
    * @param c class
    */
-  def classToCompanion(c: Class[_]): Any =
-    classToCompanion(c.getName)(c.getClassLoader)
+  def classToCompanion(c: Class[?]): Any =
+    classToCompanion(c.getName)(using c.getClassLoader)
 
   /**
    * returns companion object from class
    * @param c class
    */
-  def classToARCompanion[T <: ActiveRecordBase[_]](c: Class[_]): ActiveRecordBaseCompanion[_, T] =
-    classToCompanion(c.getName)(c.getClassLoader)
-      .asInstanceOf[ActiveRecordBaseCompanion[_, T]]
+  def classToARCompanion[T <: ActiveRecordBase[?]](c: Class[?]): ActiveRecordBaseCompanion[?, T] =
+    classToCompanion(c.getName)(using c.getClassLoader)
+      .asInstanceOf[ActiveRecordBaseCompanion[?, T]]
 
   /**
    * returns corresponding class from companion object
    * @param o companion object
    */
-  def companionToClass(o: Any): Class[_] = {
+  def companionToClass(o: Any): Class[?] = {
     val c = o.getClass
-    loadClass(c.getName.dropRight(1))(c.getClassLoader)
+    loadClass(c.getName.dropRight(1))(using c.getClassLoader)
   }
 
   class Reflectable(o: Any) {
@@ -249,7 +250,7 @@ trait ReflectionUtil {
     }
 
     def setValue(name: String, value: Any): Unit = {
-      def getField(c: Class[_], n: String): Field = try {
+      def getField(c: Class[?], n: String): Field = try {
         c.getDeclaredField(n)
       } catch {
         case e: NoSuchFieldException =>
@@ -280,37 +281,37 @@ trait ReflectionUtil {
 
   implicit def toReflectable(o: Any): Reflectable = new Reflectable(o)
 
-  def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
-  def getGenericTypes(field: Field): List[Class[_]] = getGenericTypes(field.getGenericType)
-  def getGenericTypes(genericType: java.lang.reflect.Type): List[Class[_]] =
+  def getGenericType(field: Field): Class[?] = getGenericTypes(field).head
+  def getGenericTypes(field: Field): List[Class[?]] = getGenericTypes(field.getGenericType)
+  def getGenericTypes(genericType: java.lang.reflect.Type): List[Class[?]] =
     genericType.asInstanceOf[ParameterizedType]
     .getActualTypeArguments.toList.map {
-      case t: ParameterizedType => t.getRawType.asInstanceOf[Class[_]]
-      case _t => _t.asInstanceOf[Class[_]]
+      case t: ParameterizedType => t.getRawType.asInstanceOf[Class[?]]
+      case _t => _t.asInstanceOf[Class[?]]
     }
 
-  def isSeq(clazz: Class[_]): Boolean = classOf[Seq[_]].isAssignableFrom(clazz)
-  def isOption(clazz: Class[_]): Boolean = clazz == classOf[Option[_]]
-  def isModel(clazz: Class[_]): Boolean = classOf[inner.ProductModel].isAssignableFrom(clazz)
-  def toOption(value: Any): Option[_] = value match {
+  def isSeq(clazz: Class[?]): Boolean = classOf[Seq[?]].isAssignableFrom(clazz)
+  def isOption(clazz: Class[?]): Boolean = clazz == classOf[Option[?]]
+  def isModel(clazz: Class[?]): Boolean = classOf[inner.ProductModel].isAssignableFrom(clazz)
+  def toOption(value: Any): Option[?] = value match {
     case null | None => None
     case Some(v) => Some(v)
     case v => Some(v)
   }
 
-  def isPrimitiveNumeric(clazz: Class[_]): Boolean = Seq(
+  def isPrimitiveNumeric(clazz: Class[?]): Boolean = Seq(
     classOf[java.lang.Integer], classOf[Int],
     classOf[java.lang.Long], classOf[Long],
     classOf[java.lang.Float], classOf[Float],
     classOf[java.lang.Double], classOf[Double]
   ).exists(_ == clazz)
 
-  def isBoolean(clazz: Class[_]): Boolean = Seq(
+  def isBoolean(clazz: Class[?]): Boolean = Seq(
     classOf[java.lang.Boolean],
     classOf[Boolean]
   ).exists(_ == clazz)
 
-  def isMap(clazz: Class[_]): Boolean = classOf[Map[_, _]] == clazz
+  def isMap(clazz: Class[?]): Boolean = classOf[Map[?, ?]] == clazz
 }
 
 object ReflectionUtil extends ReflectionUtil

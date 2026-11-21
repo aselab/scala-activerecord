@@ -12,16 +12,16 @@ import org.joda.time.format._
 import org.joda.time.DateTimeZone
 
 object Config {
-  private var _conf: ActiveRecordConfig = _
-  private var _timeZone: DateTimeZone = _
-  private var _dateFormatter: DateTimeFormatter = _
-  private var _datetimeFormatter: DateTimeFormatter = _
+  private var _conf: ActiveRecordConfig = scala.compiletime.uninitialized
+  private var _timeZone: DateTimeZone = scala.compiletime.uninitialized
+  private var _dateFormatter: DateTimeFormatter = scala.compiletime.uninitialized
+  private var _datetimeFormatter: DateTimeFormatter = scala.compiletime.uninitialized
 
   def confOption: Option[ActiveRecordConfig] = Option(_conf)
   def conf: ActiveRecordConfig = confOption.getOrElse(throw ActiveRecordException.notInitialized)
   def conf_=(value: ActiveRecordConfig): Unit = _conf = value
 
-  def schema(companion: ActiveRecordBaseCompanion[_, _]): ActiveRecordTables = {
+  def schema(companion: ActiveRecordBaseCompanion[?, ?]): ActiveRecordTables = {
     val clazz = companion.classInfo.clazz
     tables.getOrElse(clazz, throw ActiveRecordException.tableNotFound(clazz.toString))
   }
@@ -45,8 +45,8 @@ object Config {
   def logger: Logger = conf.logger
   def classLoader: Option[ClassLoader] = confOption.map(_.classLoader)
 
-  private val _tables = collection.mutable.Map.empty[Class[_], ActiveRecordTables]
-  def tables: Map[Class[_], ActiveRecordTables] = _tables.toMap
+  private val _tables = collection.mutable.Map.empty[Class[?], ActiveRecordTables]
+  def tables: Map[Class[?], ActiveRecordTables] = _tables.toMap
   def registerSchema(s: ActiveRecordTables): Unit = {
     conf = s.config
     s.all.foreach(t => _tables.update(t.posoMetaData.clasz, s))

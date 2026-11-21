@@ -6,12 +6,12 @@ import com.github.aselab.activerecord.dsl._
 /**
  * Single Table Inheritance
  */
-trait STI { self: ActiveRecordBase[_] =>
+trait STI { self: ActiveRecordBase[?] =>
   @Column("type") val _type = this.getClass.getSimpleName
 }
 
-trait STISupport[T <: ActiveRecord with STI] { self: ActiveRecordBaseCompanion[Long, T] =>
-  private[this] lazy val _typeName = classTag[T].runtimeClass.getSimpleName
+trait STISupport[T <: ActiveRecord & STI] { self: ActiveRecordBaseCompanion[Long, T] =>
+  private lazy val _typeName = classTag[T].runtimeClass.getSimpleName
 
   override def defaultScope = queryToRelation[T](table).where(_._type === _typeName)
 

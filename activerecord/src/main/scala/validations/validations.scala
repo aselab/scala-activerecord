@@ -9,7 +9,7 @@ import java.util.Locale
 import scala.reflect.ClassTag
 import scala.reflect.Selectable.reflectiveSelectable
 
-class Errors(model: Class[_]) extends Iterable[ValidationError] {
+class Errors(model: Class[?]) extends Iterable[ValidationError] {
   protected val errorList =
     collection.mutable.ArrayDeque.empty[ValidationError]
 
@@ -28,7 +28,7 @@ class Errors(model: Class[_]) extends Iterable[ValidationError] {
   def add(message: String): Unit = add("", message)
 
   def add(fieldName: String, message: String, args: Any*): Unit = {
-    errorList += ValidationError(model, fieldName, message, args:_*)
+    errorList += ValidationError(model, fieldName, message, args*)
     changed = true
   }
 
@@ -92,7 +92,7 @@ trait Validatable extends Saveable { self: ProductModel =>
 }
 
 case class ValidationError(
-  model: Class[_], key: String, error: String, args: Any*
+  model: Class[?], key: String, error: String, args: Any*
 ) {
   lazy val translator = Config.translator
 
@@ -101,16 +101,16 @@ case class ValidationError(
   def label(implicit locale: Locale): String = translator.field(model, key)
 
   def message(implicit locale: Locale): String =
-    translator.apply(error, args:_*)
+    translator.apply(error, args*)
 
   def translation(implicit locale: Locale): String = {
     if (isGlobal) message else label + " " + message
   }
 
-  override def toString: String = translation(Locale.getDefault)
+  override def toString: String = translation(using Locale.getDefault)
 
-  def copy(model: Class[_] = this.model, key: String = this.key, error: String = this.error) =
-    ValidationError(model, key, error, this.args:_*)
+  def copy(model: Class[?] = this.model, key: String = this.key, error: String = this.error) =
+    ValidationError(model, key, error, this.args*)
 }
 
 abstract class Validator[T <: Validator.AnnotationType](implicit m: ClassTag[T]) {
@@ -159,13 +159,13 @@ abstract class Validator[T <: Validator.AnnotationType](implicit m: ClassTag[T])
 object Validator {
   val ERROR_PREFIX = "activerecord.errors."
 
-  type AnnotationType = Annotation with ({
+  type AnnotationType = Annotation & ({
     def message(): String
     def on(): String
   })
-  type A = Class[_ <: Annotation]
+  type A = Class[? <: Annotation]
 
-  lazy val validators = collection.mutable.Map[A, Validator[_ <: AnnotationType]](
+  lazy val validators = collection.mutable.Map[A, Validator[? <: AnnotationType]](
     classOf[annotations.Required] -> requiredValidator,
     classOf[annotations.Length] -> lengthValidator,
     classOf[annotations.Range] -> rangeValidator,

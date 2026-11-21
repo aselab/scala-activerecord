@@ -12,7 +12,7 @@ trait RegistrationManager[K, V] {
     registrations.getOrElseUpdate(key, newValue)
 }
 
-trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
+trait PrimitiveHandler[T] extends RegistrationManager[Class[?], T] {
   val stringHandler: T
   val booleanHandler: T
   val intHandler: T
@@ -26,7 +26,7 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
   val uuidHandler: T
   val bigDecimalHandler: T
 
-  protected lazy val registrations = collection.mutable.Map[Class[_], T](
+  protected lazy val registrations = collection.mutable.Map[Class[?], T](
     classOf[String] -> stringHandler,
     classOf[java.lang.Boolean] -> booleanHandler,
     classOf[Boolean] -> booleanHandler,
@@ -47,5 +47,5 @@ trait PrimitiveHandler[T] extends RegistrationManager[Class[_], T] {
     classOf[BigDecimal] -> bigDecimalHandler
   )
 
-  def isDefinedAt(c: Class[_]): Boolean = registrations.isDefinedAt(c)
+  def isDefinedAt(c: Class[?]): Boolean = registrations.isDefinedAt(c)
 }

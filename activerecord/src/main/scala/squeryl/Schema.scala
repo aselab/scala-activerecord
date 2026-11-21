@@ -32,16 +32,16 @@ class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schem
     t
   }
 
-  private[squeryl] val _stiTableTypes = new HashMap[Class[_], Table[_]]
+  private[squeryl] val _stiTableTypes = new HashMap[Class[?], Table[?]]
 
-  override private [squeryl] def _addTableType(typeT: Class[_], t: Table[_]) = {
+  override private [squeryl] def _addTableType(typeT: Class[?], t: Table[?]) = {
     if (classOf[STI].isAssignableFrom(typeT)) {
       _stiTableTypes += ((typeT, t))
     }
     super._addTableType(typeT, t)
   }
 
-  override private [squeryl] def _addTable(t: Table[_]): ArrayBuffer[org.squeryl.Table[_]] = {
+  override private [squeryl] def _addTable(t: Table[?]): ArrayBuffer[org.squeryl.Table[?]] = {
     if (!tables.exists(_.name == t.name)) {
       return super._addTable(t)
     }
@@ -52,7 +52,7 @@ class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schem
    * The root model type of an STI hierarchy: the most general supertype of `typeT`
    * (excluding `typeT` itself and STI) that mixes in STI.
    */
-  lazy val baseARType: Class[_] => Option[Class[_]] = (typeT: Class[_]) => {
+  lazy val baseARType: Class[?] => Option[Class[?]] = (typeT: Class[?]) => {
     val candidates = ReflectionUtil.supertypes(typeT).filter { c =>
       c != classOf[STI] && classOf[STI].isAssignableFrom(c)
     }
@@ -71,7 +71,7 @@ class CustomTable[T](
 
   lazy val isSTI = classOf[STI].isAssignableFrom(classOfT)
 
-  private def mapping(arTable: Table[_], resultSet: ResultSet): T = {
+  private def mapping(arTable: Table[?], resultSet: ResultSet): T = {
     val o = Option(_callbacks.create).getOrElse(arTable._createInstanceOfRowObject)
     val rsmd = resultSet.getMetaData
     val columns = (1 to rsmd.getColumnCount).map(rsmd.getColumnName).map(_.toLowerCase)
@@ -98,7 +98,7 @@ class CustomTable[T](
 
     if (_type.nonEmpty) {
       val baseType = customSchema.baseARType(classOfT)
-      val isExtendTable = (t: Class[_]) => {
+      val isExtendTable = (t: Class[?]) => {
         val isExtend = baseType.exists(bt => bt.isAssignableFrom(t))
         val existsClass = _type.exists(_ == t.toString.split("\\.").last)
         isExtend && existsClass
