@@ -161,7 +161,7 @@ trait Relations {
       copyParams(pages = Some((offset, count)))
   }
 
-  trait Relation[T <: AR, S] extends QuerySupport[T, S] with PagerSupport[T, S] {
+  trait Relation[T <: AR, S] extends QuerySupport[T, S] with PagerSupport[T, S] with UnsafeFinders[T, S] {
     val queryable: Queryable[T]
 
     implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]): TypedExpressionFactory[A, Any] =
@@ -218,7 +218,10 @@ trait Relations {
       companion.inTransaction { reverse.limit(1).toQuery.headOption }
     }
 
-    def find(id: Any): Option[S] = unsafeFindAllBy("id", id).headOption
+    /** Search by id; the id type is checked at compile time. */
+    inline def find(inline id: Any): Option[S] = ${ MethodMacros.find[T, S]('this, 'id) }
+
+    def unsafeFind(id: Any): Option[S] = unsafeFindAllBy("id", id).headOption
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -228,7 +231,8 @@ trait Relations {
      * }}}
      * @param conditions fieldname-value tuples
      */
-    def findBy(conditions: (String, Any)*): Option[S] = unsafeFindBy(conditions.head, conditions.tail*)
+    inline def findBy(inline conditions: (String, Any)*): Option[S] =
+      ${ MethodMacros.findBy[T, S]('this, 'conditions) }
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -243,8 +247,8 @@ trait Relations {
       unsafeFindAllBy(condition, conditions:_*).headOption
     }
 
-    def findByOrCreate(m: T, fields: String*)(implicit ev: T =:= S): S =
-      unsafeFindByOrCreate(m, fields.head, fields.tail*)
+    inline def findByOrCreate(m: T, inline fields: String*)(implicit ev: T =:= S): S =
+      ${ MethodMacros.findByOrCreate[T, S]('this, 'm, 'fields, 'ev) }
 
     def unsafeFindByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
       unsafeFindBy((field, m.getValue[Any](field)),
@@ -259,7 +263,8 @@ trait Relations {
      * }}}
      * @param conditions fieldname-value tuples
      */
-    def findAllBy(conditions: (String, Any)*): this.type = unsafeFindAllBy(conditions.head, conditions.tail*)
+    inline def findAllBy(inline conditions: (String, Any)*): this.type =
+      ${ MethodMacros.findAllBy[T, S, this.type]('this, 'conditions) }
 
     /**
      * Search by fieldname and value and return first record.
@@ -269,7 +274,8 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findBy(name: String, value: Any): Option[S] = unsafeFindAllBy((name, value)).headOption
+    inline def findBy(inline name: String, inline value: Any): Option[S] =
+      ${ MethodMacros.findByNameValue[T, S]('this, 'name, 'value) }
 
     /**
      * Search by fieldname and value.
@@ -279,7 +285,8 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findAllBy(name: String, value: Any): this.type = unsafeFindAllBy(name, value)
+    inline def findAllBy(inline name: String, inline value: Any): this.type =
+      ${ MethodMacros.findAllByNameValue[T, S, this.type]('this, 'name, 'value) }
 
     /**
      * Search by fieldname and value.

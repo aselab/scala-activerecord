@@ -17,7 +17,8 @@ trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T]
 {
   override def newInstance: T = super.newInstance
 
-  def newInstance(data: (String, Any)*): T = newInstance.unsafeAssign(data.toMap)
+  /** Creates a model with the given field values; the names and value types are checked at compile time. */
+  inline def newInstance(inline data: (String, Any)*): T = ${ MethodMacros.newInstance[T]('this, 'data) }
 }
 
 trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.AssociationSupport

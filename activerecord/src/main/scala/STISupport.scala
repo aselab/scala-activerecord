@@ -15,7 +15,7 @@ trait STISupport[T <: ActiveRecord with STI] { self: ActiveRecordBaseCompanion[L
 
   override def defaultScope = queryToRelation[T](table).where(_._type === _typeName)
 
-  override def find(id: Long): Option[T] = defaultScope.find(id)
+  override def find(id: Long): Option[T] = defaultScope.unsafeFind(id)
 
   override protected[activerecord] def delete(id: Long): Boolean =
     all.where(_.id === id).forceDestroyAll() > 0

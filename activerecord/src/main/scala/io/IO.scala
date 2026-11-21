@@ -35,9 +35,11 @@ trait IO extends Validatable { this: ProductModel =>
     case _ => FormConverter.get(value.getClass).map(_.serialize(value).toString).getOrElse(value)
   }
 
-  def assign(data: (String, Any)*): this.type = unsafeAssign(data.toMap)
+  /** Assigns field values; the names and value types are checked at compile time. */
+  inline def assign(inline data: (String, Any)*): this.type = ${ MethodMacros.assign[this.type]('this, 'data) }
 
-  def assign(data: Map[String, Any]): this.type = unsafeAssign(data)
+  /** Assigns the field values of a `Map(...)` literal; the names and value types are checked at compile time. */
+  inline def assign(inline data: Map[String, Any]): this.type = ${ MethodMacros.assignMap[this.type]('this, 'data) }
 
   def unsafeAssign(data: Map[String, Any]): this.type = unsafeAssign(data, (v: Any, f: FieldInfo) => v)
 
