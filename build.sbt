@@ -20,53 +20,66 @@ val compileOptions = Seq(
   "-unchecked",
   "-Wdead-code",
   "-Wvalue-discard",
-  "-Xfatal-warnings"
+  "-Xfatal-warnings",
+  // Scala 2.13.11+ warns about implicits without an explicit result type (a Scala 3 migration
+  // check); silence only that category so public implicit signatures stay unchanged
+  "-Wconf:cat=other-implicit-type:s"
 )
 
 val compilerSettings = Seq(
-  javacOptions := Seq("-source", "1.8", "-target", "1.8"),
-  scalacOptions ++= compileOptions,
-  scalacOptions in Compile in doc ++= {
+  // Keep producing Java 8 compatible classes, compiled against the Java 8 API
+  javacOptions := Seq("--release", "8"),
+  scalacOptions ++= compileOptions :+ "-release:8",
+  Compile / doc / scalacOptions ++= {
     val base = baseDirectory.value
     Seq("-sourcepath", base.getAbsolutePath, "-doc-source-url",
       "https://github.com/aselab/scala-activerecord/tree/master/%s€{FILE_PATH}.scala".format(base.getName),
       "-diagrams")
   },
-  compileOrder in Compile := CompileOrder.JavaThenScala
+  Compile / compileOrder := CompileOrder.JavaThenScala
 )
 
 val defaultSettings = Seq(
   version := (if (isRelease) _version else _version + "-SNAPSHOT"),
   organization := "com.github.aselab",
-  scalaVersion := "2.13.4",
-  crossScalaVersions := Seq("2.13.4"),
-  libraryDependencies ++= Seq(
-    specs2("test").value,
-    specs2("test", "mock").value,
-    "com.h2database" % "h2" % "1.4.200" % "test",
-    "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
-  ) ++ Option(System.getProperty("ci")).map(_ => specs2("test", "junit").value).toSeq,
-  testOptions in Test ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
-  parallelExecution in Test := false,
-  fork in Test := true,
-  testForkedParallel in Test := true,
-  publishTo := sonatypePublishToBundle.value,
+  scalaVersion := "2.13.18",
+  crossScalaVersions := Seq("2.13.18"),
+  libraryDependencies ++= {
+    val junit = specs2("test", "junit").value
+    Seq(
+      specs2("test").value,
+      specs2("test", "mock").value,
+      "com.h2database" % "h2" % "1.4.200" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
+    ) ++ Option(System.getProperty("ci")).map(_ => junit).toSeq
+  },
+  Test / testOptions ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
+  Test / parallelExecution := false,
+  Test / fork := true,
+  Test / testForkedParallel := true,
+  // Squeryl generates proxies with cglib, which needs reflective access to java.lang
+  Test / javaOptions += "--add-opens=java.base/java.lang=ALL-UNNAMED",
+  // Sonatype Central Portal publishing built into sbt (publishSigned, then sonaRelease)
+  publishTo := {
+    val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+    if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+    else localStaging.value
+  },
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ => false },
   pomExtra := pomXml,
   shellPrompt := {
     (state: State) => Project.extract(state).currentProject.id + "> "
-  },
-  ivyLoggingLevel := UpdateLogging.DownloadOnly
-) ++ compilerSettings ++ org.scalastyle.sbt.ScalastylePlugin.projectSettings
+  }
+) ++ compilerSettings
 
 lazy val root = project.in(file("."))
-  .settings(defaultSettings: _*)
-  .settings(publish := {}, publishLocal := {}, packagedArtifacts := Map.empty)
+  .settings(defaultSettings)
+  .settings(publish := {}, publishLocal := {}, packagedArtifacts := Def.uncached(Map.empty))
   .aggregate(macros, core, specs, scalatra, play2, play2Specs)
 
-lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings:_*).settings(
+lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings).settings(
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
     "org.squeryl" %% "squeryl" % "0.9.15",
@@ -78,16 +91,16 @@ lazy val core: Project = Project("core", file("activerecord")).settings(defaultS
     "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scala-lang" % "scalap" % scalaVersion.value
   ),
-  unmanagedSourceDirectories in Test += (baseDirectory.value / ".." / "specs" / "src" / "main"),
-  initialCommands in console in Test := """
+  Test / unmanagedSourceDirectories += (baseDirectory.value / ".." / "specs" / "src" / "main"),
+  Test / console / initialCommands := """
   import com.github.aselab.activerecord._
   import com.github.aselab.activerecord.dsl._
   import models._
   TestTables.initialize(Map("schema" -> "com.github.aselab.activerecord.models.TestTables"))
   """
-) dependsOn(macros)
+).dependsOn(macros)
 
-lazy val macros = Project("macro", file("macro")).settings(defaultSettings:_*).settings(
+lazy val macros = Project("macro", file("macro")).settings(defaultSettings).settings(
   name := "scala-activerecord-macro",
   libraryDependencies := Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
@@ -95,12 +108,12 @@ lazy val macros = Project("macro", file("macro")).settings(defaultSettings:_*).s
   )
 )
 
-lazy val specs = project.settings(defaultSettings:_*).settings(
+lazy val specs = project.settings(defaultSettings).settings(
   name := "scala-activerecord-specs",
   libraryDependencies += specs2("provided").value
 ).dependsOn(core)
 
-lazy val play2 = project.settings(defaultSettings:_*).settings(
+lazy val play2 = project.settings(defaultSettings).settings(
   name := "scala-activerecord-play2",
   libraryDependencies ++= List(
     play20("play", "provided").value,
@@ -109,7 +122,7 @@ lazy val play2 = project.settings(defaultSettings:_*).settings(
   )
 ).dependsOn(core)
 
-lazy val play2Specs = project.settings(defaultSettings:_*).settings(
+lazy val play2Specs = project.settings(defaultSettings).settings(
   name := "scala-activerecord-play2-specs",
   libraryDependencies ++= List(
     play20("play", "provided").value,
@@ -119,7 +132,7 @@ lazy val play2Specs = project.settings(defaultSettings:_*).settings(
   )
 ).dependsOn(play2, specs)
 
-lazy val scalatra = project.settings(defaultSettings:_*).settings(
+lazy val scalatra = project.settings(defaultSettings).settings(
   name := "scala-activerecord-scalatra",
   libraryDependencies ++= Seq(
     "org.scalatra" %% "scalatra" % "2.7.1" % "provided",

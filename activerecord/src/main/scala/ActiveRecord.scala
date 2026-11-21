@@ -193,7 +193,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     table.insert(models)
   }
 
-  def forceInsertAll(models: T*): Unit = forceInsertAll(models.toIterable)
+  def forceInsertAll(models: T*): Unit = forceInsertAll(models: Iterable[T])
 
   def insertWithValidation(models: Iterable[T]): Iterable[T] = {
     val (valid, invalid) = models.partition(_.validate())
@@ -201,7 +201,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     invalid
   }
 
-  def insertWithValidation(models: T*): Iterable[T] = insertWithValidation(models.toIterable)
+  def insertWithValidation(models: T*): Iterable[T] = insertWithValidation(models: Iterable[T])
 
   /**
    * unique validation.
