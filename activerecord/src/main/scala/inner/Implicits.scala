@@ -6,7 +6,7 @@ import com.github.aselab.activerecord.aliases._
 import ActiveRecord._
 import reflections._
 import scala.reflect.ClassTag
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 import scala.language.implicitConversions
 
 // scalastyle:off
@@ -19,7 +19,7 @@ trait CompanionIterable[T <: AR] {
 }
 
 trait CompanionConversion[T <: AR] extends CompanionIterable[T] {
-  implicit def companionToRelation(c: this.type) = c.all
+  implicit def companionToRelation(c: this.type): ActiveRecord.Relation1[T, T] = c.all
 }
 
 // low priority implicits
@@ -33,7 +33,7 @@ trait IterableConversion {
 }
 
 trait DSL extends IterableConversion {
-  implicit def keyedEntityDef[T <: AR](implicit manifest: ClassTag[T]) = {
+  implicit def keyedEntityDef[T <: AR](implicit manifest: ClassTag[T]): KeyedEntityDef[T, _] = {
     ReflectionUtil.classToARCompanion[T](manifest.runtimeClass)
       .keyedEntityDef.asInstanceOf[KeyedEntityDef[T, _]]
   }
@@ -58,8 +58,8 @@ trait DSL extends IterableConversion {
     (association: SingularAssociation[_, T]): T = association.relation.head
 
   implicit def associationToRelation1[T <: AR]
-    (association: {def relation1: Relation1[T, T]}) = association.relation1
+    (association: {def relation1: Relation1[T, T]}): Relation1[T, T] = association.relation1
 
   implicit def associationToRelation2[T <: AR, I <: AR]
-    (association: {def relation2: Relation2[T, I, T]}) = association.relation2
+    (association: {def relation2: Relation2[T, I, T]}): Relation2[T, I, T] = association.relation2
 }

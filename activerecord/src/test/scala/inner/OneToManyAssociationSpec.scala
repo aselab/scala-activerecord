@@ -118,7 +118,7 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       val removed = group.usersByOtherKey.removeAll()
       removed mustEqual List(user, user2)
       removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
-      group.usersByOtherKey must beEmpty
+      group.usersByOtherKey.toList must beEmpty
       group.usersByOtherKey.reload must beEmpty
     }
 
@@ -132,7 +132,7 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       val user3 = User("user3").create
       group.users << Seq(user, user2)
       group.users.deleteAll() mustEqual List(user, user2)
-      group.users must beEmpty
+      group.users.toList must beEmpty
       User.exists(_.id === user.id) must beFalse
       User.exists(_.id === user2.id) must beFalse
       User.exists(_.id === user3.id) must beTrue

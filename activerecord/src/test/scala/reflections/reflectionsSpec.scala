@@ -137,6 +137,8 @@ class reflectionsSpec extends Specification {
     }
 
     "detect type of List value" in {
+      // SeqModel has no companion that would register its field types
+      FieldTypes.register[models.SeqModel]
       val c = new ClassInfo(classOf[models.SeqModel])
       "Int" in {
         c.fieldInfo("list") mustEqual
@@ -150,14 +152,15 @@ class reflectionsSpec extends Specification {
     }
 
     "includes superclass's fields" in {
+      FieldTypes.register[ExtendedModel]
       val c = new ClassInfo(classOf[ExtendedModel])
       c.fieldInfo.keys must contain(exactly("string", "int", "estring", "eint", "oboolean"))
     }
   }
 
-  "ScalaSigInfo#genericTypes" should {
+  "FieldTypes" should {
     "detect generic primitive types of Option field" in {
-      ScalaSigInfo(classOf[models.PrimitiveModel]).genericTypes must havePairs(
+      FieldTypes.derived[models.PrimitiveModel].types must havePairs(
         "ostring" -> classOf[String],
         "oboolean" -> classOf[Boolean],
         "oint" -> classOf[Int],
@@ -169,10 +172,19 @@ class reflectionsSpec extends Specification {
     }
 
     "detect generic primitive types of Seq field" in {
-      ScalaSigInfo(classOf[models.SeqModel]).genericTypes must havePairs(
+      FieldTypes.derived[models.SeqModel].types must havePairs(
         "list" -> classOf[Int],
         "seq" -> classOf[Double]
       )
+    }
+
+    "include fields declared in superclasses" in {
+      FieldTypes.derived[ExtendedModel].types must havePairs("oboolean" -> classOf[Boolean])
+    }
+
+    "be registered by the model companion" in {
+      models.PrimitiveModel.fieldInfo
+      FieldTypes.lookup(classOf[models.PrimitiveModel]) must beSome
     }
   }
 

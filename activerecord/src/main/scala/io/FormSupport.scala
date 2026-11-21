@@ -105,7 +105,7 @@ trait FormSerializer extends IO { self: ProductModel =>
             this.errors.add(name, Validator.ERROR_PREFIX + "invalid")
             None
         }
-    }, FormSerializer.assignFunc(_, _))
+    }, FormSerializer.assignFunc)
   }
 
   def formErrors: Seq[ValidationError] = {

@@ -21,8 +21,10 @@ trait Optimistic extends CRUDable { self: AR =>
   }
 
   /** destroy with lock */
-  abstract override protected def doDelete() = self.recordInDatabase match {
-    case Some(m) if m.occVersion != occVersion =>
+  abstract override protected def doDelete() = (self.recordInDatabase: Option[Any]) match {
+    // matched as Option[Any]: recordInDatabase is typed Option[this.type], and on Scala 3 a pattern on
+    // that singleton type only matches `this` itself, never the separately loaded record
+    case Some(m: Optimistic) if m.occVersion != occVersion =>
       throw ActiveRecordException.staleDelete(self.getClass.getName)
     case _ => super.doDelete()
   }

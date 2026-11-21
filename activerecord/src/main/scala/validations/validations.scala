@@ -7,7 +7,7 @@ import org.apache.commons.validator.GenericValidator.isEmail
 import scala.util.DynamicVariable
 import java.util.Locale
 import scala.reflect.ClassTag
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 
 class Errors(model: Class[_]) extends Iterable[ValidationError] {
   protected val errorList =
@@ -223,12 +223,12 @@ object Validator {
     private def min = annotation.min
     private def max = annotation.max
 
-    def range[T](min: T, v: T, max: T)(implicit ev: T => Ordered[T]): Unit = {
+    def range[T](min: T, v: T, max: T)(implicit ord: Ordering[T]): Unit = {
       if (annotation.message.isEmpty) {
-        if (v < min) errors.add(fieldName, ERROR_PREFIX + "minValue", min)
-        if (v > max) errors.add(fieldName, ERROR_PREFIX + "maxValue", max)
+        if (ord.lt(v, min)) errors.add(fieldName, ERROR_PREFIX + "minValue", min)
+        if (ord.gt(v, max)) errors.add(fieldName, ERROR_PREFIX + "maxValue", max)
       } else {
-        if (v < min || v > max) errors.add(fieldName, annotation.message)
+        if (ord.lt(v, min) || ord.gt(v, max)) errors.add(fieldName, annotation.message)
       }
     }
 

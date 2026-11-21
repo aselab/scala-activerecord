@@ -10,6 +10,7 @@ import java.io.{PrintWriter, StringWriter}
 import reflections.ReflectionUtil
 import java.sql.Connection
 import scala.language.existentials
+import scala.reflect.ClassTag
 
 /**
  * Base class of database schema.
@@ -22,9 +23,10 @@ trait ActiveRecordTables extends Schema {
     val map = collection.mutable.Map[String, Table[inner.IntermediateRecord]]()
     this.getFields[Table[ActiveRecordBase[_]]].map {f =>
       val clazz = getGenericTypes(f).last
-      clazz.getDeclaredFields.foreach {f =>
-        if (c.isAssignableFrom(f.getType)) {
-          val List(c1, c2) = getGenericTypes(f)
+      // associations are usually lazy vals, whose backing field is untyped on Scala 3: use the accessors
+      clazz.getDeclaredMethods.foreach {m =>
+        if (m.getParameterCount == 0 && c.isAssignableFrom(m.getReturnType)) {
+          val List(c1, c2) = getGenericTypes(m.getGenericReturnType): @unchecked
           val tableName = tableNameFromClasses(c1, c2)
           if (!map.isDefinedAt(tableName)) {
             implicit val d = inner.IntermediateRecord.keyedEntityDef
@@ -211,17 +213,30 @@ trait ActiveRecordTables extends Schema {
     out.toString
   }
 
-  def table[T <: AR](implicit m: Manifest[T]): Table[T] = {
-    val typeT = m.runtimeClass.asInstanceOf[Class[T]]
-    val columnName = baseARType(typeT)
-      .map(c => tableNameFromClass(c.name.toString))
-      .getOrElse(tableNameFromClass(typeT))
+  /**
+   * Defines the table of model `T`. Inline so that Squeryl receives the element types of
+   * `Option[Int]`-like fields, which it can only obtain at compile time on Scala 3.
+   */
+  inline def table[T <: AR](implicit m: ClassTag[T]): Table[T] =
+    tableWithFieldsInfo[T](defaultTableName(m.runtimeClass), org.squeryl.internals.TypeInfo.fieldsInfo[T])
 
-    table(columnName)(m)
-  }
+  inline def table[T <: AR](name: String)(implicit m: ClassTag[T]): Table[T] =
+    tableWithFieldsInfo[T](name, org.squeryl.internals.TypeInfo.fieldsInfo[T])
 
-  def table[T <: AR](name: String)(implicit m: Manifest[T]): Table[T] = {
-    val t = super.table[T](name)(m, dsl.keyedEntityDef(m))
+  /** Defines the table of model `T` in database schema `prefix`. */
+  inline def table[T <: AR](name: String, prefix: String)(implicit m: ClassTag[T]): Table[T] =
+    prefixedTableWithFieldsInfo[T](name, prefix, org.squeryl.internals.TypeInfo.fieldsInfo[T])
+
+  def prefixedTableWithFieldsInfo[T <: AR](name: String, prefix: String, fieldsInfo: Map[String, Class[_]])(
+    implicit m: ClassTag[T]
+  ): Table[T] = super.table[T](name, prefix)(fieldsInfo)(m, dsl.keyedEntityDef(m))
+
+  /** table name of `typeT`: the root model's name for STI models */
+  def defaultTableName(typeT: Class[_]): String =
+    baseARType(typeT).map(c => tableNameFromClass(c)).getOrElse(tableNameFromClass(typeT))
+
+  def tableWithFieldsInfo[T <: AR](name: String, fieldsInfo: Map[String, Class[_]])(implicit m: ClassTag[T]): Table[T] = {
+    val t = super.table[T](name)(fieldsInfo)(m, dsl.keyedEntityDef(m))
 
     val c = classToARCompanion[T](m.runtimeClass)
     val fields = c.fieldInfo.values.toSeq

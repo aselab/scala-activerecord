@@ -15,7 +15,7 @@ class ActiveRecordInitialize @Inject() (
   configuration: Configuration,
   config: PlayConfigProvider
 ) {
-  implicit val classLoader = environment.classLoader
+  implicit val classLoader: ClassLoader = environment.classLoader
   lazy val activeRecordTables = configuration.getOptional[Configuration]("schema")
     .map(_.keys).getOrElse(List("models.Tables")).map(ActiveRecordTables.find)
 

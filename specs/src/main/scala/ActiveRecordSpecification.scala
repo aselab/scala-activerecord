@@ -2,15 +2,17 @@ package com.github.aselab.activerecord
 
 import org.specs2.mutable._
 import org.specs2.specification._
+import scala.language.implicitConversions
 
 trait AutoRollback extends BeforeAfterEach { self: ActiveRecordSpecification =>
   override def before = self.schema.foreach(_.startTransaction)
   override def after = self.schema.reverse.foreach(_.rollback)
 }
 
-trait ActiveRecordSpecification extends Specification with BeforeAfterAll {
+// NoTypedEqual: specs2's `===` matcher would otherwise shadow Squeryl's `===` in query expressions
+trait ActiveRecordSpecification extends Specification with BeforeAfterAll with org.specs2.matcher.NoTypedEqual {
   sequential
-  implicit def toTableList(table: ActiveRecordTables) = Seq(table)
+  implicit def toTableList(table: ActiveRecordTables): Seq[ActiveRecordTables] = Seq(table)
 
   override def beforeAll() = {
     System.setProperty("run.mode", "test")

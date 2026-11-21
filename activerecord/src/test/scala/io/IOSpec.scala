@@ -1,6 +1,5 @@
 package com.github.aselab.activerecord.io
 
-import org.specs2.mock._
 import com.github.aselab.activerecord._
 import dsl._
 import models._
@@ -43,7 +42,7 @@ object Models {
   object ComplexModel extends ActiveModelCompanion[ComplexModel]
 }
 
-class IOSpec extends DatabaseSpecification with Mockito {
+class IOSpec extends DatabaseSpecification with MockSupport {
   import Models._
 
   "IO" should {
@@ -349,7 +348,7 @@ class IOSpec extends DatabaseSpecification with Mockito {
           Map("name" -> "user2", "groupId" -> id)
         )
       ))
-      g.users.map(_.toMap) must containAllOf(List(
+      g.users.toList.map(_.toMap) must containAllOf(List(
         Map("name" -> "user1", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1"))),
         Map("name" -> "user2", "groupId" -> id, "group" -> Map("name" -> "group1"), "projects" -> List(Map("name" -> "project1")))
       ))
@@ -466,7 +465,8 @@ class IOSpec extends DatabaseSpecification with Mockito {
 
         PrimitiveModel.bind(data)(source) mustEqual source
 
-        there was one(source).assignFormValues(data)
+        verifyOnce(source).assignFormValues(data)
+        ok
       }
     }
 

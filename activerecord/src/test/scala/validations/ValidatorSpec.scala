@@ -1,11 +1,10 @@
 package com.github.aselab.activerecord.validations
 
 import org.specs2.mutable._
-import org.specs2.mock._
 import com.github.aselab.activerecord._
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 
-class ValidatorSpec extends Specification with Mockito {
+class ValidatorSpec extends Specification with MockSupport {
   import annotation.meta._
   type CustomAnnotation = sample.CustomAnnotation @field
 
@@ -16,7 +15,7 @@ class ValidatorSpec extends Specification with Mockito {
 
   def mockAnnotation[T <: Validator.AnnotationType](
     on: String = "save"
-  )(implicit m: Manifest[T]) = {
+  )(implicit m: scala.reflect.ClassTag[T]) = {
     val a = mock[T]
     a.message() returns ""
     a.on() returns on
@@ -60,11 +59,11 @@ class ValidatorSpec extends Specification with Mockito {
 
         val onCreate = Model("", true)
         validate(customValidator, a, onCreate)
-        onCreate.errors must not beEmpty
+        onCreate.errors must not(beEmpty)
 
         val onUpdate = Model("", false)
         validate(customValidator, a, onUpdate)
-        onUpdate.errors must not beEmpty
+        onUpdate.errors must not(beEmpty)
       }
 
       "on create" in {
@@ -73,7 +72,7 @@ class ValidatorSpec extends Specification with Mockito {
 
         val onCreate = Model("", true)
         validate(customValidator, a, onCreate)
-        onCreate.errors must not beEmpty
+        onCreate.errors must not(beEmpty)
 
         val onUpdate = Model("", false)
         validate(customValidator, a, onUpdate)
@@ -90,7 +89,7 @@ class ValidatorSpec extends Specification with Mockito {
 
         val onUpdate = Model("", false)
         validate(customValidator, a, onUpdate)
-        onUpdate.errors must not beEmpty
+        onUpdate.errors must not(beEmpty)
       }
     }
 
@@ -183,8 +182,8 @@ class ValidatorSpec extends Specification with Mockito {
       val validator = Validator.rangeValidator
       def a = {
         val a = mockAnnotation[annotations.Range]()
-        a.min returns -2
-        a.max returns 2
+        a.min returns -2.0
+        a.max returns 2.0
         a
       }
 

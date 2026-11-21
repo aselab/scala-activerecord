@@ -4,6 +4,6 @@ import com.github.aselab.activerecord.reflections._
 import scala.language.implicitConversions
 
 object Implicits {
-  implicit def fieldToExpression(field: FieldInfo) =
+  implicit def fieldToExpression(field: FieldInfo): ExpressionConversion =
     new ExpressionConversion(field)
 }

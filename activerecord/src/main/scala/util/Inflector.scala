@@ -87,7 +87,7 @@ trait Inflector {
       }
     }
   }
-  private implicit def tuple2Rule(pair: (String, String)) = Rule(pair)
+  private implicit def tuple2Rule(pair: (String, String)): Rule = Rule(pair)
 
   @tailrec
   private def applyRules(collection: List[Rule], word: String): String = {
@@ -129,8 +129,8 @@ trait Inflector {
 
 trait InflectorImports {
 
-  implicit def string2InflectorString(word: String) = new Inflector.InflectorString(word)
-  implicit def int2InflectorInt(number: Int) = new Inflector.InflectorInt(number)
+  implicit def string2InflectorString(word: String): Inflector.InflectorString = new Inflector.InflectorString(word)
+  implicit def int2InflectorInt(number: Int): Inflector.InflectorInt = new Inflector.InflectorInt(number)
 
 }
 

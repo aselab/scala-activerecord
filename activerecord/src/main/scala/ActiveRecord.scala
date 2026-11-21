@@ -17,8 +17,7 @@ trait ActiveModelCompanion[T <: ActiveModel] extends ProductModelCompanion[T]
 {
   override def newInstance: T = super.newInstance
 
-  import scala.language.experimental.macros
-  def newInstance(data: (String, Any)*): T = macro MethodMacros.newInstance[T]
+  def newInstance(data: (String, Any)*): T = newInstance.unsafeAssign(data.toMap)
 }
 
 trait ActiveRecordBase[T] extends CRUDable with ActiveModel with ActiveRecord.AssociationSupport
@@ -101,7 +100,10 @@ abstract class ActiveRecord extends ActiveRecordBase[Long]
 
 object ActiveRecord extends inner.Relations with inner.Associations
 
-trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
+// T is bounded by ActiveRecordBase[?] rather than ActiveRecordBase[K]: Scala 3 cannot check the
+// F-bound for wildcard uses such as ActiveRecordBaseCompanion[?, T]. Concrete companions
+// (ActiveRecordCompanion[T] extends ActiveRecordBaseCompanion[Long, T]) still fix K.
+trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[?]]
   extends ActiveModelCompanion[T] with inner.CompanionConversion[T] {
   import reflections.ReflectionUtil.toReflectable
   import ActiveRecord.Relation1
@@ -112,12 +114,12 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
   lazy val isOptimistic =
     classOf[Optimistic].isAssignableFrom(manifest.runtimeClass)
 
-  implicit val keyedEntityDef = new KeyedEntityDef[T, K] {
-    def getId(m: T): K = m.id
+  implicit val keyedEntityDef: KeyedEntityDef[T, K] = new KeyedEntityDef[T, K] {
+    def getId(m: T): K = m.id.asInstanceOf[K]
     def isPersisted(m: T): Boolean = m.isPersisted
     val idPropertyName = "id"
     override def optimisticCounterPropertyName: Option[String] =
-      if (isOptimistic) Some("occVersionNumber") else None
+      if (ActiveRecordBaseCompanion.this.isOptimistic) Some("occVersionNumber") else None
   }
 
   implicit val toCanLookup: K => CanLookup = (id: K) => org.squeryl.CanLookups.unknown
@@ -210,7 +212,7 @@ trait ActiveRecordBaseCompanion[K, T <: ActiveRecordBase[K]]
     case value if value == null || value == None =>
       true
     case value => inTransaction {
-      find(m.id) match {
+      find(m.id.asInstanceOf[K]) match {
         case Some(old) if old.getValue[Any](name) != value =>
           all.unsafeFindBy((name, value)).isEmpty
         case Some(_) => true

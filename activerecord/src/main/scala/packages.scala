@@ -1,17 +1,20 @@
 package com.github.aselab.activerecord
 
-import scala.language.experimental.macros
+import scala.annotation.compileTimeOnly
 import org.joda.time.{LocalDate, DateTime}
 
 trait dsl extends org.squeryl.PrimitiveTypeMode
+  with squeryl.AggregateFunctions
   with squeryl.DateTimeSupport with squeryl.LocalDateSupport
   with inner.DSL with io.JsonImplicits {
   val optionUUIDTEF = PrimitiveTypeSupport.optionUUIDTEF
   val optionBooleanTEF = PrimitiveTypeSupport.optionBooleanTEF
 
-  override def transaction[A](a: => A): A = macro MethodMacros.unsupportedInTransaction[A]
+  @compileTimeOnly("dsl#inTransaction is deprecated. use ActiveRecordCompanion#inTransaction instead.")
+  override def transaction[A](a: => A): A = super.transaction(a)
   override def transaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.transaction(sf)(a)
-  override def inTransaction[A](a: => A): A = macro MethodMacros.unsupportedInTransaction[A]
+  @compileTimeOnly("dsl#inTransaction is deprecated. use ActiveRecordCompanion#inTransaction instead.")
+  override def inTransaction[A](a: => A): A = super.inTransaction(a)
   override def inTransaction[A](sf: org.squeryl.SessionFactory)(a: => A): A = super.inTransaction(sf)(a)
 }
 

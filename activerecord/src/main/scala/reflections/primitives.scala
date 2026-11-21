@@ -3,10 +3,10 @@ package com.github.aselab.activerecord.reflections
 import org.joda.time.{LocalDate, DateTime}
 
 trait RegistrationManager[K, V] {
-  protected val registrations: collection.mutable.Map[K, V]
+  protected def registrations: collection.mutable.Map[K, V]
 
-  def register(key: K, value: V):Unit  = registrations += (key -> value)
-  def unregister(key: K): Unit = registrations -= key
+  def register(key: K, value: V): Unit = registrations.update(key, value)
+  def unregister(key: K): Unit = registrations.remove(key): Unit
   def get(key: K): Option[V] = registrations.get(key)
   def getOrRegister(key: K, newValue: => V): V =
     registrations.getOrElseUpdate(key, newValue)

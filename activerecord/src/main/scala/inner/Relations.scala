@@ -7,7 +7,8 @@ import com.github.aselab.activerecord.squeryl.Implicits._
 import ActiveRecord._
 import reflections._
 import ReflectionUtil._
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
+import com.github.aselab.activerecord.squeryl.{Aggregates, MaxMinResult, SumResult, AvgResult}
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -18,7 +19,7 @@ trait Relations {
   case class Parameters[T <: AR, JoinedType <: {def _1: T}, S](
     conditions: List[JoinedType => LogicalBoolean] = Nil,
     orders: List[JoinedType => ExpressionNode] = Nil,
-    selector: JoinedType => S = {t: JoinedType => t._1},
+    selector: JoinedType => S = {(t: JoinedType) => t._1},
     includeAssociations: List[T => Association[T, AR]] = Nil,
     pages: Option[(Int, Int)] = None,
     isUnique: Boolean = false,
@@ -64,7 +65,7 @@ trait Relations {
     protected implicit def relationToThisType[R](self: Relation[T, R]): this.type =
       self.asInstanceOf[this.type]
 
-    private def _includes(associations: Inc[_]*): this.type =
+    private def _includes(associations: (T => Association[T, ?])*): this.type =
       copyParams(includeAssociations =
         includeAssociations ++ associations.map(_.asInstanceOf[Inc[AR]]))
 
@@ -118,10 +119,10 @@ trait Relations {
 
     def reverse: this.type = copyParams(isReverse = !isReverse)
 
-    protected def wrap[A <: TupleN, R](f: T => R): A => R = {m: A => f(m._1)}
+    protected def wrap[A <: TupleN, R](f: T => R): A => R = {(m: A) => f(m._1)}
 
     protected def wrapTuple1[A <: TupleN, R](f: Tuple1[T] => R): A => R =
-      {t: A => f(Tuple1(t._1))}
+      {(t: A) => f(Tuple1(t._1))}
 
     def where(condition: T => LogicalBoolean): this.type =
       copyParams(conditions = conditions :+ wrap(condition))
@@ -163,7 +164,7 @@ trait Relations {
   trait Relation[T <: AR, S] extends QuerySupport[T, S] with PagerSupport[T, S] {
     val queryable: Queryable[T]
 
-    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]) =
+    implicit protected def convertFactory[A](f: TypedExpressionFactory[A, _]): TypedExpressionFactory[A, Any] =
       f.asInstanceOf[TypedExpressionFactory[A, Any]]
 
     private var _isLoaded = false
@@ -217,7 +218,7 @@ trait Relations {
       companion.inTransaction { reverse.limit(1).toQuery.headOption }
     }
 
-    def find(id: Any): Option[S] = macro MethodMacros.findById[T]
+    def find(id: Any): Option[S] = unsafeFindAllBy("id", id).headOption
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -227,7 +228,7 @@ trait Relations {
      * }}}
      * @param conditions fieldname-value tuples
      */
-    def findBy(conditions: (String, Any)*): Option[S] = macro MethodMacros.findBy[T]
+    def findBy(conditions: (String, Any)*): Option[S] = unsafeFindBy(conditions.head, conditions.tail*)
 
     /**
      * Search by multiple fieldnames and values and return first record.
@@ -242,7 +243,8 @@ trait Relations {
       unsafeFindAllBy(condition, conditions:_*).headOption
     }
 
-    def findByOrCreate(m: T, fields: String*): S = macro MethodMacros.findByOrCreate[T, S]
+    def findByOrCreate(m: T, fields: String*)(implicit ev: T =:= S): S =
+      unsafeFindByOrCreate(m, fields.head, fields.tail*)
 
     def unsafeFindByOrCreate(m: T, field: String, fields: String*)(implicit ev: T =:= S): S = {
       unsafeFindBy((field, m.getValue[Any](field)),
@@ -257,7 +259,7 @@ trait Relations {
      * }}}
      * @param conditions fieldname-value tuples
      */
-    def findAllBy(conditions: (String, Any)*): this.type = macro MethodMacros.findAllBy[T]
+    def findAllBy(conditions: (String, Any)*): this.type = unsafeFindAllBy(conditions.head, conditions.tail*)
 
     /**
      * Search by fieldname and value and return first record.
@@ -267,7 +269,7 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findBy(name: String, value: Any): Option[S] = macro MethodMacros.findByArg2[T]
+    def findBy(name: String, value: Any): Option[S] = unsafeFindAllBy((name, value)).headOption
 
     /**
      * Search by fieldname and value.
@@ -277,7 +279,7 @@ trait Relations {
      * @param name field name
      * @param value field value
      */
-    def findAllBy(name: String, value: Any): this.type = macro MethodMacros.findAllByArg2[T]
+    def findAllBy(name: String, value: Any): this.type = unsafeFindAllBy(name, value)
 
     /**
      * Search by fieldname and value.
@@ -339,33 +341,30 @@ trait Relations {
       toQuery(t => whereScope(t).compute(e(t)))
     }
 
-    def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 =
-        compute(m => dsl.max(e(m))(f))
+    def maximum[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: MaxMinResult[A1, A2, T2]): A2 =
+        compute(m => Aggregates.max(e(m)))
 
-    def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 =
-        compute(m => dsl.min(e(m))(f))
+    def minimum[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: MaxMinResult[A1, A2, T2]): A2 =
+        compute(m => Aggregates.min(e(m)))
 
-    def average[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-      (e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 =
-        compute(m => dsl.avg(e(m))(f))
+    def average[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: AvgResult[A1, A2, T2]): A2 =
+        compute(m => Aggregates.avg(e(m)))
 
-    def max[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 = maximum(e)(f)
+    def max[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: MaxMinResult[A1, A2, T2]): A2 = maximum(e)
 
-    def min[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 = minimum(e)(f)
+    def min[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: MaxMinResult[A1, A2, T2]): A2 = minimum(e)
 
-    def avg[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-      (e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 = average(e)(f)
+    def avg[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: AvgResult[A1, A2, T2]): A2 = average(e)
 
-    def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1, A2]
-      (e: JoinedType => TypedExpression[A1, T1])
-      (implicit f: TypedExpressionFactory[A2, T2]): A2 =
-        compute(m => dsl.sum(e(m))(f))
+    def sum[A1, T1 >: TNumericLowerTypeBound, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+      (implicit r: SumResult[A1, A2, T2]): A2 =
+        compute(m => Aggregates.sum(e(m)))
 
     protected def toQuery[R](f: JoinedType => QueryYield[R]): Query[R]
 
@@ -400,33 +399,30 @@ trait Relations {
 
       def count: Map[R, Long] = compute(e => dsl.count)
 
-      def maximum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
-          compute(m => dsl.max(e(m))(f))
+      def maximum[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: MaxMinResult[A1, A2, T2]): Map[R, A2] =
+          compute(m => Aggregates.max(e(m)))
 
-      def minimum[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
-          compute(m => dsl.min(e(m))(f))
+      def minimum[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: MaxMinResult[A1, A2, T2]): Map[R, A2] =
+          compute(m => Aggregates.min(e(m)))
 
-      def average[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-        (e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
-          compute(m => dsl.avg(e(m))(f))
+      def average[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: AvgResult[A1, A2, T2]): Map[R, A2] =
+          compute(m => Aggregates.avg(e(m)))
 
-      def max[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = maximum(e)(f)
+      def max[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: MaxMinResult[A1, A2, T2]): Map[R, A2] = maximum(e)
 
-      def min[T2 >: TOption, T1 <: T2, A1, A2](e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = minimum(e)(f)
+      def min[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: MaxMinResult[A1, A2, T2]): Map[R, A2] = minimum(e)
 
-      def avg[T2 >: TOptionFloat, T1 <: T2, A1, A2]
-        (e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] = average(e)(f)
+      def avg[A1, T1, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: AvgResult[A1, A2, T2]): Map[R, A2] = average(e)
 
-      def sum[T2 >: TOption, T1 >: TNumericLowerTypeBound <: T2, A1, A2]
-        (e: JoinedType => TypedExpression[A1, T1])
-        (implicit f: TypedExpressionFactory[A2, T2]): Map[R, A2] =
-          compute(m => dsl.sum(e(m))(f))
+      def sum[A1, T1 >: TNumericLowerTypeBound, A2, T2](e: JoinedType => TypedExpression[A1, T1])
+        (implicit r: SumResult[A1, A2, T2]): Map[R, A2] =
+          compute(m => Aggregates.sum(e(m)))
     }
   }
 

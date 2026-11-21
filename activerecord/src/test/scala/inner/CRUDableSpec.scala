@@ -1,7 +1,7 @@
 package com.github.aselab.activerecord.inner
 
 import org.specs2.mutable._
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 
 class SaveableSpec extends Specification {
   "Saveable" should {
@@ -18,7 +18,10 @@ class CRUDableSpec extends Specification {
     createResult: Boolean = true,
     updateResult: Boolean = true,
     deleteResult: Boolean = true
-  ) = new CRUDable {
+  ) = new TestModel(isNew, createResult, updateResult, deleteResult)
+
+  // a named class: Scala 3 does not infer refinements such as `calledMethods` for anonymous classes
+  class TestModel(isNew: Boolean, createResult: Boolean, updateResult: Boolean, deleteResult: Boolean) extends CRUDable {
     _isNewRecord = isNew
     var calledMethods = List[String]()
 

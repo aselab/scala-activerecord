@@ -11,11 +11,13 @@ trait ProductModel extends Product with Saveable {
     .asInstanceOf[ProductModelCompanion[this.type]]
 }
 
-trait ProductModelCompanion[T <: ProductModel] {
+trait ProductModelCompanion[T <: ProductModel](using fieldTypes: FieldTypes[T]) {
   import ReflectionUtil._
 
   /** corresponding model class */
   protected lazy val targetClass = companionToClass(this).asInstanceOf[Class[T]]
+
+  FieldTypes.register(targetClass, fieldTypes.types)
 
   /**
    * Create a new model object.

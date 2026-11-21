@@ -62,7 +62,7 @@ class PlayHelper[T <: ActiveModel] (companion: ActiveModelCompanion[T]) {
   def textarea(field: Field, options: (Symbol, Any)*)(implicit handler: FieldConstructor, messages: MessagesProvider) =
     playhelper.textarea(field, inputOptions(field, options.toSeq):_*)
 
-  implicit def fieldConstructor(implicit m: ClassTag[T]) = new FieldConstructor {
+  implicit def fieldConstructor(implicit m: ClassTag[T]): FieldConstructor = new FieldConstructor {
     def apply(elements: FieldElements) = {
       val error = if (elements.hasErrors) "error" else ""
       Html(<div class={"control-group %s %s".format(elements.args.get(Symbol("_class")).getOrElse(""), error)} 

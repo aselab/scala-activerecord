@@ -1,21 +1,20 @@
 package com.github.aselab.activerecord
 
 import org.specs2.mutable._
-import org.specs2.mock._
 import java.util.Locale
 import i18n._
-import scala.language.reflectiveCalls
 
-class i18nSpec extends Specification with Mockito {
+class i18nSpec extends Specification {
   "Translator" should {
     implicit val locale = Locale.ENGLISH
-    def translator(result: Option[String]) = new Translator {
+    class TestTranslator(result: Option[String]) extends Translator {
       var args: List[Any] = Nil
       def get(key: String, args: Any*)(implicit locale: Locale) = {
         this.args = key :: args.toList
         result
       }
     }
+    def translator(result: Option[String]) = new TestTranslator(result)
 
     "apply" in {
       "translation exists" in {

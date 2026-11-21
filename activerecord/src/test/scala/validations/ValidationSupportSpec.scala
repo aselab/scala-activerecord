@@ -154,7 +154,7 @@ class ValidationSupportSpec extends DatabaseSpecification {
         m3.errors must contain(ValidationError(c, "maxValue", "activerecord.errors.maxValue", 5.3))
       }
 
-     "@Range min" in {
+      "@Range min" in {
         val c = classOf[ValidationModel]
         val m1 = ValidationModel(minValue = 0)
         val m2 = ValidationModel(minValue = 1)
@@ -167,7 +167,7 @@ class ValidationSupportSpec extends DatabaseSpecification {
         m3.errors.messages.toList must contain(ValidationError(c, "minValue", "activerecord.errors.minValue", 0).toString)
       }
 
-     "@Range" in {
+      "@Range" in {
         val c = classOf[ValidationModel]
         val models = List(
           ValidationModel(range = 4),
@@ -203,7 +203,7 @@ class ValidationSupportSpec extends DatabaseSpecification {
         m4.errors must beEmpty
       }
 
-     "@Range min (Option)" in {
+      "@Range min (Option)" in {
         val c = classOf[ValidationModel]
         val m1 = ValidationModel(minValueOption = Some(0))
         val m2 = ValidationModel(minValueOption = Some(1))
@@ -219,7 +219,7 @@ class ValidationSupportSpec extends DatabaseSpecification {
         m4.errors must beEmpty
       }
 
-     "@Range (Option)" in {
+      "@Range (Option)" in {
         val c = classOf[ValidationModel]
         val models = List(
           ValidationModel(rangeOption = Some(4)),
@@ -350,17 +350,17 @@ class ValidationSupportSpec extends DatabaseSpecification {
       "on save" in {
         val onCreate = AnnotationOptionModel(onSave = "")
         onCreate.validate() must beFalse
-        onCreate.errors must not beEmpty
+        onCreate.errors must not(beEmpty)
 
         val onUpdate = AnnotationOptionModel(onSave = "", persisted = true)
         onUpdate.validate() must beFalse
-        onUpdate.errors must not beEmpty
+        onUpdate.errors must not(beEmpty)
       }
 
       "on create" in {
         val onCreate = AnnotationOptionModel(onCreate = "")
         onCreate.validate() must beFalse
-        onCreate.errors must not beEmpty
+        onCreate.errors must not(beEmpty)
 
         val onUpdate = AnnotationOptionModel(onCreate = "", persisted = true)
         onUpdate.validate() must beTrue
@@ -374,7 +374,7 @@ class ValidationSupportSpec extends DatabaseSpecification {
 
         val onUpdate = AnnotationOptionModel(onUpdate = "", persisted = true)
         onUpdate.validate() must beFalse
-        onUpdate.errors must not beEmpty
+        onUpdate.errors must not(beEmpty)
       }
     }
 
@@ -382,13 +382,13 @@ class ValidationSupportSpec extends DatabaseSpecification {
       "not extends ActiveRecord" >> {
         val v = ValidationSupportModel("aaa")
         v.save() must beFalse
-        v.errors must not beEmpty
+        v.errors must not(beEmpty)
       }
 
       "extends ActiveRecord" >> {
         val m = UserModel("a", "b")
         m.save() must beFalse
-        m.errors must not beEmpty
+        m.errors must not(beEmpty)
       }
 
       "save(true) throws Exception" >> {

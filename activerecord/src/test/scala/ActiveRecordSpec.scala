@@ -31,19 +31,19 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
     }
 
     "#find searches by id and returns option result" >> {
-      PrimitiveModel.find(13) must beSome.which {_.id == 13}
+      PrimitiveModel.find(13) must beSome[PrimitiveModel].which(_.id == 13)
     }
 
     "#where" >> {
       "complex query" >> {
-        PrimitiveModel.where {m: PrimitiveModel =>
+        PrimitiveModel.where {(m: PrimitiveModel) =>
           (m.int lte 30) and (m.string like "string%0")
         }.toList must have size 3
       }
 
       "null value" >> {
-        PrimitiveModel.where {m: PrimitiveModel =>
-          m.oint isNull
+        PrimitiveModel.where {(m: PrimitiveModel) =>
+          m.oint.isNull
         }.toList must have size 50
       }
     }
@@ -168,7 +168,7 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = DateModel.findAllBy("odate", t)
         result.toList must have size 1
-        result.head.odate must beSome.which {_.toString == "1970-01-23"}
+        result.head.odate must beSome[java.util.Date].which(_.toString == "1970-01-23")
       }
 
       "UUID" >> {
@@ -191,7 +191,7 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         val result = PrimitiveModel.findAllBy("string" -> "string22", "int" -> 22)
         result.toList must have size 1
         result.head.int mustEqual 22
-        PrimitiveModel.findAllBy("string" -> "string22", "int" -> 23) must beEmpty
+        PrimitiveModel.findAllBy("string" -> "string22", "int" -> 23).toList must beEmpty
       }
     }
 

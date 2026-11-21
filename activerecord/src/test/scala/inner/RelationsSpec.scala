@@ -41,11 +41,11 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
 
     "#orderBy" >> {
       "single field" >> {
-        relation.orderBy(m => m.int desc).toList mustEqual PrimitiveModel.all.toList.reverse
+        relation.orderBy(m => m.int.desc).toList mustEqual PrimitiveModel.all.toList.reverse
       }
 
       "multiple fields" >> {
-        relation.orderBy(_.oint asc, _.int desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
+        relation.orderBy(_.oint.asc, _.int.desc).toList mustEqual PrimitiveModel.all.toList.sortWith {
           (m1, m2) => (m1.oint, m2.oint) match {
             case (a, b) if a == b => m1.int > m2.int
             case (Some(a), Some(b)) => a < b
@@ -74,7 +74,7 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "single field order" >> {
-        relation.orderBy(m => m.int desc).reverse.toList mustEqual PrimitiveModel.all.toList
+        relation.orderBy(m => m.int.desc).reverse.toList mustEqual PrimitiveModel.all.toList
       }
 
       "use ExpressionNode order" >> {
@@ -82,7 +82,7 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "multiple fields" >> {
-        relation.orderBy(_.oint asc, _.int desc).reverse.toList mustEqual PrimitiveModel.all.toList.sortWith {
+        relation.orderBy(_.oint.asc, _.int.desc).reverse.toList mustEqual PrimitiveModel.all.toList.sortWith {
           (m1, m2) => (m1.oint, m2.oint) match {
             case (a, b) if a == b => m1.int > m2.int
             case (Some(a), Some(b)) => a < b
@@ -181,7 +181,9 @@ class RelationsSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "#compute" >> new testData {
-        Item.group(_.name).compute(item => sum(item.price) + avg(item.price)) mustEqual
+        // Squeryl on Scala 3 cannot infer the result type of arithmetic on different column types,
+        // so the factory (Option[Float], as Scala 2 inferred) is passed explicitly
+        Item.group(_.name).compute(item => sum(item.price).+(avg(item.price))(optionFloatTEF)) mustEqual
           Map("apple" -> Some(375.0), "orange" -> Some(400.0), "coffee" -> Some(200.0))
       }
 

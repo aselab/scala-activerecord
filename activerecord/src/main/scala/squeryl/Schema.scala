@@ -8,11 +8,25 @@ import internals.ResultSetMapper
 import com.github.aselab.activerecord.reflections.ReflectionUtil
 import com.github.aselab.activerecord.STI
 import collection.mutable.{HashMap, ArrayBuffer}
+import scala.reflect.ClassTag
 
 class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schema {
-  override protected def table[T](name: String)(implicit manifestT: Manifest[T], ked: OptionalKeyedEntityDef[T,_]): Table[T] = {
+  override protected def table[T](name: String)(optionalFieldsInfo: Map[String, Class[?]])(
+    implicit manifestT: ClassTag[T], ked: OptionalKeyedEntityDef[T, ?]
+  ): Table[T] = {
     val typeT = manifestT.runtimeClass.asInstanceOf[Class[T]]
-    val t = new CustomTable[T](name, typeT, this, None, ked.keyedEntityDef)
+    val t = new CustomTable[T](name, typeT, this, None, ked.keyedEntityDef, Some(optionalFieldsInfo))
+    _addTable(t)
+    _addTableType(typeT, t)
+    t
+  }
+
+  // Squeryl 0.11 drops the field types for prefixed tables (it passes None); keep them
+  override protected def table[T](name: String, prefix: String)(optionalFieldsInfo: Map[String, Class[?]])(
+    implicit manifestT: ClassTag[T], ked: OptionalKeyedEntityDef[T, ?]
+  ): Table[T] = {
+    val typeT = manifestT.runtimeClass.asInstanceOf[Class[T]]
+    val t = new CustomTable[T](name, typeT, this, Some(prefix), ked.keyedEntityDef, Some(optionalFieldsInfo))
     _addTable(t)
     _addTableType(typeT, t)
     t
@@ -34,27 +48,26 @@ class CustomSchema(implicit override val fieldMapper: FieldMapper) extends Schem
     ArrayBuffer.empty
   }
 
-  lazy val parentTypes = {
-    val parentTypeSig = ReflectionUtil.typeSig(classOf[STI])
-    (parentTypeSig, parentTypeSig.typeSymbol)
-  }
-
-  lazy val baseARType = (typeT: Class[_]) => {
-    val typeTSig = ReflectionUtil.typeSig(typeT)
-    val (parentTypeSig, parentType) = parentTypes
-    typeTSig.baseClasses.tail.reverse.find { c =>
-      ReflectionUtil.isExtend(c, parentType) && !(c.typeSignature =:= parentTypeSig)
+  /**
+   * The root model type of an STI hierarchy: the most general supertype of `typeT`
+   * (excluding `typeT` itself and STI) that mixes in STI.
+   */
+  lazy val baseARType: Class[_] => Option[Class[_]] = (typeT: Class[_]) => {
+    val candidates = ReflectionUtil.supertypes(typeT).filter { c =>
+      c != classOf[STI] && classOf[STI].isAssignableFrom(c)
     }
+    candidates.find(c => !candidates.exists(d => d != c && d.isAssignableFrom(c)))
   }
 }
 
 class CustomTable[T](
   _name: String,
-  override private[squeryl] val classOfT: Class[T],
-  schema: CustomSchema,
+  _classOfT: Class[T],
+  customSchema: CustomSchema,
   _prefix: Option[String],
-  override val ked: Option[KeyedEntityDef[T,_]]
-) extends Table[T](_name, classOfT, schema, _prefix, ked) {
+  _ked: Option[KeyedEntityDef[T, ?]],
+  _optionalFieldsInfo: Option[Map[String, Class[?]]]
+) extends Table[T](_name, _classOfT, customSchema, _prefix, _ked, _optionalFieldsInfo) {
 
   lazy val isSTI = classOf[STI].isAssignableFrom(classOfT)
 
@@ -84,13 +97,13 @@ class CustomTable[T](
     }
 
     if (_type.nonEmpty) {
-      val baseType = schema.baseARType(classOfT)
+      val baseType = customSchema.baseARType(classOfT)
       val isExtendTable = (t: Class[_]) => {
-        val isExtend = baseType.exists(bt => ReflectionUtil.isExtend(t, bt))
+        val isExtend = baseType.exists(bt => bt.isAssignableFrom(t))
         val existsClass = _type.exists(_ == t.toString.split("\\.").last)
         isExtend && existsClass
       }
-      val arTable = schema._stiTableTypes.collect {
+      val arTable = customSchema._stiTableTypes.collect {
         case (typeT, t) if isExtendTable(typeT) => t
       }.head
       mapping(arTable, resultSet)

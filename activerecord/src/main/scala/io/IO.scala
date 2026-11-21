@@ -27,17 +27,17 @@ trait IO extends Validatable { this: ProductModel =>
     case v => serializedValue(v)
   }.toMap
 
-  protected def serializedValue(value: Any) =
-    if (isPrimitiveNumeric(value.getClass) || isBoolean(value.getClass) || isMap(value.getClass)) {
-      value
-    } else {
-      FormConverter.get(value.getClass).map(_.serialize(value).toString).getOrElse(value)
-    }
+  protected def serializedValue(value: Any): Any = value match {
+    // nested models become maps here, so that json4s never has to reflect on model classes
+    // (its case class reflection needs scala3-staging at run time on Scala 3)
+    case m: IO => m.toSerializedMap
+    case _ if isPrimitiveNumeric(value.getClass) || isBoolean(value.getClass) || isMap(value.getClass) => value
+    case _ => FormConverter.get(value.getClass).map(_.serialize(value).toString).getOrElse(value)
+  }
 
-  import scala.language.experimental.macros
-  def assign(data: (String, Any)*): this.type = macro MethodMacros.assign[this.type]
+  def assign(data: (String, Any)*): this.type = unsafeAssign(data.toMap)
 
-  def assign(data: Map[String, Any]): this.type = macro MethodMacros.assignMap[this.type]
+  def assign(data: Map[String, Any]): this.type = unsafeAssign(data)
 
   def unsafeAssign(data: Map[String, Any]): this.type = unsafeAssign(data, (v: Any, f: FieldInfo) => v)
 

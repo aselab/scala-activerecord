@@ -6,10 +6,8 @@ import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, ParameterizedType}
 import scala.util.control.Exception._
 import annotations._
-import scala.tools.scalap.scalax.rules.scalasig._
-import scala.language.reflectiveCalls
+import scala.reflect.Selectable.reflectiveSelectable
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
 import scala.language.implicitConversions
 
 class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
@@ -45,7 +43,8 @@ class ClassInfo[T <: AnyRef](val clazz: Class[T]) {
     }
   }.toMap
 
-  lazy val scalaSigInfo = ScalaSigInfo(clazz)
+  /** element classes of generic fields such as `Option[Int]` (see [[FieldTypes]]) */
+  lazy val genericTypes: Map[String, Class[_]] = ClassInfo.genericTypes(clazz)
 }
 
 object ClassInfo {
@@ -54,7 +53,22 @@ object ClassInfo {
   def apply[T <: AnyRef](clazz: Class[T]): ClassInfo[T] = cache.getOrElseUpdate(
     clazz, new ClassInfo(clazz)).asInstanceOf[ClassInfo[T]]
 
-  lazy val factories = new PrimitiveHandler[() => AnyRef] {
+  /**
+   * Field types registered for `clazz` and its superclasses. Initializes the companion object
+   * first if needed, since model companions register the field types of their model.
+   */
+  def genericTypes(clazz: Class[_]): Map[String, Class[_]] = {
+    def registered(c: Class[_]): Option[Map[String, Class[_]]] =
+      FieldTypes.lookup(c).orElse {
+        allCatch.opt(ReflectionUtil.classToCompanion(c))
+        FieldTypes.lookup(c)
+      }
+
+    Iterator.iterate[Class[_]](clazz)(_.getSuperclass).takeWhile(c => c != null && c != classOf[Object])
+      .toList.reverse.flatMap(c => registered(c).getOrElse(Map.empty)).toMap
+  }
+
+  object factories extends PrimitiveHandler[() => AnyRef] {
     val stringHandler = () => ""
     val booleanHandler = () => java.lang.Boolean.FALSE
     val intHandler = () => java.lang.Integer.valueOf(0)
@@ -146,10 +160,8 @@ object FieldInfo {
 
     def genericType: Class[_] = getGenericType(field) match {
       case c if c == classOf[Object] =>
-        // detect generic primitive type from ScalaSig
-        classInfo.scalaSigInfo.genericTypes.getOrElse(
-          field.getName, notSupported
-        )
+        // the JVM erased a primitive type argument; use the types captured at compile time
+        classInfo.genericTypes.getOrElse(field.getName, notSupported)
 
       case c => c
     }
@@ -168,41 +180,24 @@ object FieldInfo {
   }
 }
 
-case class ScalaSigInfo(clazz: Class[_]) {
-  def error: Nothing = throw ActiveRecordException.scalaSig(clazz)
-
-  val scalaSig = {
-    def find(c: Class[_]): Option[ScalaSig] =
-      ScalaSigParser.parse(c).orElse(find(c.getDeclaringClass))
-    find(clazz).getOrElse(error)
-  }
-
-  val classSymbol = scalaSig.symbols.iterator.collect {
-    case symbol: ClassSymbol if !symbol.isModule => symbol
-  }.find(_.name == clazz.getSimpleName).getOrElse(error)
-
-  lazy val genericTypes: Map[String, Class[_]] = (classSymbol.children.collect {
-    case m: MethodSymbol if m.isLocal => (m.name.trim, m.infoType)
-  }.collect {
-    case (name, TypeRefType(_, symbol, Seq(TypeRefType(_, s, Nil))))
-      if support.primitiveClasses.isDefinedAt(s.path) =>
-        (name, support.primitiveClasses(s.path))
-  } ++ Option(clazz.getSuperclass).filterNot(_ == classOf[Object]).map(ScalaSigInfo(_).genericTypes.toSeq).getOrElse(Nil)).toMap
-}
-
 trait ReflectionUtil {
   private def _defaultClassLoader = Thread.currentThread.getContextClassLoader
   def defaultLoader: ClassLoader = Config.classLoader.getOrElse(_defaultClassLoader)
-  def runtimeMirror = universe.runtimeMirror(defaultLoader)
-
-  def typeSig(typeT: Class[_]) =
-    ReflectionUtil.runtimeMirror.classSymbol(typeT).typeSignature
-
-  def isExtend(t: Class[_], baseTypeSymbol: universe.Symbol): Boolean =
-    isExtend(runtimeMirror.classSymbol(t), baseTypeSymbol)
-
-  def isExtend(typeSymbol: universe.Symbol, baseTypeSymbol: universe.Symbol): Boolean =
-    typeSymbol.typeSignature.baseType(baseTypeSymbol).contains(baseTypeSymbol)
+  /**
+   * All superclasses and interfaces of `c`, excluding `c` itself:
+   * the superclass chain first, then interfaces breadth-first, without duplicates.
+   */
+  def supertypes(c: Class[_]): Seq[Class[_]] = {
+    val superclasses = Iterator.iterate[Class[_]](c.getSuperclass)(_.getSuperclass).takeWhile(_ != null).toList
+    val interfaces = collection.mutable.LinkedHashSet[Class[_]]()
+    var queue = (c :: superclasses).flatMap(_.getInterfaces.toList)
+    while (queue.nonEmpty) {
+      val i = queue.head
+      queue = queue.tail
+      if (interfaces.add(i)) queue = queue ++ i.getInterfaces.toList
+    }
+    superclasses ++ interfaces
+  }
 
   def loadClass(name: String)(
     implicit classLoader: ClassLoader = defaultLoader
@@ -286,8 +281,9 @@ trait ReflectionUtil {
   implicit def toReflectable(o: Any): Reflectable = new Reflectable(o)
 
   def getGenericType(field: Field): Class[_] = getGenericTypes(field).head
-  def getGenericTypes(field: Field): List[Class[_]] =
-    field.getGenericType.asInstanceOf[ParameterizedType]
+  def getGenericTypes(field: Field): List[Class[_]] = getGenericTypes(field.getGenericType)
+  def getGenericTypes(genericType: java.lang.reflect.Type): List[Class[_]] =
+    genericType.asInstanceOf[ParameterizedType]
     .getActualTypeArguments.toList.map {
       case t: ParameterizedType => t.getRawType.asInstanceOf[Class[_]]
       case _t => _t.asInstanceOf[Class[_]]

@@ -39,7 +39,7 @@ trait Associations {
     protected def hasConstraint: Boolean
 
     protected def conditionFactory(conditions: Map[String, Any]) = {
-      m: T => LogicalBoolean.and(conditions.map {
+      (m: T) => LogicalBoolean.and(conditions.map {
         case (key, value) =>
           fieldInfo(key).toEqualityExpression(m.getValue[Any](key), value)
       }.toSeq)
@@ -144,7 +144,7 @@ trait Associations {
 
     def associate(m: T): T = companion.inTransaction {
       if (hasConstraint) delete() else remove()
-      if (m.isNewRecord) m.save(throws = true)
+      if (m.isNewRecord) m.save(throws = true): Unit
       assignConditions(m).update
       relation.cache = List(m)
       m
@@ -257,7 +257,7 @@ trait Associations {
     def assign(m: T): T = assignConditions(m)
 
     def associate(m: T): T = companion.inTransaction {
-      if (m.isNewRecord) m.save(throws = true)
+      if (m.isNewRecord) m.save(throws = true): Unit
       assign(m).update
     }
 
@@ -296,6 +296,7 @@ trait Associations {
       ))
       if (relation.isLoaded) {
         relation.cache = relation.cache.filterNot(_.id == m.id)
+        ()
       }
       result.headOption
     }
@@ -381,6 +382,7 @@ trait Associations {
       ))
       if (relation.isLoaded) {
         relation.cache = relation.cache.filterNot(_.id == m.id)
+        ()
       }
       if (inters.nonEmpty) Some(m) else None
     }
@@ -460,7 +462,7 @@ trait Associations {
     }
 
     def associate(m: T): T = companion.inTransaction {
-      if (m.isNewRecord) m.save(throws = true)
+      if (m.isNewRecord) m.save(throws = true): Unit
       val t = assignConditions(m)
       val inter = interCompanion.newInstance
       assocSide match {
@@ -500,6 +502,7 @@ trait Associations {
       if (count > 0) {
         if (relation.isLoaded) {
           relation.cache = relation.cache.filterNot(_.id == m.id)
+          ()
         }
         Some(m)
       } else {
