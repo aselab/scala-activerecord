@@ -15,19 +15,19 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
 
   "ActiveRecordCompanion" should {
     "#newInstance" >> {
-      User.newInstance mustEqual User("")
+      User.newInstance must beEqualTo(User(""))
     }
 
     "#newInstance(key -> value)" >> {
-      User.newInstance("name" -> "alice", "isAdmin" -> true) mustEqual User("alice", true)
+      User.newInstance("name" -> "alice", "isAdmin" -> true) must beEqualTo(User("alice", true))
     }
 
     "#table returns corresponding table" >> {
-      PrimitiveModel.table mustEqual TestTables.primitiveModels
+      PrimitiveModel.table must beEqualTo(TestTables.primitiveModels)
     }
 
     "#all returns all records" >> {
-      PrimitiveModel.all.toList must have size 100
+      PrimitiveModel.all.toList must haveSize(100)
     }
 
     "#find searches by id and returns option result" >> {
@@ -38,13 +38,13 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       "complex query" >> {
         PrimitiveModel.where {(m: PrimitiveModel) =>
           (m.int lte 30) and (m.string like "string%0")
-        }.toList must have size 3
+        }.toList must haveSize(3)
       }
 
       "null value" >> {
         PrimitiveModel.where {(m: PrimitiveModel) =>
           m.oint.isNull
-        }.toList must have size 50
+        }.toList must haveSize(50)
       }
     }
 
@@ -63,119 +63,119 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
     "#findAllBy" >> {
       "String" >> {
         val result = PrimitiveModel.findAllBy("string", "string33")
-        result.toList must have size 1
-        result.head.string mustEqual "string33"
+        result.toList must haveSize(1)
+        result.head.string must beEqualTo("string33")
       }
 
       "Option[String]" >> {
         val result = PrimitiveModel.findAllBy("ostring", "string33")
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.ostring must beSome("string33")
       }
 
       "Boolean" >> {
         val result = PrimitiveModel.findAllBy("boolean", true)
-        result.toList must have size 50
+        result.toList must haveSize(50)
       }
 
       "Option[Boolean]" >> {
         val result = PrimitiveModel.findAllBy("oboolean", true)
-        result.toList must have size 25
+        result.toList must haveSize(25)
       }
 
       "Int" >> {
         val result = PrimitiveModel.findAllBy("int", 55)
-        result.toList must have size 1
-        result.head.int mustEqual 55
+        result.toList must haveSize(1)
+        result.head.int must beEqualTo(55)
       }
 
       "Option[Int]" >> {
         val result = PrimitiveModel.findAllBy("oint", 35)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.oint must beSome(35)
       }
 
       "Long" >> {
         val result = PrimitiveModel.findAllBy("long", 55L)
-        result.toList must have size 1
-        result.head.long mustEqual 55L
+        result.toList must haveSize(1)
+        result.head.long must beEqualTo(55L)
       }
 
       "Option[Long]" >> {
         val result = PrimitiveModel.findAllBy("olong", 35L)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.olong must beSome(35L)
       }
 
       "Float" >> {
         val result = PrimitiveModel.findAllBy("float", 23.toFloat)
-        result.toList must have size 1
-        result.head.float mustEqual 23.toFloat
+        result.toList must haveSize(1)
+        result.head.float must beEqualTo(23.toFloat)
       }
 
       "Option[Float]" >> {
         val result = PrimitiveModel.findAllBy("ofloat", 23.toFloat)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.ofloat must beSome(23.toFloat)
       }
 
       "Double" >> {
         val result = PrimitiveModel.findAllBy("double", 45.0)
-        result.toList must have size 1
-        result.head.double mustEqual 45.0
+        result.toList must haveSize(1)
+        result.head.double must beEqualTo(45.0)
       }
 
       "Option[Double]" >> {
         val result = PrimitiveModel.findAllBy("odouble", 45.0)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.odouble must beSome(45.0)
       }
 
       "BigDecimal" >> {
         val result = PrimitiveModel.findAllBy("bigDecimal", BigDecimal(55))
-        result.toList must have size 1
-        result.head.bigDecimal mustEqual BigDecimal(55)
+        result.toList must haveSize(1)
+        result.head.bigDecimal must beEqualTo(BigDecimal(55))
       }
 
       "Option[BigDecimal]" >> {
         val result = PrimitiveModel.findAllBy("obigDecimal", BigDecimal(45))
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.obigDecimal must beSome(BigDecimal(45))
       }
 
       "Timestamp" >> {
         val t = new Timestamp(44L * 1000)
         val result = DateModel.findAllBy("timestamp", t)
-        result.toList must have size 1
-        result.head.timestamp mustEqual t
+        result.toList must haveSize(1)
+        result.head.timestamp must beEqualTo(t)
       }
 
       "Option[Timestamp]" >> {
         val t = new Timestamp(44L * 1000)
         val result = DateModel.findAllBy("otimestamp", t)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.otimestamp must beSome(t)
       }
 
       "Date" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = DateModel.findAllBy("date", t)
-        result.toList must have size 1
-        result.head.date.toString mustEqual "1970-01-23"
+        result.toList must haveSize(1)
+        result.head.date.toString must beEqualTo("1970-01-23")
       }
 
       "Option[Date]" >> {
         val t = new Date(22L * 1000 * 60 * 60 * 24)
         val result = DateModel.findAllBy("odate", t)
-        result.toList must have size 1
+        result.toList must haveSize(1)
         result.head.odate must beSome[java.util.Date].which(_.toString == "1970-01-23")
       }
 
       "UUID" >> {
         val u = new UUID(11L, 11L)
         val result = PrimitiveModel.findAllBy("uuid", u)
-        result.toList must have size 1
-        result.head.uuid mustEqual u
+        result.toList must haveSize(1)
+        result.head.uuid must beEqualTo(u)
       }
 
       "invalid field name (unsafe)" >> {
@@ -183,14 +183,14 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "null, None" >> {
-        PrimitiveModel.findAllBy("oboolean", null).toList must have size 50
-        PrimitiveModel.findAllBy("oboolean", None).toList must have size 50
+        PrimitiveModel.findAllBy("oboolean", null).toList must haveSize(50)
+        PrimitiveModel.findAllBy("oboolean", None).toList must haveSize(50)
       }
 
       "multiple values" >> {
         val result = PrimitiveModel.findAllBy("string" -> "string22", "int" -> 22)
-        result.toList must have size 1
-        result.head.int mustEqual 22
+        result.toList must haveSize(1)
+        result.head.int must beEqualTo(22)
         PrimitiveModel.findAllBy("string" -> "string22", "int" -> 23).toList must beEmpty
       }
     }
@@ -198,27 +198,27 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
     "#forceUpdate" >> {
       val now = new Timestamp(System.currentTimeMillis)
       val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true))
-      query.count mustEqual 0
-      PrimitiveModel.forceUpdate(_.id.~ > 40)(_.string := "aaa", _.oboolean := Some(true)) mustEqual 60
-      query.count mustEqual 60
+      query.count must beEqualTo(0)
+      PrimitiveModel.forceUpdate(_.id.~ > 40)(_.string := "aaa", _.oboolean := Some(true)) must beEqualTo(60)
+      query.count must beEqualTo(60)
     }
 
     "#forceUpdateAll" >> {
       val now = new Timestamp(System.currentTimeMillis)
       val query = PrimitiveModel.where(p => p.string === "aaa" and p.oboolean === Some(true))
-      query.count mustEqual 0
-      PrimitiveModel.forceUpdateAll(_.string := "aaa", _.oboolean := Some(true)) mustEqual 100
-      query.count mustEqual 100
+      query.count must beEqualTo(0)
+      PrimitiveModel.forceUpdateAll(_.string := "aaa", _.oboolean := Some(true)) must beEqualTo(100)
+      query.count must beEqualTo(100)
     }
 
     "#forceDelete" >> {
-      PrimitiveModel.forceDelete(_.id.~ > 40) mustEqual 60
-      PrimitiveModel.count mustEqual 40
+      PrimitiveModel.forceDelete(_.id.~ > 40) must beEqualTo(60)
+      PrimitiveModel.count must beEqualTo(40)
     }
 
     "#forceDeleteAll" >> {
-      PrimitiveModel.forceDeleteAll() mustEqual 100
-      PrimitiveModel.count mustEqual 0
+      PrimitiveModel.forceDeleteAll() must beEqualTo(100)
+      PrimitiveModel.count must beEqualTo(0)
     }
 
     "#forceInsertAll" >> {
@@ -226,9 +226,9 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         override def doValidate(): Unit = { errors.add("error") }
       }
       User.forceInsertAll(List(User("user1"), invalidUser))
-      User.count mustEqual 2
+      User.count must beEqualTo(2)
       User.forceInsertAll(User("user2"), invalidUser)
-      User.count mustEqual 4
+      User.count must beEqualTo(4)
     }
 
     "#insertWithValidation" >> {
@@ -236,9 +236,9 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
         override def doValidate(): Unit = { errors.add("error") }
       }
       User.insertWithValidation(List(User("user1"), invalidUser)) must contain(exactly(invalidUser))
-      User.count mustEqual 1
+      User.count must beEqualTo(1)
       User.insertWithValidation(User("user2"), invalidUser) must contain(exactly(invalidUser))
-      User.count mustEqual 2
+      User.count must beEqualTo(2)
     }
 
     "implicit conversions" >> {
@@ -247,10 +247,10 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       }
 
       "ActiveRecordCompanion to Relation" in {
-        PrimitiveModel.limit(10).toList mustEqual PrimitiveModel.all.toList.take(10)
-        PrimitiveModel.count mustEqual 100
-        PrimitiveModel.head mustEqual PrimitiveModel.toList.head
-        PrimitiveModel.headOption mustEqual Option(PrimitiveModel.toList.head)
+        PrimitiveModel.limit(10).toList must beEqualTo(PrimitiveModel.all.toList.take(10))
+        PrimitiveModel.count must beEqualTo(100)
+        PrimitiveModel.head must beEqualTo(PrimitiveModel.toList.head)
+        PrimitiveModel.headOption must beEqualTo(Option(PrimitiveModel.toList.head))
       }
     }
 
@@ -335,7 +335,7 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
 
     "#_companion returns companion object" >> {
       val m = PrimitiveModel.newModel(3)
-      m._companion mustEqual PrimitiveModel
+      m._companion must beEqualTo(PrimitiveModel)
     }
 
     "CRUD" >> {
@@ -343,13 +343,13 @@ class ActiveRecordSpec extends DatabaseSpecification with AutoRollback {
       val size = PrimitiveModel.all.size
       m.string = "abcdezzz"
       m.save()
-      PrimitiveModel.all.size mustEqual size + 1
+      PrimitiveModel.all.size must beEqualTo(size + 1)
 
       val oldId = m.id
       m.string = "aaaa"
       m.save()
-      m.id mustEqual oldId
-      PrimitiveModel.find(oldId).get.string mustEqual "aaaa"
+      m.id must beEqualTo(oldId)
+      PrimitiveModel.find(oldId).get.string must beEqualTo("aaaa")
 
       m.delete() must beTrue
       m.isPersisted must beFalse

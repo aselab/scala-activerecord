@@ -3,7 +3,9 @@ package com.github.aselab.activerecord.reflections
 import org.specs2.mutable._
 import com.github.aselab.activerecord._
 
-class reflectionsSpec extends Specification {
+// Top-level (not inner) classes: an inner class constructor takes the spec instance,
+// so ClassInfo#factory would construct the spec itself and re-enter its own lazy val
+object reflectionsSpec {
   class Dummy {
     val s: String = "test"
   }
@@ -67,6 +69,10 @@ class reflectionsSpec extends Specification {
     estring: String,
     eint: Int
   ) extends BaseModel
+}
+
+class reflectionsSpec extends Specification {
+  import reflectionsSpec._
 
   "ClassInfo" should {
     "factory of PrimitiveModel" in {
@@ -75,7 +81,7 @@ class reflectionsSpec extends Specification {
       "can construct new instance" in {
         val m = factory.apply()
         m.isInstanceOf[PrimitiveModel] must beTrue
-        factory.apply() must not equalTo(m)
+        factory.apply() must not(equalTo(m))
       }
 
       "is added to ClassInfo.factories" in {
@@ -87,7 +93,7 @@ class reflectionsSpec extends Specification {
       val factory = ClassInfo(classOf[MultipleConstructor]).factory
 
       "uses a constructor which has minimum arguments size" in {
-        factory.apply().string mustEqual "test"
+        factory.apply().string must beEqualTo("test")
       }
     }
 
@@ -96,7 +102,7 @@ class reflectionsSpec extends Specification {
         val factory = ClassInfo(classOf[ComplexModel]).factory
         val m = factory.apply()
         m.isInstanceOf[ComplexModel] must beTrue
-        factory.apply() must not equalTo(m)
+        factory.apply() must not(equalTo(m))
       }
 
       "is added to ClassInfo.factories" in {
@@ -126,13 +132,11 @@ class reflectionsSpec extends Specification {
     "detect type of Option value" in {
       val c = new ClassInfo(classOf[models.PrimitiveModel])
       "Int" in {
-        c.fieldInfo("oint") mustEqual
-          FieldInfo("oint", classOf[Int], true, false)
+        c.fieldInfo("oint") must beEqualTo(FieldInfo("oint", classOf[Int], true, false))
       }
 
       "String" in {
-         c.fieldInfo("ostring") mustEqual
-           FieldInfo("ostring", classOf[String], true, false)
+         c.fieldInfo("ostring") must beEqualTo(FieldInfo("ostring", classOf[String], true, false))
       }
     }
 
@@ -141,13 +145,11 @@ class reflectionsSpec extends Specification {
       FieldTypes.register[models.SeqModel]
       val c = new ClassInfo(classOf[models.SeqModel])
       "Int" in {
-        c.fieldInfo("list") mustEqual
-          FieldInfo("list", classOf[Int], false, true)
+        c.fieldInfo("list") must beEqualTo(FieldInfo("list", classOf[Int], false, true))
       }
 
       "String" in {
-         c.fieldInfo("seq") mustEqual
-           FieldInfo("seq", classOf[Double], false, true)
+         c.fieldInfo("seq") must beEqualTo(FieldInfo("seq", classOf[Double], false, true))
       }
     }
 
@@ -193,25 +195,25 @@ class reflectionsSpec extends Specification {
     "toOption" in {
       "Option[String]" in {
         val v = Some("a")
-        v.toOption[String] mustEqual v
+        v.toOption[String] must beEqualTo(v)
       }
 
       "Option[Int]" in {
         val v = Some(3)
-        v.toOption[Int] mustEqual v
+        v.toOption[Int] must beEqualTo(v)
       }
 
       "None" in {
-        None.toOption mustEqual None
+        None.toOption must beEqualTo(None)
       }
 
       "Int" in {
-        3.toOption[Int] mustEqual Some(3)
+        3.toOption[Int] must beEqualTo(Some(3))
       }
 
       "null" in {
         val v: String = null
-        v.toOption mustEqual None
+        v.toOption must beEqualTo(None)
       }
     }
   }

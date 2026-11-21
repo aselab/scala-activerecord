@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
-import org.specs2.specification.Scope
+import com.github.aselab.activerecord.Scope
 
 package onetoone {
   case class User(name: String) extends ActiveRecord {
@@ -109,7 +109,7 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
       group.user := user
       val u: Option[User] = group.user
       u must beSome(user)
-      group.user.name mustEqual user.name
+      group.user.name must beEqualTo(user.name)
     }
   }
 
@@ -158,7 +158,7 @@ class OneToOneAssociationSpec extends DatabaseSpecification {
     "implicit conversions" >> new TestData {
       val a: Option[Address] = user.address
       a must beSome(address)
-      user.address.country mustEqual address.country
+      user.address.country must beEqualTo(address.country)
     }
   }
 }

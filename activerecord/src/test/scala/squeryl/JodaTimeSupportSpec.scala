@@ -17,7 +17,7 @@ class JodaTimeSupportSpec extends DatabaseSpecification with AutoRollback {
 
     "save" >> {
       val d1 = jodaTimeModel().create
-      JodaTimeModel.toList mustEqual List(d1)
+      JodaTimeModel.toList must beEqualTo(List(d1))
     }
 
     "where" >> {

@@ -49,7 +49,7 @@ class IOSpec extends DatabaseSpecification with MockSupport {
     "toFormValues" in {
       "primitive and options" in {
         val m = PrimitiveModel.newModel(5)
-        m.toFormValues mustEqual Map(
+        m.toFormValues must beEqualTo(Map(
           "boolean" -> "true",
           "oboolean" -> "true",
           "float" -> "5.0",
@@ -65,35 +65,35 @@ class IOSpec extends DatabaseSpecification with MockSupport {
           "int" -> "5",
           "oint" -> "5",
           "uuid" -> "00000000-0000-0005-0000-000000000005"
-        )
+        ))
       }
 
       "primitive list" in {
         val m = ListModel(List("aa", "bb", "cc"), List(11, 22, 33))
-        m.toFormValues mustEqual Map(
+        m.toFormValues must beEqualTo(Map(
           "l1[0]" -> "aa",
           "l1[1]" -> "bb",
           "l1[2]" -> "cc",
           "l2[0]" -> "11",
           "l2[1]" -> "22",
           "l2[2]" -> "33"
-        )
+        ))
       }
 
       "nest model" in {
         val m = new NestModel
-        m.toFormValues mustEqual Map(
+        m.toFormValues must beEqualTo(Map(
           "int" -> "1",
           "list[l1][0]" -> "a",
           "list[l1][1]" -> "b",
           "list[l2][0]" -> "1",
           "list[l2][1]" -> "2"
-        )
+        ))
       }
 
       "complex model" in {
         val m = new ComplexModel
-        m.toFormValues mustEqual Map(
+        m.toFormValues must beEqualTo(Map(
           "int" -> "1",
           "nest[int]" -> "1",
           "nest[list][l1][0]" -> "a",
@@ -110,7 +110,7 @@ class IOSpec extends DatabaseSpecification with MockSupport {
           "nestlist[1][list][l1][1]" -> "b",
           "nestlist[1][list][l2][0]" -> "1",
           "nestlist[1][list][l2][1]" -> "2"
-        )
+        ))
       }
     }
 
@@ -431,24 +431,24 @@ class IOSpec extends DatabaseSpecification with MockSupport {
 
   "FormUtil" should {
     "shift" in {
-      FormUtil.shift("a[b][c]") mustEqual "b[c]"
-      FormUtil.shift("a[b][c][d]") mustEqual "b[c][d]"
-      FormUtil.shift("a[b]") mustEqual "b"
-      FormUtil.shift("a") mustEqual "a"
+      FormUtil.shift("a[b][c]") must beEqualTo("b[c]")
+      FormUtil.shift("a[b][c][d]") must beEqualTo("b[c][d]")
+      FormUtil.shift("a[b]") must beEqualTo("b")
+      FormUtil.shift("a") must beEqualTo("a")
     }
 
     "split" in {
-      FormUtil.split("a[b]") mustEqual Array("a", "b")
-      FormUtil.split("a[b][c][d]") mustEqual Array("a", "b", "c", "d")
-      FormUtil.split("a[]") mustEqual Array("a")
-      FormUtil.split("a[][b]") mustEqual Array("a", "", "b")
+      FormUtil.split("a[b]") must beEqualTo(Array("a", "b"))
+      FormUtil.split("a[b][c][d]") must beEqualTo(Array("a", "b", "c", "d"))
+      FormUtil.split("a[]") must beEqualTo(Array("a"))
+      FormUtil.split("a[][b]") must beEqualTo(Array("a", "", "b"))
     }
 
     "join" in {
-      FormUtil.join("a", "b") mustEqual "a[b]"
-      FormUtil.join("a", "b", "c") mustEqual "a[b][c]"
-      FormUtil.join("a", "b", "c", "d") mustEqual "a[b][c][d]"
-      FormUtil.join("a", "b", "c[d]") mustEqual "a[b][c][d]"
+      FormUtil.join("a", "b") must beEqualTo("a[b]")
+      FormUtil.join("a", "b", "c") must beEqualTo("a[b][c]")
+      FormUtil.join("a", "b", "c", "d") must beEqualTo("a[b][c][d]")
+      FormUtil.join("a", "b", "c[d]") must beEqualTo("a[b][c][d]")
     }
   }
 
@@ -456,14 +456,14 @@ class IOSpec extends DatabaseSpecification with MockSupport {
     "bind" in {
       "with no source" in {
         val m = PrimitiveModel.bind(Map("string" -> "string", "ostring" -> "", "int" -> "100"))
-        m mustEqual PrimitiveModel.newInstance.copy(string = "string", int = 100, uuid = m.uuid)
+        m must beEqualTo(PrimitiveModel.newInstance.copy(string = "string", int = 100, uuid = m.uuid))
       }
 
       "with source" in {
         val source = mock[PrimitiveModel]
         val data = Map("string" -> "string", "ostring" -> "", "int" -> "100")
 
-        PrimitiveModel.bind(data)(source) mustEqual source
+        PrimitiveModel.bind(data)(source) must beTheSameAs(source)
 
         verifyOnce(source).assignFormValues(data)
         ok
@@ -474,7 +474,7 @@ class IOSpec extends DatabaseSpecification with MockSupport {
       val m = mock[PrimitiveModel]
       val data = Map("aaa" -> "aaa", "bbb" -> "bbb")
       m.toFormValues returns data
-      PrimitiveModel.unbind(m) mustEqual data
+      PrimitiveModel.unbind(m) must beEqualTo(data)
     }
 
     "isRequired" in {

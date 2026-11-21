@@ -2,7 +2,7 @@ val _version = "0.7.0"
 val isRelease = System.getProperty("release") == "true"
 
 def specs2(scope: String, name: String = "core") = Def.setting {
-  "org.specs2" %% s"specs2-${name}" % "4.23.0" % scope
+  "org.specs2" %% s"specs2-${name}" % "5.9.1" % scope  // 5.11+ is built with Scala 3.9
 }
 
 val compileOptions = Seq(
@@ -16,9 +16,9 @@ val compileOptions = Seq(
 )
 
 val compilerSettings = Seq(
-  // Keep producing Java 8 compatible classes, compiled against the Java 8 API
-  javacOptions := Seq("--release", "8"),
-  scalacOptions ++= compileOptions ++ Seq("-release", "8"),
+  // Java 11 is the minimum of the runtime dependencies (HikariCP, nscala-time, json4s)
+  javacOptions := Seq("--release", "11"),
+  scalacOptions ++= compileOptions ++ Seq("-release", "11"),
   Compile / compileOrder := CompileOrder.JavaThenScala
 )
 
@@ -32,10 +32,12 @@ val defaultSettings = Seq(
     Seq(
       specs2("test").value,
       "org.mockito" % "mockito-core" % "5.24.0" % "test",
-      "com.h2database" % "h2" % "1.4.200" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.2.3" % "test"
+      "com.h2database" % "h2" % "2.5.252" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.6.7" % "test"
     ) ++ Option(System.getProperty("ci")).map(_ => junit).toSeq
   },
+  // specs2 5 provides its implicit conversions as `given Conversion`s
+  Test / scalacOptions += "-language:implicitConversions",
   Test / testOptions ++= Option(System.getProperty("ci")).map(_ => Tests.Argument("junitxml", "console")).toSeq,
   Test / parallelExecution := false,
   Test / fork := true,
@@ -69,12 +71,12 @@ lazy val core: Project = Project("core", file("activerecord")).settings(defaultS
   name := "scala-activerecord",
   libraryDependencies ++= Seq(
     "org.squeryl" %% "squeryl" % "0.11.0",
-    "com.typesafe" % "config" % "1.4.1",
-    "com.zaxxer" % "HikariCP" % "3.4.5",
-    "com.github.nscala-time" %% "nscala-time" % "2.34.0",
-    "commons-validator" % "commons-validator" % "1.7",
-    "io.github.json4s" %% "json4s-native" % "4.1.0",
-    "org.slf4j" % "slf4j-api" % "1.7.30"
+    "com.typesafe" % "config" % "1.4.10",
+    "com.zaxxer" % "HikariCP" % "7.1.0",
+    "com.github.nscala-time" %% "nscala-time" % "3.2.0",
+    "commons-validator" % "commons-validator" % "1.11.0",
+    "io.github.json4s" %% "json4s-native" % "4.1.1",
+    "org.slf4j" % "slf4j-api" % "2.0.20"
   ),
   Test / unmanagedSourceDirectories += (baseDirectory.value / ".." / "specs" / "src" / "main"),
   Test / console / initialCommands := """

@@ -64,7 +64,8 @@ Schema and query DSL is based on [Squeryl](http://squeryl.org/).
 
 The current master builds for Scala 3 (3.3 LTS); Scala 2.13 users should stay on 0.6.x.
 
-* Building requires JDK 17 or later (sbt 2). The library itself is compiled for Java 8.
+* Building requires JDK 17 or later (sbt 2). The library itself is compiled for Java 11, the minimum of its
+  dependencies (HikariCP, nscala-time, json4s).
 * Squeryl creates proxies of model classes with cglib. On JDK 9 and later, run your application and tests with
   `--add-opens=java.base/java.lang=ALL-UNNAMED` (with sbt, e.g. `fork := true` and `javaOptions += "..."`).
 * The element types of fields such as `Option[Int]` or `List[Long]` are captured at compile time when the model's
@@ -76,8 +77,14 @@ The current master builds for Scala 3 (3.3 LTS); Scala 2.13 users should stay on
 * Squeryl on Scala 3 cannot infer the result type of arithmetic on columns of different types, such as
   `sum(item.price) + avg(item.price)`; pass the result factory explicitly:
   `sum(item.price).+(avg(item.price))(optionFloatTEF)`. Aggregates (`max`, `min`, `sum`, `avg`) work as before.
-* `ActiveRecordSpecification` (scala-activerecord-specs) disables the specs2 `===` matcher, which would otherwise
-  shadow Squeryl's `===` in queries; use `mustEqual` or `must_===` instead.
+* scala-activerecord-specs is built on specs2 5 (5.9.1, the latest release that supports Scala 3.3):
+  * `ActiveRecordSpecification` runs its examples sequentially. Override `beforeAll()` and `afterAll()`
+    (methods, now with `()`) to add set-up and tear-down; call `super` to keep the schema handling.
+  * `AutoRollback` rolls back each example with `AroundEach`.
+  * The specs2 `===` matcher is disabled, as it would otherwise shadow Squeryl's `===` in queries;
+    use `must beEqualTo(...)` instead. specs2 5 removed `mustEqual`, `must have size` and `Scope`.
+* The tests use H2 2.x, where `value` is a keyword; add `;NON_KEYWORDS=VALUE` to the JDBC URL if a model has a
+  field named `value`.
 * The Play 2 and Scalatra modules have not been migrated to Scala 3 yet.
 
 ## Features

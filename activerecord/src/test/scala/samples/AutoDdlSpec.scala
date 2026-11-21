@@ -2,6 +2,7 @@ package com.github.aselab.activerecord.samples
 
 import org.specs2.mutable._
 import org.specs2.specification._
+import org.specs2.execute.{AsResult, Result}
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
@@ -21,12 +22,13 @@ object AutoDdlTestTables extends ActiveRecordTables {
   }
 }
 
-class AutoDdlSpec extends Specification with BeforeEach {
+class AutoDdlSpec extends Specification with AroundEach {
   sequential
 
-  def before = {
+  def around[R: AsResult](r: => R): Result = {
     AutoDdlTestTables.created = false
     AutoDdlTestTables.dropped = false
+    AsResult(r)
   }
 
   "ActiveRecordConfig#autoCreate" should {

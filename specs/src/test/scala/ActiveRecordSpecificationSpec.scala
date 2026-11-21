@@ -24,17 +24,17 @@ class Model1Spec extends ActiveRecordSpecification {
   override def schema = com.github.aselab.activerecord.models.Tables1
 
   override def config = Map(
-    "jdbcurl" -> "jdbc:h2:mem:tables1"
+    "jdbcurl" -> "jdbc:h2:mem:tables1;NON_KEYWORDS=VALUE"
   )
 
   "ActiveRecordSpecification" should {
     "run.mode is test" >> {
-      System.getProperty("run.mode") mustEqual "test"
+      System.getProperty("run.mode") must beEqualTo("test")
     }
 
     "can override config" >> {
       Model1(1).create
-      Model1.count mustEqual 1
+      Model1.count must beEqualTo(1)
     }
   }
 }
@@ -45,13 +45,13 @@ class Model2Spec extends ActiveRecordSpecification {
   override def schema = com.github.aselab.activerecord.models.Tables2
 
   override def config = Map(
-    "jdbcurl" -> "jdbc:h2:mem:tables2"
+    "jdbcurl" -> "jdbc:h2:mem:tables2;NON_KEYWORDS=VALUE"
   )
 
   "ActiveRecordSpecification" should {
     "can override config" >> {
       Model2(1).create
-      Model2.count mustEqual 1
+      Model2.count must beEqualTo(1)
     }
   }
 }

@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
-import org.specs2.specification.Scope
+import com.github.aselab.activerecord.Scope
 
 package onetomany {
   case class User(name: String) extends ActiveRecord {
@@ -41,8 +41,8 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
     "assign persisted record" >> new TestData {
       user.group := group
       user.group.isLoaded must beTrue
-      user.group.cache mustEqual List(group)
-      user.groupId mustEqual(group.id)
+      user.group.cache must beEqualTo(List(group))
+      user.groupId must beEqualTo((group.id))
     }
 
     "assign non-persisted record" >> new TestData {
@@ -68,9 +68,9 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
 
     "implicit conversions" >> new TestData {
       user.group.associate(group)
-      user.group.count mustEqual 1
-      user.group.where(_.id === group.id).toList mustEqual List(group)
-      user.group.name mustEqual group.name
+      user.group.count must beEqualTo(1)
+      user.group.where(_.id === group.id).toList must beEqualTo(List(group))
+      user.group.name must beEqualTo(group.name)
     }
   }
 
@@ -82,19 +82,19 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
 
     "assign persisted record" >> new TestData {
       group.users.assign(user)
-      user.groupId mustEqual(group.id)
+      user.groupId must beEqualTo((group.id))
     }
 
     "associate persisted record" >> new TestData {
       group.users.associate(user)
-      group.users.toList mustEqual List(user)
+      group.users.toList must beEqualTo(List(user))
     }
 
     "associate non-persisted record" >> new TestData {
       val newUser = User("user2")
       group.users.associate(newUser)
       newUser.isPersisted must beTrue
-      group.users.toList mustEqual List(newUser)
+      group.users.toList must beEqualTo(List(newUser))
     }
 
     "remove" >> new TestData {
@@ -102,8 +102,8 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       group.usersByOtherKey := List(user, user2)
       val removed = group.usersByOtherKey.remove(user)
       removed must beSome(user)
-      group.usersByOtherKey.toList mustEqual List(user2)
-      group.usersByOtherKey.reload mustEqual List(user2)
+      group.usersByOtherKey.toList must beEqualTo(List(user2))
+      group.usersByOtherKey.reload must beEqualTo(List(user2))
     }
 
     "remove with not null constraint" >> new TestData {
@@ -116,7 +116,7 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       group.usersByOtherKey << user
       group.usersByOtherKey += user2
       val removed = group.usersByOtherKey.removeAll()
-      removed mustEqual List(user, user2)
+      removed must beEqualTo(List(user, user2))
       removed.forall(m => m.otherKey == None && m.isPersisted) must beTrue
       group.usersByOtherKey.toList must beEmpty
       group.usersByOtherKey.reload must beEmpty
@@ -131,7 +131,7 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       val user2 = User("user2").create
       val user3 = User("user3").create
       group.users << Seq(user, user2)
-      group.users.deleteAll() mustEqual List(user, user2)
+      group.users.deleteAll() must beEqualTo(List(user, user2))
       group.users.toList must beEmpty
       User.exists(_.id === user.id) must beFalse
       User.exists(_.id === user2.id) must beFalse
@@ -152,7 +152,7 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       group.usersByOtherKey << user
       group.usersByOtherKey := List(user2, user3)
       User.exists(_.id === user.id) must beTrue
-      group.usersByOtherKey.toList mustEqual List(user2, user3)
+      group.usersByOtherKey.toList must beEqualTo(List(user2, user3))
     }
 
     "replace records with not null constraint" >> new TestData {
@@ -161,13 +161,13 @@ class OneToManyAssociationSpec extends DatabaseSpecification {
       group.users << user
       group.users := List(user2, user3)
       User.exists(_.id === user.id) must beFalse
-      group.users.toList mustEqual List(user2, user3)
+      group.users.toList must beEqualTo(List(user2, user3))
     }
 
     "implicit conversions" >> new TestData {
       group.users.associate(user)
-      group.users.map(_.name).toList mustEqual List(user.name)
-      group.users.where(_.id === user.id).toList mustEqual List(user)
+      group.users.map(_.name).toList must beEqualTo(List(user.name))
+      group.users.where(_.id === user.id).toList must beEqualTo(List(user))
     }
   }
 

@@ -18,25 +18,25 @@ class i18nSpec extends Specification {
 
     "apply" in {
       "translation exists" in {
-        translator(Some("test")).apply("key") mustEqual "test"
-        translator(Some("message")).apply("any", "a") mustEqual "message"
+        translator(Some("test")).apply("key") must beEqualTo("test")
+        translator(Some("message")).apply("any", "a") must beEqualTo("message")
       }
 
       "translation is missing" in {
-        translator(None).apply("key") mustEqual "key"
-        translator(None).apply("any", "a", 1) mustEqual "any"
+        translator(None).apply("key") must beEqualTo("key")
+        translator(None).apply("any", "a", 1) must beEqualTo("any")
       }
     }
 
     "field" in {
       "get translation of activerecord.models.ClassName.fieldName" in {
         val t = translator(Some("aaa"))
-        t.field(classOf[models.User], "name") mustEqual "aaa"
-        t.args mustEqual List("activerecord.models.User.name")
+        t.field(classOf[models.User], "name") must beEqualTo("aaa")
+        t.args must beEqualTo(List("activerecord.models.User.name"))
       }
 
       "returns titleized name when translation is missing" in {
-        translator(None).field(classOf[models.User], "fieldName") mustEqual "Field Name"
+        translator(None).field(classOf[models.User], "fieldName") must beEqualTo("Field Name")
       }
     }
   }
@@ -60,7 +60,7 @@ class i18nSpec extends Specification {
       }
 
       "minValue validation error message" in {
-        DefaultTranslator.apply("activerecord.errors.minValue", 3)(Locale.JAPANESE) mustEqual "は3以上でなければなりません"
+        DefaultTranslator.apply("activerecord.errors.minValue", 3)(Locale.JAPANESE) must beEqualTo("は3以上でなければなりません")
       }
     }
   }

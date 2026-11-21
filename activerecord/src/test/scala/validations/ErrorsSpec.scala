@@ -59,9 +59,9 @@ class ErrorsSpec extends DatabaseSpecification with MockSupport {
       errors.add("some message")
       errors.add("name", "required")
 
-      errors.global.size mustEqual 1
-      errors("name").size mustEqual 1
-      errors.size mustEqual 2
+      errors.global.size must beEqualTo(1)
+      errors("name").size must beEqualTo(1)
+      errors.size must beEqualTo(2)
       errors.clear()
       errors.global must beEmpty
       errors("name") must beEmpty
@@ -82,11 +82,11 @@ class ErrorsSpec extends DatabaseSpecification with MockSupport {
       }
 
       "locale en" in {
-        errors.messages(Locale.ENGLISH) mustEqual messagesEn
+        errors.messages(Locale.ENGLISH) must beEqualTo(messagesEn)
       }
 
       "locale ja" in {
-        errors.messages(Locale.JAPANESE) mustEqual messagesJa
+        errors.messages(Locale.JAPANESE) must beEqualTo(messagesJa)
       }
     }
   }

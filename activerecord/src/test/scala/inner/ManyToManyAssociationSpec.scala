@@ -2,7 +2,7 @@ package com.github.aselab.activerecord.inner
 
 import com.github.aselab.activerecord._
 import com.github.aselab.activerecord.dsl._
-import org.specs2.specification.Scope
+import com.github.aselab.activerecord.Scope
 
 package manytomany {
   case class Foo(name: String) extends ActiveRecord {
@@ -55,8 +55,8 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
     "assign persisted record" >> new TestData {
       val inter = foo.through.assign(bar)
       inter.isPersisted must beFalse
-      inter.fooId mustEqual foo.id
-      inter.barId mustEqual bar.id
+      inter.fooId must beEqualTo(foo.id)
+      inter.barId must beEqualTo(bar.id)
     }
 
     "assign non-persisted record" >> new TestData {
@@ -72,7 +72,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
     "associate persisted record" >> new TestData {
       val inter = foo.through << bar
       inter.isPersisted must beTrue
-      foo.through.toList mustEqual List(bar)
+      foo.through.toList must beEqualTo(List(bar))
     }
 
     "remove" >> new TestData {
@@ -81,7 +81,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       val inter2 = foo.throughOption << baz2
       val removed = foo.throughOption.remove(baz)
       removed must beSome(baz)
-      foo.throughOption.toList mustEqual List(baz2)
+      foo.throughOption.toList must beEqualTo(List(baz2))
       Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
     }
 
@@ -93,7 +93,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
     "removeAll" >> new TestData {
       val inter = foo.throughOption << baz
       val removed = foo.throughOption.removeAll()
-      removed mustEqual List(baz)
+      removed must beEqualTo(List(baz))
       foo.throughOption.toList must beEmpty
       foo.throughOption.reload must beEmpty
       Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
@@ -107,7 +107,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
     "deleteAll" >> new TestData {
       val inter = foo.throughOption << baz
       val deleted = foo.throughOption.deleteAll()
-      deleted mustEqual List(baz)
+      deleted must beEqualTo(List(baz))
       foo.throughOption.toList must beEmpty
       Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
     }
@@ -115,7 +115,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
     "deleteAll with not null constraint" >> new TestData {
       val inter = foo.through << bar
       val deleted = foo.through.deleteAll()
-      deleted mustEqual List(bar)
+      deleted must beEqualTo(List(bar))
       foo.through.toList must beEmpty
       Inter.find(inter.id) must beNone
     }
@@ -134,7 +134,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       val inter = foo.throughOption << baz
       foo.throughOption := List(baz2, baz3)
       Inter.find(inter.id).map(_.bazId) must equalTo(Some(None))
-      foo.throughOption.toList mustEqual List(baz2, baz3)
+      foo.throughOption.toList must beEqualTo(List(baz2, baz3))
     }
 
     "replace records with not null constraint" >> new TestData {
@@ -143,12 +143,12 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       val inter = foo.through << bar
       foo.through := List(bar2, bar3)
       Inter.find(inter.id) must beNone
-      foo.through.toList mustEqual List(bar2, bar3)
+      foo.through.toList must beEqualTo(List(bar2, bar3))
     }
 
     "implicit conversions" in new TestData {
       val inter = foo.through << bar
-      foo.through.where(_.id === bar.id).toList mustEqual List(bar)
+      foo.through.where(_.id === bar.id).toList must beEqualTo(List(bar))
     }
   }
 
@@ -157,7 +157,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       val newBar = Bar("bar2")
       foo.bars << newBar
       newBar.isPersisted must beTrue
-      foo.bars.toList mustEqual List(newBar)
+      foo.bars.toList must beEqualTo(List(newBar))
     }
 
     "associate to non-persisted record" >> new TestData {
@@ -167,8 +167,8 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "associate persisted record" >> new TestData {
       foo.bars << bar
-      foo.bars.toList mustEqual List(bar)
-      bar.foos.toList mustEqual List(foo)
+      foo.bars.toList must beEqualTo(List(bar))
+      bar.foos.toList must beEqualTo(List(foo))
     }
 
     "remove" >> new TestData {
@@ -176,14 +176,14 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       foo.bars := List(bar, bar2)
       foo.bars.remove(bar) must beSome(bar)
       foo.bars.remove(bar) must beNone
-      foo.bars.toList mustEqual List(bar2)
-      foo.bars.reload mustEqual List(bar2)
+      foo.bars.toList must beEqualTo(List(bar2))
+      foo.bars.reload must beEqualTo(List(bar2))
       Bar.find(bar.id) must beSome
     }
 
     "removeAll" >> new TestData {
       foo.bars << bar
-      foo.bars.removeAll() mustEqual List(bar)
+      foo.bars.removeAll() must beEqualTo(List(bar))
       foo.bars.toList must beEmpty
       foo.bars.reload must beEmpty
       Bar.find(bar.id) must beSome
@@ -191,7 +191,7 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
 
     "deleteAll" >> new TestData {
       foo.bars << bar
-      foo.bars.deleteAll() mustEqual List(bar)
+      foo.bars.deleteAll() must beEqualTo(List(bar))
       foo.bars.toList must beEmpty
       Bar.find(bar.id) must beNone
     }
@@ -209,14 +209,14 @@ class ManyToManyAssociationSpec extends DatabaseSpecification {
       val bar3 = Bar("bar3").create
       foo.bars << bar
       foo.bars := List(bar2, bar3)
-      foo.bars.toList mustEqual List(bar2, bar3)
-      foo.bars.reload mustEqual List(bar2, bar3)
+      foo.bars.toList must beEqualTo(List(bar2, bar3))
+      foo.bars.reload must beEqualTo(List(bar2, bar3))
       Bar.find(bar.id) must beSome
     }
 
     "implicit conversions" >> new TestData {
       foo.bars << bar
-      foo.bars.where(_.id === bar.id).toList mustEqual List(bar)
+      foo.bars.where(_.id === bar.id).toList must beEqualTo(List(bar))
     }
   }
 }

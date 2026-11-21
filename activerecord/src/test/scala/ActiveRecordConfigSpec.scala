@@ -112,9 +112,9 @@ class MultipleSchemaSpec extends ActiveRecordSpecification {
       foo.save()
       hoge.save()
       bar.save()
-      schema1.Foo.toList mustEqual List(foo)
-      schema2.Hoge.toList mustEqual List(hoge)
-      schema1.Bar.toList mustEqual List(bar)
+      schema1.Foo.toList must beEqualTo(List(foo))
+      schema2.Hoge.toList must beEqualTo(List(hoge))
+      schema1.Bar.toList must beEqualTo(List(bar))
     }
   }
 }

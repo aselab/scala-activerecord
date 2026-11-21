@@ -20,9 +20,9 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
         User("testuser").save()
         User("testuser2").save()
         User("testuser3").save()
-        User.all.toList must not equalTo(users)
+        User.all.toList must not(equalTo(users))
       }
-      User.all.toList mustEqual users
+      User.all.toList must beEqualTo(users)
     }
 
     "startTransaction and rollback" >> {
@@ -32,7 +32,7 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
       User("testuser2").save()
       User("testuser3").save()
       TestTables.rollback
-      User.all.toList mustEqual users
+      User.all.toList must beEqualTo(users)
     }
   }
 
@@ -44,11 +44,11 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
     }
 
     "except @Transient column" >> {
-      ddl must not matching("""(?ms).* transient_field .*""".r)
+      ddl must not(beMatching("""(?ms).* transient_field .*""".r))
     }
 
     "be able to change column name by @Column" >> {
-      ddl must not matching("""(?ms).* column_field .*""".r)
+      ddl must not(beMatching("""(?ms).* column_field .*""".r))
       ddl must matching("""(?ms).* columnName .*""".r)
     }
 
@@ -57,11 +57,11 @@ class ActiveRecordTablesSpec extends DatabaseSpecification {
     }
 
     "except confirmation column" >> {
-      ddl must not matching("""(?ms).* confirmation_field_confirmation .*""".r)
+      ddl must not(beMatching("""(?ms).* confirmation_field_confirmation .*""".r))
     }
 
     "except renamed confirmation column" >> {
-      ddl must not matching("""(?ms).* confirmation_name .*""".r)
+      ddl must not(beMatching("""(?ms).* confirmation_name .*""".r))
     }
 
   }
