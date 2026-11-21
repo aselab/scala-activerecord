@@ -40,7 +40,6 @@ ActiveRecord model usage:
 ```scala
 import com.github.aselab.activerecord.dsl._
 import models._
-import scala.language.postfixOps
 
 object App extends App {
   Tables.initialize
@@ -53,13 +52,33 @@ object App extends App {
   Person.findBy("name", "person1") //=> Some(Person("person1", 25))
   Person.findBy("age", 55) //=> None
   Person.findAllBy("age", 18).toList //=> List(Person("person2", 18), Person("person4", 18))
-  Person.where(_.age.~ >= 20).orderBy(_.age desc).toList //=> List(Person("person3", 40), Person("person1", 25))
+  Person.where(_.age.~ >= 20).orderBy(_.age.desc).toList //=> List(Person("person3", 40), Person("person1", 25))
   
   Tables.cleanup
 }
 ```
 
 Schema and query DSL is based on [Squeryl](http://squeryl.org/).
+
+## Scala 3
+
+The current master builds for Scala 3 (3.3 LTS); Scala 2.13 users should stay on 0.6.x.
+
+* Building requires JDK 17 or later (sbt 2). The library itself is compiled for Java 8.
+* Squeryl creates proxies of model classes with cglib. On JDK 9 and later, run your application and tests with
+  `--add-opens=java.base/java.lang=ALL-UNNAMED` (with sbt, e.g. `fork := true` and `javaOptions += "..."`).
+* The element types of fields such as `Option[Int]` or `List[Long]` are captured at compile time when the model's
+  companion object (`ActiveRecordCompanion`, `ActiveModelCompanion`) is defined. For a class without such a companion,
+  call `com.github.aselab.activerecord.reflections.FieldTypes.register[MyClass]` before using it.
+* Field names and value types passed to `newInstance`, `assign`, `find`, `findBy`, `findAllBy` and `findByOrCreate`
+  are still checked at compile time. They must be written out at the call site (string literals); use the `unsafe*`
+  variants for dynamic names.
+* Squeryl on Scala 3 cannot infer the result type of arithmetic on columns of different types, such as
+  `sum(item.price) + avg(item.price)`; pass the result factory explicitly:
+  `sum(item.price).+(avg(item.price))(optionFloatTEF)`. Aggregates (`max`, `min`, `sum`, `avg`) work as before.
+* `ActiveRecordSpecification` (scala-activerecord-specs) disables the specs2 `===` matcher, which would otherwise
+  shadow Squeryl's `===` in queries; use `mustEqual` or `must_===` instead.
+* The Play 2 and Scalatra modules have not been migrated to Scala 3 yet.
 
 ## Features
 

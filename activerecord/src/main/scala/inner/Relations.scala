@@ -9,7 +9,6 @@ import reflections._
 import ReflectionUtil._
 import scala.reflect.Selectable.reflectiveSelectable
 import com.github.aselab.activerecord.squeryl.{Aggregates, MaxMinResult, SumResult, AvgResult}
-import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
