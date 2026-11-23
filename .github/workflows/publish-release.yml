@@ -1,0 +1,76 @@
+# Signs the release versions of all modules and uploads them to the Central Portal after the tests pass.
+# Run it by hand from the Actions tab ("Run workflow"), choosing the release tag in "Use workflow from".
+#
+# By default the deployment is only uploaded: check it on https://central.sonatype.com/publishing/deployments
+# and press "Publish" there. Check "Publish to Maven Central right away" to publish it without that step.
+# A release on Maven Central cannot be removed or replaced afterwards.
+#
+# Requires the repository secrets
+# - SONATYPE_USERNAME, SONATYPE_PASSWORD: the two parts of a user token from https://central.sonatype.com/usertoken
+# - PGP_SECRET: the signing key, exported with `gpg --armor --export-secret-keys <KEYID> | base64`
+# - PGP_PASSPHRASE: the passphrase of the signing key (sbt-pgp reads it from this environment variable)
+name: Publish release
+run-name: Release ${{ github.ref_name }}${{ !inputs.publish && ' (upload only)' || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to Maven Central right away (if unchecked, press Publish on the Central Portal afterwards)
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+      - name: Import the signing key
+        run: echo "$PGP_SECRET" | base64 --decode | gpg --batch --import
+        env:
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+      - name: Test, sign and upload the release
+        # -Drelease=true drops the -SNAPSHOT suffix and publishes to the local staging directory for sonaUpload/sonaRelease
+        run: sbt --server --batch -Drelease=true test publishSigned ${{ inputs.publish && 'sonaRelease' || 'sonaUpload' }}
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      # shown on the run's Summary page
+      - name: Show the next steps
+        if: ${{ !inputs.publish }}
+        run: |
+          echo "::notice title=Not published yet::Check the deployment on the Central Portal and press Publish"
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Next: publish ${{ github.ref_name }} on the Central Portal
+
+          The release was only uploaded, so it is not on Maven Central yet.
+
+          1. Open https://central.sonatype.com/publishing/deployments
+          2. Wait until the deployment is **Validated**, check its files, and press **Publish**
+          3. If it is **Failed**, the deployment shows the reasons: fix them, press **Drop**, and run this workflow again
+
+          A published release cannot be removed or replaced.
+          EOF
+      - name: Show the result
+        if: ${{ inputs.publish }}
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Published ${{ github.ref_name }}
+
+          The deployment was published to Maven Central. Its state is on
+          https://central.sonatype.com/publishing/deployments, and the files can take a while to show up on Maven Central.
+          EOF

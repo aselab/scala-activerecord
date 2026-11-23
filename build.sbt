@@ -69,6 +69,7 @@ lazy val root = project.in(file("."))
 
 lazy val core: Project = Project("core", file("activerecord")).settings(defaultSettings).settings(
   name := "scala-activerecord",
+  description := "An ORM library for Scala inspired by ActiveRecord of Ruby on Rails",
   libraryDependencies ++= Seq(
     "org.squeryl" %% "squeryl" % "0.11.0",
     "com.typesafe" % "config" % "1.4.10",
@@ -89,6 +90,7 @@ lazy val core: Project = Project("core", file("activerecord")).settings(defaultS
 
 lazy val specs = project.settings(defaultSettings).settings(
   name := "scala-activerecord-specs",
+  description := "specs2 support for testing the models of scala-activerecord",
   libraryDependencies += specs2("provided").value
 ).dependsOn(core)
 
@@ -102,8 +104,9 @@ val pomXml =
     </license>
   </licenses>
   <scm>
-    <url>git@github.com:aselab/scala-activerecord.git</url>
-    <connection>scm:git:git@github.com:aselab/scala-activerecord.git</connection>
+    <url>https://github.com/aselab/scala-activerecord</url>
+    <connection>scm:git:https://github.com/aselab/scala-activerecord.git</connection>
+    <developerConnection>scm:git:git@github.com:aselab/scala-activerecord.git</developerConnection>
   </scm>
   <developers>
     <developer>
